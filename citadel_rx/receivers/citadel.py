@@ -71,7 +71,11 @@ class CitadelRx(DeepSICReceiver):
         w = np.array(cc.level_weights[: self.K - 1], dtype=float) if self.K > 1 else np.array([])
         self.level_w = (w / w.sum()) if w.size else w
         gates = [] if single_memory else cc.gates
-        self.gate = GateController(gates, cc.gate_mode, cc.g1_tau, cc.g2_tau, cc.g3_tau, cc.g3_quantile,
+        # G2 threshold from Proposition 2.3: a pass-rate ratio below (1 - slack)^L means the fast
+        # level's SER exceeds the reference's by more than `slack`
+        L = cfg.frame.crc_subblock_symbols
+        g2_tau = cc.g2_tau if cc.g2_tau is not None else float((1.0 - cc.g2_ser_slack) ** L)
+        self.gate = GateController(gates, cc.gate_mode, cc.g1_tau, g2_tau, cc.g3_tau, cc.g3_quantile,
                                    cc.adaptive_thresholds, dof=self.n_ant * self.n_user,
                                    tighten_floor=cc.tighten_floor)
         self.reject_action = cc.reject_action

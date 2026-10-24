@@ -7,7 +7,7 @@ from citadel_rx.receivers.lmmse import ChannelTracker
 
 
 def test_g2_rejects_when_pass_rate_collapses_relative_to_lmmse():
-    gc = GateController(["g2"], "min", 1.5, 0.5, 4.0, 0.999, adaptive=False, dof=16)
+    gc = GateController(["g2"], "min", 1.25, 0.72, 4.0, 0.999, adaptive=False, dof=16)
     for _ in range(5):  # clean history: neural and LMMSE pass rates comparable
         v = gc.evaluate(None, 0.6, 0.55, None)
         gc.update_clean(v, None, 0.6, 0.55)

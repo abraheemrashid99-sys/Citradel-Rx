@@ -79,8 +79,9 @@ class CitadelConfig:
     level_weights: List[float] = field(default_factory=lambda: [0.5, 0.5])  # Pi weights over slow levels
     gates: List[str] = field(default_factory=lambda: ["g1", "g2", "g3"])
     gate_mode: str = "min"            # min (all gates must pass) | product | max (any) | any_hard
-    g1_tau: float = 1.5               # residual ratio threshold (relative to the clean EMA)
-    g2_tau: float = 0.5               # neural CRC pass-rate must be >= tau x LMMSE pass-rate on the same block
+    g1_tau: float = 1.25              # residual ratio threshold (relative to the clean EMA)
+    g2_tau: Optional[float] = None    # explicit CRC pass-rate ratio threshold; None -> derived from g2_ser_slack
+    g2_ser_slack: float = 0.01        # tolerated SER excess over the reference; tau2 = (1 - slack)^L (Prop. 2.3)
     g3_tau: float = 4.0               # innovation energy relative to its running level
     g3_quantile: float = 0.999        # chi-square floor for the innovation test
     adaptive_thresholds: bool = True
