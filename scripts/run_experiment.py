@@ -12,6 +12,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import torch  # noqa: E402
+
+# Small per-user MLPs do not benefit from intra-op parallelism; several runs side by side do.
+torch.set_num_threads(int(os.environ.get("CITADEL_THREADS", "1")))
+
 from citadel_rx.config import Config  # noqa: E402
 from citadel_rx.eval import run_experiment  # noqa: E402
 
