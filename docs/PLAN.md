@@ -12,8 +12,10 @@
       online DeepSIC clean ≈ LMMSE floor (both track the fade);
       A1 @ SIR 0 dB: 2 % → 85 % SER, A1 @ SIR 10 dB: 4 % → 30 % SER, recovery > 10 blocks
 
-## Day 2 (next)
-- [ ] Citadel vs online/meta under A1 at SIR {−10,…,10}: confirm ≥ 60 % reduction in Δ_dB and recovery ≤ C_2
+## Day 2 (in progress)
+- [x] Citadel vs online/meta under A1 at SIR {0, 5, 10} (1 seed): Citadel stays on its clean trajectory,
+      recovery 0 blocks, 93–97 % of attacked blocks rejected, ≤ 2 % false rejection → `docs/RESULTS.md`
+- [ ] 3 seeds, SIR −10/−5, transfer attacker, all seven receivers
 - [ ] Clean parity sweep (E2) across SNR and both fading modes; fix the periods if parity costs > 0.2 dB
 - [ ] Gate ROC (rejection vs false rejection) from E3 records
 - [ ] E7 adaptive attacker; E4 A2; E5 certificate slope
