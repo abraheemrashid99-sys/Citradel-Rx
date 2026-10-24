@@ -66,6 +66,22 @@ Reading:
   robustness gain and a faster recovery; the vision-style robust-gradient
   defence is worse than no defence and leaves a lasting poison (post 0.17).
 
+## E7 adaptive (gate-aware) attacker and transfer attacker, SIR 10 dB (1 seed)
+
+| receiver / gates | attacker | SER in attack window | attacked blocks accepted | rejection of attacked |
+|---|---|---|---|---|
+| Citadel, G1 only | adaptive (G1-penalty weight 5) | 0.046 | 8 / 40 | 0.80 |
+| Citadel, G1+G2+G3 | adaptive (weight 5) | 0.032 | 1 / 40 | 0.97 |
+| Citadel, G1+G2+G3 | A1 transfer (surrogate receiver) | 0.041 | 14 / 40 | 0.65 |
+| online DeepSIC | A1 transfer | 0.197 (white-box: 0.278) | – | – |
+
+Reading: a gate-aware attacker partially defeats the residual gate on its
+own (as the proposal predicted: G1 is necessary but weak); with the CRC and
+prior gates it gains nothing. Transfer attacks are milder than white-box
+(as in Wu et al.) and slip the gates more often, but the leaked blocks cost
+little. Pending: sweep of the gate-aware weight (50, 500) to represent the
+attacker's best effort.
+
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
 2. The attacked blocks' SER (0.03) is *lower* than the clean run's mean
