@@ -33,7 +33,8 @@ def load(root):
 
 def key(r):
     c = r["config"]
-    return (c["receiver"]["type"], c["channel"]["model"], c["channel"]["fading"], c["channel"]["linear"],
+    return (c["receiver"]["type"] + ("+pre" if c["receiver"]["pretrain"] else ""), c["channel"]["model"],
+            c["channel"]["fading"], c["channel"]["linear"],
             c["channel"]["snr_db"], c["attack"]["type"], c["attack"]["knowledge"], c["attack"]["sir_db"],
             tuple(c["citadel"]["gates"]), tuple(c["citadel"]["periods"]))
 

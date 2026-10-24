@@ -34,6 +34,16 @@ Reading:
 Figure: `docs/figures/fig_ser_vs_block_a1_sir10.png`, `..._sir5.png`,
 `..._sir0.png` (SER vs block, clean trajectories dashed, attack window shaded).
 
+## 3-seed replication of the key cells (seeds 0, 1, 2; mean ± std over seeds)
+
+| receiver | clean SER (no attack, 100 blocks) | pre-attack SER | SER in attack window (SIR 10 dB) | SER after | recovery |
+|---|---|---|---|---|---|
+| online DeepSIC | 0.0575 ± 0.0014 | 0.0696 ± 0.0033 | 0.2779 ± 0.0095 | 0.0772 ± 0.0041 | 9, 9, 12 |
+| **Citadel-Rx** | **0.0305 ± 0.0006** | 0.0395 ± 0.0010 | **0.0342 ± 0.0006** | 0.0299 ± 0.0005 | 0, 0, 0 |
+
+Seed-to-seed spread is an order of magnitude below the effect; the headline
+numbers are not a seed artefact.
+
 ## Baselines and ablations at SIR 10 dB (1 seed)
 
 | receiver | clean SER (blocks 0–29) | SER in attack window | SER after | recovery (blocks) |
