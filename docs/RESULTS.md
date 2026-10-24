@@ -71,6 +71,7 @@ Reading:
 | receiver / gates | attacker | SER in attack window | attacked blocks accepted | rejection of attacked |
 |---|---|---|---|---|
 | Citadel, G1 only | adaptive (G1-penalty weight 5) | 0.046 | 8 / 40 | 0.80 |
+| Citadel, G1 only | adaptive (weight 500 — attacker's best effort) | 0.074 | 28 / 40 | 0.30 |
 | Citadel, G1+G2+G3 | adaptive (weight 5) | 0.032 | 1 / 40 | 0.97 |
 | Citadel, G1+G2+G3 | A1 transfer (surrogate receiver) | 0.041 | 14 / 40 | 0.65 |
 | online DeepSIC | A1 transfer | 0.197 (white-box: 0.278) | – | – |
