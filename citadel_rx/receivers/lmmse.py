@@ -68,6 +68,8 @@ class ChannelTracker:
     H_prev: Optional[np.ndarray] = None
     innov_var_ema: Optional[float] = None
     ema: float = 0.9
+    warmup: int = 3          # first accepted innovations seed the reference with their maximum
+    n_commit: int = 0
 
     def fuse(self, H_hat: np.ndarray, noise_var: float, n_p: int, accept: bool = True) -> Dict[str, Any]:
         """Returns the fused estimate and the innovation energy normalised by its *running level*
@@ -97,8 +99,11 @@ class ChannelTracker:
 
     def commit(self, innov_energy: float) -> None:
         """Fold an accepted block's innovation energy into the running reference level."""
+        self.n_commit += 1
         if self.innov_var_ema is None:
             self.innov_var_ema = innov_energy
+        elif self.n_commit <= self.warmup:
+            self.innov_var_ema = max(self.innov_var_ema, innov_energy)
         else:
             self.innov_var_ema = self.ema * self.innov_var_ema + (1 - self.ema) * innov_energy
 

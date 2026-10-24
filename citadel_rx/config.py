@@ -84,8 +84,11 @@ class CitadelConfig:
     g3_tau: float = 4.0               # innovation energy relative to its running level
     g3_quantile: float = 0.999        # chi-square floor for the innovation test
     adaptive_thresholds: bool = True
+    tighten_floor: float = 0.7        # thresholds shrink at most to this fraction of their slack under surprise
     surprise_clamp: float = 8.0       # surprise ratio clipped to [1/c, c]
-    surprise_warmup: int = 3          # blocks used to seed the surprise EMA
+    surprise_warmup: int = 5          # blocks used to seed the surprise EMA
+    reject_action: str = "revert"     # what happens to the fast level on a rejected block: keep | revert | anchor
+    fallback_on_reject: bool = True   # detect the data of a rejected block with the slow projection instead
     dgd_delta: float = 0.1            # scale of the delta-rule decay term
 
 

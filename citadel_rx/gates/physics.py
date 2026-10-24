@@ -71,11 +71,13 @@ def g3_prior(innov_norm: float) -> float:
 
 class GateController:
     def __init__(self, gates: List[str], mode: str, g1_tau: float, g2_tau: float, g3_tau: float,
-                 g3_quantile: float, adaptive: bool, dof: int, kappa: float = 0.1, ema: float = 0.9):
+                 g3_quantile: float, adaptive: bool, dof: int, kappa: float = 0.1, ema: float = 0.9,
+                 tighten_floor: float = 0.7):
         self.gates = [g.lower() for g in gates]
         self.mode = mode
         self.g1_tau, self.g2_tau = g1_tau, g2_tau
         self.adaptive = adaptive
+        self.tighten_floor = tighten_floor
         self.dof = max(dof, 1)
         self.kappa = kappa
         self.ema = ema
@@ -89,7 +91,7 @@ class GateController:
         """Tighten thresholds when surprise is high relative to its EMA (ratio > 1)."""
         t = 1.0
         if self.adaptive and surprise_ratio > 1:
-            t = float(np.clip(1.0 / surprise_ratio, 0.5, 1.0))
+            t = float(np.clip(1.0 / surprise_ratio, self.tighten_floor, 1.0))
         return {"g1": 1 + (self.g1_tau - 1) * t,            # 1.5 -> 1.25 at the tightest
                 "g2": 1 - (1 - self.g2_tau) * t,            # 0.5 -> 0.75 at the tightest
                 "g3": 1 + (self.g3_tau - 1) * t}

@@ -72,7 +72,10 @@ class CitadelRx(DeepSICReceiver):
         self.level_w = (w / w.sum()) if w.size else w
         gates = [] if single_memory else cc.gates
         self.gate = GateController(gates, cc.gate_mode, cc.g1_tau, cc.g2_tau, cc.g3_tau, cc.g3_quantile,
-                                   cc.adaptive_thresholds, dof=self.n_ant * self.n_user)
+                                   cc.adaptive_thresholds, dof=self.n_ant * self.n_user,
+                                   tighten_floor=cc.tighten_floor)
+        self.reject_action = cc.reject_action
+        self.fallback = cc.fallback_on_reject
         self.noise_var = 10 ** (-0.1 * cfg.channel.snr_db)
         self.tracker = ChannelTracker(rho=1.0)
         self.levels: List[ParamDict] = [clone_params(self.params) for _ in range(self.K)]
@@ -242,6 +245,22 @@ class CitadelRx(DeepSICReceiver):
             stats.update({f"gate_{k}": v for k, v in verdict.stats.items()})
             stats.update({f"verdict_{k}": v for k, v in verdict.verdicts.items()})
             stats.update(pass_nn=pass_nn, pass_mm=pass_mm, innov_norm=fused["innov_norm"])
+            # 4b. a rejected block: the fast update is not trusted. Discard it (revert / snap to the
+            #     slow projection) and, if enabled, detect the data with the slow projection instead.
+            if gamma < 0.5 and self.K > 1:
+                anchor = self._anchor()
+                if self.reject_action == "revert":
+                    self.params = before
+                elif self.reject_action == "anchor":
+                    self.params = dict(self.params)
+                    self.params.update(anchor)
+                if self.fallback:
+                    p_fb = dict(self.params)
+                    p_fb.update(anchor)
+                    with torch.no_grad():
+                        probs = self.core.detect(p_fb, yf_d)
+                    idx_hat = self.hard(probs)
+                    stats["fallback"] = True
         stats["gamma"] = gamma
 
         # 5. store the gated state and consolidate / re-anchor
