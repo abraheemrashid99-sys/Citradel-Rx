@@ -72,7 +72,9 @@ Reading:
 |---|---|---|---|---|
 | Citadel, G1 only | adaptive (G1-penalty weight 5) | 0.046 | 8 / 40 | 0.80 |
 | Citadel, G1 only | adaptive (weight 500 — attacker's best effort) | 0.074 | 28 / 40 | 0.30 |
+| Citadel, G1 only | adaptive (weight 50) | 0.044 | 6 / 40 | 0.85 |
 | Citadel, G1+G2+G3 | adaptive (weight 5) | 0.032 | 1 / 40 | 0.97 |
+| Citadel, G1+G2+G3 | adaptive (weight 500 — best effort) | 0.027 | 2 / 40 | 0.95 |
 | Citadel, G1+G2+G3 | A1 transfer (surrogate receiver) | 0.041 | 14 / 40 | 0.65 |
 | online DeepSIC | A1 transfer | 0.197 (white-box: 0.278) | – | – |
 
@@ -80,8 +82,10 @@ Reading: a gate-aware attacker partially defeats the residual gate on its
 own (as the proposal predicted: G1 is necessary but weak); with the CRC and
 prior gates it gains nothing. Transfer attacks are milder than white-box
 (as in Wu et al.) and slip the gates more often, but the leaked blocks cost
-little. Pending: sweep of the gate-aware weight (50, 500) to represent the
-attacker's best effort.
+little. The gate-aware weight sweep (5 / 50 / 500) shows the attacker's
+trade-off against G1 alone (rejection 0.80 → 0.85 → 0.30, SER 0.046 → 0.044 →
+0.074: evading the residual test costs poisoning strength); against the full
+gate set the best-effort attacker gains nothing (rejection 0.95, SER 0.027).
 
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
