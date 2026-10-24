@@ -179,14 +179,16 @@ class Config:
 def _dc_from_dict(cls, d):
     if not is_dataclass(cls):
         return d
+    import typing
+    hints = typing.get_type_hints(cls)   # resolves the string annotations of `from __future__ import annotations`
     kwargs = {}
-    names = {f.name: f for f in fields(cls)}
+    names = {f.name for f in fields(cls)}
     for k, v in (d or {}).items():
         if k not in names:
             raise KeyError(f"Unknown config key '{k}' for {cls.__name__}")
-        f = names[k]
-        if is_dataclass(f.type) or (isinstance(f.type, type) and is_dataclass(f.type)):
-            kwargs[k] = _dc_from_dict(f.type, v)
+        t = hints.get(k)
+        if isinstance(t, type) and is_dataclass(t):
+            kwargs[k] = _dc_from_dict(t, v)
         else:
             kwargs[k] = v
     return cls(**kwargs)

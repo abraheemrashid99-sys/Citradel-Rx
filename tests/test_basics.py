@@ -86,6 +86,17 @@ def test_deepsic_functional_adapt_reduces_loss():
     assert l1 < l0
 
 
+def test_config_yaml_loads_nested_sections():
+    import glob
+    import os
+    from citadel_rx.config import CitadelConfig
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    for path in glob.glob(os.path.join(root, "configs", "*.yaml")):
+        cfg = Config.from_yaml(path, ["receiver.type=citadel", "attack.sir_db=3"])
+        assert isinstance(cfg.citadel, CitadelConfig)
+        assert cfg.receiver.type == "citadel" and cfg.attack.sir_db == 3.0
+
+
 def test_config_override_and_hash():
     cfg = Config()
     h0 = cfg.hash()
