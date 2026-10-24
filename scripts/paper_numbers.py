@@ -67,26 +67,38 @@ def table_summary(recs, out):
 
 
 def figure_ser_vs_block(recs, out):
+    """One figure per (attack type, SIR): SER vs block for every receiver, seeds averaged,
+    with the clean trajectory of the same receiver dashed and the attack window shaded."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    by = defaultdict(list)
+    clean = defaultdict(list)
+    attacked = defaultdict(lambda: defaultdict(list))
     for r in recs:
         c = r["config"]
-        if c["attack"]["type"] in ("a1", "adaptive") and c["attack"]["sir_db"] == 0.0:
-            by[c["receiver"]["type"]].append(r)
-    if not by:
-        return
-    plt.figure(figsize=(6, 3.5))
-    for rx, rs in sorted(by.items()):
-        ser = np.mean([[b["ser"] for b in r["blocks"]] for r in rs], axis=0)
-        plt.semilogy(ser, label=f"{rx} (n={len(rs)})")
-    c = next(iter(by.values()))[0]["config"]["attack"]
-    plt.axvspan(c["start_block"], c["end_block"], color="red", alpha=0.1, label="attack window")
-    plt.xlabel("block"); plt.ylabel("SER"); plt.legend(fontsize=7); plt.grid(True, alpha=0.3); plt.tight_layout()
-    path = os.path.join(out, "fig_ser_vs_block_a1_sir0.png")
-    plt.savefig(path, dpi=200)
-    print(f"wrote {path}")
+        rx = c["receiver"]["type"]
+        if c["attack"]["type"] == "none":
+            clean[rx].append(r)
+        else:
+            attacked[(c["attack"]["type"], c["attack"]["sir_db"])][rx].append(r)
+    for (atk, sir), by in sorted(attacked.items()):
+        plt.figure(figsize=(6.4, 3.6))
+        colors = {}
+        for i, (rx, rs) in enumerate(sorted(by.items())):
+            ser = np.mean([[b["ser"] for b in r["blocks"]] for r in rs], axis=0)
+            line, = plt.semilogy(ser, label=f"{rx} under {atk} (n={len(rs)})")
+            colors[rx] = line.get_color()
+            if rx in clean:
+                sc = np.mean([[b["ser"] for b in r["blocks"]] for r in clean[rx]], axis=0)
+                plt.semilogy(sc[: len(ser)], "--", color=colors[rx], alpha=0.6, label=f"{rx} clean")
+        c = next(iter(by.values()))[0]["config"]["attack"]
+        plt.axvspan(c["start_block"], c["end_block"], color="red", alpha=0.08, label="attack window")
+        plt.xlabel("coherence block"); plt.ylabel("SER"); plt.title(f"{atk}, SIR {sir:g} dB")
+        plt.legend(fontsize=6, ncol=2); plt.grid(True, alpha=0.3); plt.tight_layout()
+        path = os.path.join(out, f"fig_ser_vs_block_{atk}_sir{sir:g}.png")
+        plt.savefig(path, dpi=200)
+        plt.close()
+        print(f"wrote {path}")
 
 
 def table_degradation(recs, out):
