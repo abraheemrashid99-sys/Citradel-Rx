@@ -69,28 +69,38 @@ class ChannelTracker:
     innov_var_ema: Optional[float] = None
     ema: float = 0.9
 
-    def fuse(self, H_hat: np.ndarray, noise_var: float, n_p: int) -> Dict[str, Any]:
+    def fuse(self, H_hat: np.ndarray, noise_var: float, n_p: int, accept: bool = True) -> Dict[str, Any]:
+        """Returns the fused estimate and the innovation energy normalised by its *running level*
+        (floored by the physical expectation: AR(1) process variance + LS estimation noise).
+        The running level is only updated on accepted blocks (``accept``), so a poisoned or
+        spoofed block cannot inflate the reference it is tested against."""
         est_var = noise_var / max(n_p, 1)            # LS estimation noise per entry (unit-energy pilots)
         if self.H_prev is None:
             self.H_prev = H_hat
-            return {"H": H_hat, "innov": 0.0, "innov_norm": 0.0, "pred": H_hat}
-        H_pred = self.rho * self.H_prev + (1 - self.rho) * 0.0
+            return {"H": H_hat, "innov": 0.0, "innov_norm": 0.0, "pred": H_hat, "expected": 0.0}
+        H_pred = self.rho * self.H_prev
         innov = H_hat - H_pred
         innov_energy = float(np.sum(np.abs(innov) ** 2))
-        # expected innovation energy under the prior: process variance + estimation noise
         n_entries = innov.size
         proc_var = (1 - self.rho ** 2) * float(np.mean(np.abs(self.H_prev) ** 2)) if self.rho < 1 else 0.0
         expected = n_entries * (proc_var + est_var) + 1e-9
         if self.innov_var_ema is None:
             self.innov_var_ema = max(innov_energy, expected)
-        normalised = innov_energy / max(expected, 0.5 * self.innov_var_ema)
-        # Kalman-style gain: trust the estimate in proportion to prior uncertainty
+        normalised = innov_energy / max(expected, self.innov_var_ema)
         K = (proc_var + 1e-9) / (proc_var + est_var + 1e-9) if self.rho < 1 else 1.0
         H_fused = H_pred + K * innov
-        self.innov_var_ema = self.ema * self.innov_var_ema + (1 - self.ema) * innov_energy
+        if accept:
+            self.commit(innov_energy)
         self.H_prev = H_fused
         return {"H": H_fused, "innov": innov_energy, "innov_norm": normalised, "pred": H_pred,
                 "expected": expected}
+
+    def commit(self, innov_energy: float) -> None:
+        """Fold an accepted block's innovation energy into the running reference level."""
+        if self.innov_var_ema is None:
+            self.innov_var_ema = innov_energy
+        else:
+            self.innov_var_ema = self.ema * self.innov_var_ema + (1 - self.ema) * innov_energy
 
 
 class LMMSEReceiver(Receiver):

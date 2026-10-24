@@ -6,13 +6,16 @@ from citadel_rx.modulation import Modulation
 from citadel_rx.receivers.lmmse import ChannelTracker
 
 
-def test_g2_rejects_when_pass_rate_collapses():
-    gc = GateController(["g2"], "product", 1.5, 0.5, 0.999, adaptive=False, dof=16)
-    for _ in range(5):  # clean history
-        v = gc.evaluate(None, 0.6, None)
-        gc.update_clean(v, 0.6, None)
-    assert gc.evaluate(None, 0.6, None).gamma > 0.9
-    assert gc.evaluate(None, 0.1, None).gamma < 0.1
+def test_g2_rejects_when_pass_rate_collapses_relative_to_lmmse():
+    gc = GateController(["g2"], "min", 1.5, 0.5, 4.0, 0.999, adaptive=False, dof=16)
+    for _ in range(5):  # clean history: neural and LMMSE pass rates comparable
+        v = gc.evaluate(None, 0.6, 0.55, None)
+        gc.update_clean(v, None, 0.6, 0.55)
+    assert gc.evaluate(None, 0.6, 0.55, None).gamma > 0.9
+    # the channel got worse for both -> still accepted
+    assert gc.evaluate(None, 0.2, 0.18, None).gamma > 0.9
+    # only the neural receiver collapsed -> rejected
+    assert gc.evaluate(None, 0.1, 0.55, None).gamma < 0.1
 
 
 def test_g1_ratio_is_near_one_for_correct_decisions_and_large_for_wrong():

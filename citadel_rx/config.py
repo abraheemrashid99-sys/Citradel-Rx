@@ -73,15 +73,20 @@ class CitadelConfig:
     surprise_lr: bool = True
     surprise_ema: float = 0.9
     level_lr: List[float] = field(default_factory=lambda: [1.0, 0.5, 0.25])  # eta^(k) for k>=2 (index k-1)
-    reanchor_beta: float = 0.5
+    reanchor_mode: str = "proximal"   # jump (Eq. 72 re-anchor at consolidation) | proximal (per-block pull)
+    reanchor_beta: float = 0.25       # jump weight
+    prox_lambda: float = 0.5          # proximal pull strength (fraction of eta) toward the slow projection
     level_weights: List[float] = field(default_factory=lambda: [0.5, 0.5])  # Pi weights over slow levels
     gates: List[str] = field(default_factory=lambda: ["g1", "g2", "g3"])
-    gate_mode: str = "product"        # product | min | any_hard
-    g1_tau: float = 1.5               # residual ratio threshold
-    g2_tau: float = 0.5               # fraction of the clean CRC pass-rate EMA
-    g3_quantile: float = 0.999        # chi-square quantile for innovation test
+    gate_mode: str = "min"            # min (all gates must pass) | product | max (any) | any_hard
+    g1_tau: float = 1.5               # residual ratio threshold (relative to the clean EMA)
+    g2_tau: float = 0.5               # neural CRC pass-rate must be >= tau x LMMSE pass-rate on the same block
+    g3_tau: float = 4.0               # innovation energy relative to its running level
+    g3_quantile: float = 0.999        # chi-square floor for the innovation test
     adaptive_thresholds: bool = True
-    dgd_delta: float = 1.0            # scale of the delta-rule decay term
+    surprise_clamp: float = 8.0       # surprise ratio clipped to [1/c, c]
+    surprise_warmup: int = 3          # blocks used to seed the surprise EMA
+    dgd_delta: float = 0.1            # scale of the delta-rule decay term
 
 
 @dataclass
