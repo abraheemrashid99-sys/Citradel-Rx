@@ -34,6 +34,28 @@ Reading:
 Figure: `docs/figures/fig_ser_vs_block_a1_sir10.png`, `..._sir5.png`,
 `..._sir0.png` (SER vs block, clean trajectories dashed, attack window shaded).
 
+## Baselines and ablations at SIR 10 dB (1 seed)
+
+| receiver | clean SER (blocks 0–29) | SER in attack window | SER after | recovery (blocks) |
+|---|---|---|---|---|
+| online DeepSIC | 0.069 | 0.279 | 0.078 | 9 |
+| online DeepSIC + joint pre-training | 0.074 | 0.274 | 0.082 | 12 |
+| drift-detection receiver (TWC 2025 style, "adapt less") | 0.088 | 0.265 | 0.080 | 4 |
+| MedBN-style median-of-means gradient (vision TTA defence) | 0.073 | 0.365 | 0.170 | 30 (censored) |
+| single-memory Titans receiver (DGD + surprise rate, K=1, no gates) | 0.069 | 0.269 | 0.073 | 8 |
+| **Citadel-Rx** | **0.039** | **0.034** | **0.030** | **0** |
+
+Reading:
+* Pre-training does not explain Citadel's clean advantage (pre-trained online
+  DeepSIC: 0.074), nor its robustness. The gain comes from the levels, the
+  gates and the proximal anchoring.
+* A single test-time memory with the same fast rule is exactly as vulnerable
+  as online DeepSIC: NL-style memory without the frequency hierarchy is not a
+  defence (consistent with the Titans reimplementation study).
+* The drift-detection receiver trades clean performance (0.088) for a small
+  robustness gain and a faster recovery; the vision-style robust-gradient
+  defence is worse than no defence and leaves a lasting poison (post 0.17).
+
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
 2. The attacked blocks' SER (0.03) is *lower* than the clean run's mean
