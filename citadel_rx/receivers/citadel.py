@@ -231,11 +231,24 @@ class CitadelRx(DeepSICReceiver):
             fused = self.tracker.fuse(H_ls, nv, y_p.shape[0], accept=False)
             H = fused["H"]
             idx_mm = hard_from_probs(lmmse_soft_symbols(y_d, H, nv, self.mod))
-            g1 = g1_residual(y_d, idx_hat, idx_mm, H, self.mod) if "g1" in self.gate.gates else None
+            # the uncorrupted slow memory is a second, model-free reference on the same block
+            probs_slow = idx_slow = None
+            if self.K > 1:
+                p_slow = dict(self.params)
+                p_slow.update(self._anchor())
+                with torch.no_grad():
+                    probs_slow = self.core.detect(p_slow, yf_d)
+                idx_slow = self.hard(probs_slow)
+            g1 = g1_residual(y_d, idx_hat, idx_mm, H, self.mod, idx_slow) if "g1" in self.gate.gates else None
             pass_nn = pass_mm = None
             if "g2" in self.gate.gates and framer is not None and framer.framer.enabled:
-                pass_nn = float(framer.framer.check(framer.decided_bits_to_subblocks(idx_hat)).mean())
-                pass_mm = float(framer.framer.check(framer.decided_bits_to_subblocks(idx_mm)).mean())
+                chk = lambda i: float(framer.framer.check(framer.decided_bits_to_subblocks(i)).mean())
+                pass_nn = chk(idx_hat)
+                pass_mm = chk(idx_mm)
+                if idx_slow is not None:
+                    pass_slow = chk(idx_slow)
+                    stats["pass_slow"] = pass_slow
+                    pass_mm = max(pass_mm, pass_slow)
             innov = fused["innov_norm"] if "g3" in self.gate.gates else None
             verdict = self.gate.evaluate(g1, pass_nn, pass_mm, innov, r)
             accepted = self.gate.update_clean(verdict, g1, pass_nn, pass_mm)
@@ -254,12 +267,8 @@ class CitadelRx(DeepSICReceiver):
                 elif self.reject_action == "anchor":
                     self.params = dict(self.params)
                     self.params.update(anchor)
-                if self.fallback:
-                    p_fb = dict(self.params)
-                    p_fb.update(anchor)
-                    with torch.no_grad():
-                        probs = self.core.detect(p_fb, yf_d)
-                    idx_hat = self.hard(probs)
+                if self.fallback and probs_slow is not None:
+                    probs, idx_hat = probs_slow, idx_slow
                     stats["fallback"] = True
         stats["gamma"] = gamma
 

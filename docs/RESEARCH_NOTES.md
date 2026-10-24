@@ -99,6 +99,18 @@ qualitative):
 | Attacks implemented as white-box (through a differentiable one-step adaptation surrogate) **and** transfer (surrogate receiver) **and** adaptive (gate-aware) | Reviewer item 4 above. |
 | Every run writes a JSON record with config hash + git commit; `paper_numbers.py` regenerates every table from records | Reviewer item 6. |
 
+## 3b. Decisions forced by the first runs (24 Oct, smoke results in `results/smoke*`)
+
+| Observation | Change |
+|---|---|
+| Gate statistics compared with a clean-history EMA false-rejected 40 % of *clean* blocks: a deep fade raises the SER of every receiver, which looked like poisoning. | Every gate statistic is now **relative to a reference computed on the same block** — the LMMSE detector and, once the levels exist, the uncorrupted slow memory. "The fast level must do at least as well as the certified memory" is the test; channel-induced degradation cancels. |
+| Consolidating gated *mean increments* made the slow level move ~1/C of the fast level, so re-anchoring dragged the receiver to a stale memory (clean cost). | Slow level ← gated mean of fast **states** over the period (same adversary share 1/C_k, Eq. 2.6'); re-anchoring is a proximal pull inside the fast update (default) with the Eq.-72 jump as an ablation. |
+| Surprise EMA seeded by the near-zero post-pre-training gradient → ratio 10⁸. | Warm-up median + clamp to [1/8, 8]; threshold tightening floored at 0.7 of the slack. |
+| During an attack the fast level still detected with poisoned parameters (attack-window SER 0.21 vs 0.30 for online DeepSIC — a reduction, not a defence). | **Gated fallback**: a rejected block's fast update is reverted and its data are detected with the slow projection. Attack-window SER → 0.10 (10 dB SIR) / 0.12 (0 dB) with zero clean false rejections. This is the mechanism the paper should lead with: the certified memory is not only protected, it *serves* when the fast memory is distrusted. |
+| At SIR 0 dB the attacker also corrupts the LMMSE channel estimate the gates use as reference, letting one block through. | Reference = best of {LMMSE, slow memory} on the block. |
+
+Meta-DeepSIC under A1 never recovered within the window (post-attack SER 0.15 vs 0.02 pre): the poisoned pilots sit in its meta-training buffer. This reproduces the qualitative Wu et al. finding and is a figure for the paper.
+
 ## 4. Open risks carried into the code
 
 1. Wu et al. numbers unverified here (see above) — E1 is the check.

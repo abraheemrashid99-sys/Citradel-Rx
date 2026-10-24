@@ -52,13 +52,21 @@ def _soft_step(stat: float, tau: float, kappa: float, accept_below: bool) -> flo
     return float(1.0 / (1.0 + np.exp(-x / max(kappa * abs(tau), 1e-9))))
 
 
+def model_residual(y_d: np.ndarray, idx: np.ndarray, H: np.ndarray, mod: Modulation) -> float:
+    """Mean squared residual of the linear model with the given decisions."""
+    s = mod.modulate_indices(idx)
+    return float(np.mean(np.abs(y_d - s @ H.T) ** 2))
+
+
 def g1_residual(y_d: np.ndarray, idx_nn: np.ndarray, idx_mm: np.ndarray, H: np.ndarray,
-                mod: Modulation) -> float:
-    s_nn = mod.modulate_indices(idx_nn)
-    s_mm = mod.modulate_indices(idx_mm)
-    r_nn = float(np.mean(np.abs(y_d - s_nn @ H.T) ** 2))
-    r_mm = float(np.mean(np.abs(y_d - s_mm @ H.T) ** 2))
-    return r_nn / max(r_mm, 1e-12)
+                mod: Modulation, idx_ref: Optional[np.ndarray] = None) -> float:
+    """Residual ratio of the neural decisions against the best available reference decisions
+    (LMMSE and, when given, the uncorrupted slow memory)."""
+    r_nn = model_residual(y_d, idx_nn, H, mod)
+    r_ref = model_residual(y_d, idx_mm, H, mod)
+    if idx_ref is not None:
+        r_ref = min(r_ref, model_residual(y_d, idx_ref, H, mod))
+    return r_nn / max(r_ref, 1e-12)
 
 
 def g2_crc(pass_nn: float, pass_mm: float, floor: float = 0.02) -> float:
