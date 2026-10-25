@@ -33,6 +33,16 @@ def grid(exp: str, args) -> List[Dict[str, str]]:
         for r, snr, fad in itertools.product(rx, args.snrs or [4, 6, 8, 10, 12, 14, 16], ["cosine", "jakes"]):
             jobs.append({"receiver.type": r, "channel.snr_db": str(snr), "channel.fading": fad, "attack.type": "none",
                          "run.name": f"e2_{r}_{fad}_snr{snr}"})
+    elif exp in ("e2nl", "e2cost"):  # clean parity where DeepSIC's model-based gains show
+        extra = {"channel.linear": "false"} if exp == "e2nl" else {"channel.model": "cost2100"}
+        for r, snr in itertools.product(rx, args.snrs or [4, 6, 8, 10, 12, 14, 16]):
+            jobs.append({"receiver.type": r, "channel.snr_db": str(snr), "attack.type": "none", **extra,
+                         "run.name": f"{exp}_{r}_snr{snr}"})
+    elif exp in ("e3nl", "e3cost"):  # A1 defence on the nonlinear / COST2100 channel
+        extra = {"channel.linear": "false"} if exp == "e3nl" else {"channel.model": "cost2100"}
+        for r, sir in itertools.product(rx, args.sirs or [-10, -5, 0, 5, 10]):
+            jobs.append({"receiver.type": r, "attack.type": "a1", "attack.sir_db": str(sir), **extra,
+                         "run.name": f"{exp}_{r}_sir{sir}"})
     elif exp == "e3":
         for r, sir, know in itertools.product(rx, args.sirs or [-10, -5, 0, 5, 10], ["whitebox", "transfer"]):
             jobs.append({"receiver.type": r, "attack.type": "a1", "attack.knowledge": know, "attack.sir_db": str(sir),
@@ -97,6 +107,8 @@ def main() -> None:
 
     cfg = args.config or os.path.join(ROOT, "configs", {
         "e1": "e1_reproduce_attack.yaml", "e2": "e2_clean_parity.yaml", "e3": "e3_a1_defence.yaml",
+        "e2nl": "e2_clean_parity.yaml", "e2cost": "e2_clean_parity.yaml",
+        "e3nl": "e3_a1_defence.yaml", "e3cost": "e3_a1_defence.yaml",
         "e3snr": "e3_a1_defence.yaml", "e4": "e4_a2_drift_spoof.yaml", "e5": "e5_a3_boiling_frog.yaml",
         "e7": "e7_adaptive_attacker.yaml", "ablate": "e3_a1_defence.yaml"}[args.exp])
     jobs = grid(args.exp, args)

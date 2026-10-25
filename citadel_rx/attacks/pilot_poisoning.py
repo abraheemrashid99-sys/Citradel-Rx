@@ -179,15 +179,19 @@ class Attacker:
             stats["eps"] = eps
             return y_p, y_d + E, stats
 
-        # victim or surrogate model
-        if self.ac.knowledge == "transfer":
+        # victim or surrogate model. A receiver without a differentiable adaptation map (LMMSE)
+        # is attacked through the surrogate even in "white-box" mode, so every row of the
+        # SIR table carries a perturbation of the same budget.
+        surf = receiver.attack_surface() if self.ac.knowledge != "transfer" else {}
+        if self.ac.knowledge == "transfer" or not surf:
             sur = self._ensure_surrogate()
+            if self.ac.knowledge != "transfer":  # surrogate must still learn from the clean pilots
+                sur.adapt(b, sur.to_feat(y_p), sur.to_idx(idx_p))
             core, theta, keys, lr = sur.core, sur.params, list(sur.params.keys()), sur.lr
+            stats["knowledge_used"] = "transfer"
         else:
-            surf = receiver.attack_surface()
-            if not surf:
-                return y_p, y_d, stats
             core, theta, keys, lr = surf["core"], surf["params"], surf["keys"], surf["lr"]
+            stats["knowledge_used"] = "whitebox"
         theta = clone_params(theta)
 
         eps = self.budget(y_p, small=(t == "a3"))

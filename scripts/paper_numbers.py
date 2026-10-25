@@ -102,6 +102,44 @@ def figure_ser_vs_block(recs, out):
         print(f"wrote {path}")
 
 
+def figure_ser_vs_sir(recs, out):
+    """Attack-window SER vs SIR per receiver, one panel per attacker knowledge; seeds averaged
+    with std error bars; clean level of each receiver as a dotted line of the same colour."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    by = defaultdict(lambda: defaultdict(list))
+    for r in recs:
+        c = r["config"]
+        if c["attack"]["type"] != "a1" or "ser_attack" not in r["summary"]:
+            continue
+        by[c["attack"]["knowledge"]][(c["receiver"]["type"], c["attack"]["sir_db"])].append(r["summary"])
+    if not by:
+        return
+    fig, axes = plt.subplots(1, len(by), figsize=(5.2 * len(by), 3.6), sharey=True, squeeze=False)
+    for ax, (know, cells) in zip(axes[0], sorted(by.items())):
+        rxs = sorted({k[0] for k in cells})
+        for rx in rxs:
+            sirs = sorted({k[1] for k in cells if k[0] == rx})
+            mean = [np.mean([s["ser_attack"] for s in cells[(rx, sir)]]) for sir in sirs]
+            std = [np.std([s["ser_attack"] for s in cells[(rx, sir)]], ddof=1) if len(cells[(rx, sir)]) > 1 else 0
+                   for sir in sirs]
+            line = ax.errorbar(sirs, mean, yerr=std, marker="o", capsize=2, label=rx)
+            pre = np.mean([s.get("ser_pre", np.nan) for sir in sirs for s in cells[(rx, sir)]])
+            ax.axhline(pre, ls=":", color=line[0].get_color(), alpha=0.6)
+        ax.set_yscale("log")
+        ax.set_xlabel("SIR (dB)  — attacker energy relative to all users")
+        ax.set_title(f"A1 pilot poisoning, {know} attacker")
+        ax.grid(True, alpha=0.3)
+    axes[0][0].set_ylabel("SER in attack window (dotted: clean level)")
+    axes[0][-1].legend(fontsize=7)
+    fig.tight_layout()
+    path = os.path.join(out, "fig_ser_vs_sir_a1.png")
+    fig.savefig(path, dpi=200)
+    plt.close(fig)
+    print(f"wrote {path}")
+
+
 def table_degradation(recs, out):
     """Delta_dB from e3snr runs: clean vs attacked SER-vs-SNR curves per receiver."""
     curves = defaultdict(lambda: defaultdict(list))
@@ -142,6 +180,7 @@ def main():
     table_summary(recs, args.out)
     table_degradation(recs, args.out)
     figure_ser_vs_block(recs, args.out)
+    figure_ser_vs_sir(recs, args.out)
 
 
 if __name__ == "__main__":

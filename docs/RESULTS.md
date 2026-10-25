@@ -34,6 +34,47 @@ Reading:
 Figure: `docs/figures/fig_ser_vs_block_a1_sir10.png`, `..._sir5.png`,
 `..._sir0.png` (SER vs block, clean trajectories dashed, attack window shaded).
 
+## E3 full sweep from the GPU workstation (25 Oct 2026; 3 seeds; records `results/e3/`)
+
+SER in the attack window (blocks 30–69), mean over 3 seeds. Clean-window SER of every
+receiver is in the "pre" column; "post" is the mean after the attack; "rec" the recovery
+time in blocks (30 = censored, never recovered within the run).
+
+| receiver | pre | **white-box A1**, SIR −10 / −5 / 0 / 5 / 10 dB | post (SIR 0) | rec | **transfer A1**, SIR −10 / −5 / 0 / 5 / 10 dB | rec | data jamming, 0 dB (control) |
+|---|---|---|---|---|---|---|---|
+| LMMSE (no adaptation) | 0.056 | n/a¹ | – | – | 0.873 / 0.740 / 0.447 / 0.149 / 0.064 | 0 | 0.892 |
+| online DeepSIC | 0.071 | 0.973 / 0.936 / 0.769 / 0.474 / 0.279 | 0.087 | 11 | 0.353 / 0.367 / 0.347 / 0.289 / 0.205 | 10 | 0.855 |
+| Meta-DeepSIC | 0.062 | 0.863 / 0.800 / 0.594 / 0.400 / 0.243 | 0.187 | 30† | 0.194 / 0.206 / 0.214 / 0.207 / 0.171 | 14 | 0.851 |
+| drift-detection | 0.077 | 0.975 / 0.942 / 0.776 / 0.459 / 0.265 | 0.097 | 10 | 0.345 / 0.359 / 0.337 / 0.277 / 0.199 | 7 | 0.858 |
+| MedBN-style | 0.065 | 0.933 / 0.853 / 0.738 / 0.549 / 0.397 | 0.204 | 30† | 0.724 / 0.641 / 0.544 / 0.423 / 0.296 | 30† | 0.858 |
+| single-memory Titans | 0.068 | 0.975 / 0.939 / 0.788 / 0.486 / 0.276 | 0.075 | 6 | 0.363 / 0.368 / 0.354 / 0.290 / 0.200 | 6 | 0.861 |
+| **Citadel-Rx** | **0.039** | **0.025 / 0.025 / 0.026 / 0.029 / 0.032** | **0.029** | **0** | **0.026 / 0.026 / 0.027 / 0.029 / 0.037** | **0** | 0.848 |
+
+Citadel gate statistics across the sweep: rejection of attacked blocks 0.87–0.99
+(white-box), 0.77–0.98 (transfer); false rejection of clean blocks 0.000–0.017.
+
+¹ The white-box attacker differentiates through the victim's adaptation map; LMMSE has
+none, so the "white-box" record for LMMSE contains no perturbation. The transfer column
+(perturbation crafted on a surrogate and injected) is the valid LMMSE row; it shows that
+pilot poisoning also wrecks model-based channel estimation at high budgets. Fixed in the
+code: receivers without an adaptation map are now attacked through the surrogate.
+† Censored: SER had not returned to within 10 % of the pre-attack level 30 blocks after the attack.
+
+Reading:
+* Against Citadel-Rx, pilot poisoning is worthless at every budget and under both
+  knowledge models: the attack-window SER (0.025–0.037) is at or below the receiver's own
+  clean level (0.039, blocks 0–29), and recovery is immediate. Every other receiver is
+  destroyed at ≤ 0 dB (SER 0.6–0.98) and still loses 4–6× at 10 dB.
+* The equal-energy jamming control makes the point a security reviewer wants: against
+  every baseline, poisoning the 200 pilot bits is as damaging as jamming the 50 000 data
+  bits with the same energy (0.77 vs 0.86 at 0 dB) *and* leaves persistent damage
+  (Meta-DeepSIC and MedBN never recover; jamming leaves no trace). Against Citadel the
+  attacker is reduced to plain jamming, which costs continuous power and has no persistence.
+* Transfer attacks are weaker than white-box for the baselines (as Wu et al. report) but
+  not harmless (0.2–0.37); Citadel is indifferent to the knowledge model.
+* The vision-style robust-gradient defence (MedBN) is the worst receiver under attack and
+  the only baseline besides Meta-DeepSIC with permanent damage.
+
 ## 3-seed replication of the key cells (seeds 0, 1, 2; mean ± std over seeds)
 
 | receiver | clean SER (no attack, 100 blocks) | pre-attack SER | SER in attack window (SIR 10 dB) | SER after | recovery |
