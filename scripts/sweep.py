@@ -89,6 +89,8 @@ def grid(exp: str, args) -> List[Dict[str, str]]:
             "reject_keep": {"citadel.reject_action": "keep"},
         }
         for tag, ov in variants.items():
+            if args.variants and tag not in args.variants:
+                continue
             jobs.append({**base, **ov, "run.name": f"ablate_{tag}"})
     else:
         raise SystemExit(f"unknown experiment {exp}")
@@ -104,6 +106,7 @@ def main() -> None:
     ap.add_argument("--receivers", nargs="*", default=None)
     ap.add_argument("--snrs", nargs="*", type=float, default=None)
     ap.add_argument("--sirs", nargs="*", type=float, default=None)
+    ap.add_argument("--variants", nargs="*", default=None, help="ablate: run only these variant tags")
     ap.add_argument("--extra", nargs="*", default=[], help="extra dotted overrides applied to every job")
     ap.add_argument("--dry", action="store_true")
     args = ap.parse_args()
