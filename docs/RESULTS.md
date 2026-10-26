@@ -116,8 +116,21 @@ per-symbol ε budget; the Δ_dB comparison comes from E3snr.)
 | plain GD fast rule | 0.066 | 0.048 | 0 | 0.90 | 0.072 |
 | Adam without the delta-rule decay | 0.040 | 0.030 | 0 | 0.97 | 0.006 |
 | fixed η (no surprise) | 0.040 | 0.027 | 0 | 0.97 | 0.011 |
+| **no anchoring** (λ = 0, β = 0) | **0.058** | 0.031 | 0 | 0.99 | 0.178 |
+| jump re-anchoring (Eq. 72, β = 0.25) instead of proximal | 0.058 | 0.031 | 0 | 0.97 | 0.150 |
+| **no fallback** (rejected block still detected by the fast level) | 0.040 | **0.245** | 0 | 0.97 | 0.011 |
+| keep (not revert) the fast update of a rejected block | 0.040 | 0.025 | 0 | 1.00 | 0.017 |
 
 Reading:
+* **The proximal anchor is the clean gain.** Without it clean SER goes 0.039 → 0.058
+  (online DeepSIC: 0.069), and the jump re-anchoring of the CMS paper is no better than no
+  anchoring at all; both also raise clean false rejections to 15–18 % because the fast
+  level drifts away from the memory it is compared against. Continuous proximal pull
+  toward the slow projection is what turns the memory hierarchy into a prior.
+* **The fallback is the attack-window protection.** Reverting a rejected update alone
+  leaves the data of that block to a poisoned fast level (0.245); detecting it with the
+  slow projection brings it to 0.026. Whether the rejected update is reverted or kept
+  makes no difference once the fallback is active (0.025 vs 0.026).
 * **The slow memory is the mechanism.** With a single level the gates still fire (0.98)
   but there is nothing uncorrupted to fall back on, and the receiver collapses like online
   DeepSIC; two levels already give 0.050 and three or four give the clean level.
@@ -127,9 +140,8 @@ Reading:
 * Honest negatives: the delta-rule decay and the surprise-driven rate each buy only
   2–3 % clean SER; period alignment with the coherence structure does not matter on this
   channel; plain GD costs clean performance and false rejections.
-* The `no_reanchor` row of the first sweep was invalid (it set the jump weight while the
-  anchoring mode is proximal); the corrected variants (no anchor, jump anchor, no fallback,
-  keep-on-reject) are being re-run.
+* (The `no_reanchor` row of the first GPU sweep set the jump weight while the anchoring
+  mode is proximal and is discarded; the four corrected variants above were run here.)
 
 ## E4 — A2 targeted drift spoofing, Jakes f_D T_b = 0.05, SIR 0 dB (3 seeds; `results/e4/`)
 

@@ -88,7 +88,7 @@ def ablate():
     print("| variant | pre | attack window | post | recovery | rejection of attacked | false rejection |")
     print("|---|---|---|---|---|---|---|")
     order = ["K1", "K2", "K4", "misaligned", "nogate", "g1", "g2", "g3", "last_only", "plain_gd", "adam_no_delta",
-             "fixed_eta", "no_reanchor"]
+             "fixed_eta", "no_anchor", "jump_anchor", "no_fallback", "reject_keep"]
     for tag in order:
         v = cells.get(tag, [])
         if not v:
