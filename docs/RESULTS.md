@@ -75,6 +75,70 @@ Reading:
 * The vision-style robust-gradient defence (MedBN) is the worst receiver under attack and
   the only baseline besides Meta-DeepSIC with permanent damage.
 
+## E2 clean parity → clean *gain* (26 Oct; 3 seeds; `results/e2/`; full table: `docs/TABLES.md`)
+
+Clean SER at 10 dB, no attack, 100 blocks: cosine fading — LMMSE 0.054, online 0.059,
+Meta 0.053, drift 0.065, MedBN 0.064, single-memory Titans 0.053, **Citadel 0.030**;
+Jakes f_D T_b = 0.05 — LMMSE 0.0095, online 0.011, Meta 0.010, **Citadel 0.0053**. Citadel
+is the best receiver at every SNR from 4 to 12 dB on both fading models (at 14–16 dB all
+receivers are at the 1e-4 floor of a 100-block run and differences are noise). Since
+pre-trained online DeepSIC is *not* better than online DeepSIC (0.074 vs 0.069 pre-attack
+in the SIR-10 runs), the gain comes from the memory hierarchy: the slow levels accumulate
+channel knowledge across blocks and the proximal anchor turns it into a prior for the
+per-block fit from 100 pilot symbols. The proposal's parity target (≤ 0.2 dB cost) is
+replaced by a ~2 dB clean gain, which must be presented as a second contribution and
+ablated (see below).
+
+## E1 reproduction of the attack (3 seeds; `results/e1/`)
+
+White-box A1 destroys online DeepSIC and Meta-DeepSIC at ≤ 0 dB SIR on both the linear
+and the tanh-PA channel (0.78–0.97) and still costs 4–5× at 10 dB; Meta-DeepSIC never
+recovers (30 blocks censored, post-attack SER 0.18–0.20 vs 0.06–0.07 clean). The transfer
+attacker is much weaker on the linear channel (0.26–0.30) but nearly as strong as white-box
+on the nonlinear channel (0.67–0.77): the surrogate transfers better when the receiver's
+nonlinearity is what the attack exploits. (The Wu et al. "3.09 dB at 15 dB" figure uses a
+per-symbol ε budget; the Δ_dB comparison comes from E3snr.)
+
+## Ablations under white-box A1 at SIR 0 dB (3 seeds; `results/ablate/`)
+
+| variant | clean (pre) | attack window | recovery | rejection | false rej. |
+|---|---|---|---|---|---|
+| full Citadel (K=3, C=1/8/32, G1+G2+G3, DGD, surprise η, proximal anchor, fallback) | 0.039 | **0.026** | 0 | 0.97 | 0.006 |
+| K=1 (single memory, gates active, no slow level to fall back on) | 0.068 | 0.788 | 6.3 | 0.98 | 0.222 |
+| K=2 (C=1/8) | 0.038 | 0.050 | 0 | 0.97 | 0.006 |
+| K=4 (C=1/4/16/64) | 0.038 | 0.029 | 0 | 0.97 | 0.011 |
+| periods misaligned with coherence (C=1/3/7) | 0.037 | 0.031 | 0 | 0.95 | 0.000 |
+| no gates | 0.039 | 0.540 | 0 | 0.00 | – |
+| G1 only | 0.039 | 0.031 | 0 | 0.97 | 0.000 |
+| G2 only | 0.039 | 0.028 | 0 | 0.97 | 0.000 |
+| G3 only | 0.039 | 0.507 | 0 | 0.08 | 0.000 |
+| adaptable = last layer only | 0.052 | 0.029 | 0 | 0.98 | 0.011 |
+| plain GD fast rule | 0.066 | 0.048 | 0 | 0.90 | 0.072 |
+| Adam without the delta-rule decay | 0.040 | 0.030 | 0 | 0.97 | 0.006 |
+| fixed η (no surprise) | 0.040 | 0.027 | 0 | 0.97 | 0.011 |
+
+Reading:
+* **The slow memory is the mechanism.** With a single level the gates still fire (0.98)
+  but there is nothing uncorrupted to fall back on, and the receiver collapses like online
+  DeepSIC; two levels already give 0.050 and three or four give the clean level.
+* G1 or G2 alone defeats the non-adaptive A1 (E7 shows G1 alone does not survive a
+  gate-aware attacker); G3 alone is useless against A1, as the proposal predicted — its
+  role is A2/A3.
+* Honest negatives: the delta-rule decay and the surprise-driven rate each buy only
+  2–3 % clean SER; period alignment with the coherence structure does not matter on this
+  channel; plain GD costs clean performance and false rejections.
+* The `no_reanchor` row of the first sweep was invalid (it set the jump weight while the
+  anchoring mode is proximal); the corrected variants (no anchor, jump anchor, no fallback,
+  keep-on-reject) are being re-run.
+
+## E4 — A2 targeted drift spoofing, Jakes f_D T_b = 0.05, SIR 0 dB (3 seeds; `results/e4/`)
+
+Online DeepSIC and Meta-DeepSIC lose all users (window SER 0.44 / 0.35; user-0 SER 0.16 /
+0.11, others 0.16 / 0.13 — with λ = 1 the attack is not very selective), Citadel stays at
+its clean level (0.010) with 82 % rejection. G3 on/off makes no measurable difference:
+G1/G2 catch this attack anyway. G3's value has to be shown on A3 (E5) or reported as
+not needed in these settings.
+
 ## 3-seed replication of the key cells (seeds 0, 1, 2; mean ± std over seeds)
 
 | receiver | clean SER (no attack, 100 blocks) | pre-attack SER | SER in attack window (SIR 10 dB) | SER after | recovery |

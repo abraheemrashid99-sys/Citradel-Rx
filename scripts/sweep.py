@@ -83,7 +83,10 @@ def grid(exp: str, args) -> List[Dict[str, str]]:
             "plain_gd": {"citadel.fast_rule": "gd"},
             "adam_no_delta": {"citadel.fast_rule": "adam"},
             "fixed_eta": {"citadel.surprise_lr": "false"},
-            "no_reanchor": {"citadel.reanchor_beta": "0.0"},
+            "no_anchor": {"citadel.prox_lambda": "0.0", "citadel.reanchor_beta": "0.0"},
+            "jump_anchor": {"citadel.reanchor_mode": "jump", "citadel.reanchor_beta": "0.25"},
+            "no_fallback": {"citadel.fallback_on_reject": "false"},
+            "reject_keep": {"citadel.reject_action": "keep"},
         }
         for tag, ov in variants.items():
             jobs.append({**base, **ov, "run.name": f"ablate_{tag}"})
