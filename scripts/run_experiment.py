@@ -29,6 +29,7 @@ def main() -> None:
     ap.add_argument("--quick", action="store_true", help="tiny settings for a smoke test")
     ap.add_argument("--no-save", action="store_true")
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--force", action="store_true", help="re-run even if the record already exists")
     args = ap.parse_args()
 
     cfg = Config.from_yaml(args.config, args.set) if args.config else Config()
@@ -49,6 +50,14 @@ def main() -> None:
         cfg.run.log_every = 1
     seeds = args.seeds if args.seeds is not None else cfg.run.seeds
     for s in seeds:
+        # resume support: a run is identified by (name, seed, config hash); skip finished ones
+        import copy
+        probe = copy.deepcopy(cfg)
+        probe.channel.seed = s
+        existing = os.path.join(cfg.run.out_dir, f"{cfg.run.name}_s{s}_{probe.hash()}.json")
+        if os.path.exists(existing) and not args.force and not args.no_save:
+            print(f"== {cfg.run.name} seed {s}: exists, skipped ({existing})")
+            continue
         rec = run_experiment(cfg, seed=s, save=not args.no_save, verbose=not args.quiet)
         summ = rec["summary"]
         print(f"== {cfg.run.name} seed {s}: ser_mean={summ['ser_mean']:.4f} "
