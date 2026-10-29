@@ -113,6 +113,30 @@ def e7():
               f"{ms([s.get('gate_reject_rate_attacked') for s in v], '{:.2f}')} | {ms([s.get('gate_false_reject_rate_clean') for s in v], '{:.3f}')} |")
 
 
+def e3(exp="e3nl"):
+    recs = load(exp)
+    cells = defaultdict(list)
+    for r in recs:
+        c = r["config"]
+        if c["attack"]["type"] != "a1":
+            continue
+        cells[(c["receiver"]["type"], c["attack"]["knowledge"], c["attack"]["sir_db"])].append(r["summary"])
+    sirs = sorted({k[2] for k in cells})
+    knows = sorted({k[1] for k in cells})
+    for know in knows:
+        print(f"\n### {exp}: {know} A1, SER in attack window (mean±std over seeds)\n")
+        print("| receiver | pre | " + " | ".join(f"SIR {s:g}" for s in sirs) + " | post (0 dB) | recovery (0 dB) | rejection | false rej. |")
+        print("|---|---|" + "---|" * (len(sirs) + 4))
+        for rx in RX_ORDER:
+            row = [ms([s["ser_attack"] for s in cells.get((rx, know, sir), [])]) for sir in sirs]
+            if all(x == "–" for x in row):
+                continue
+            allc = [s for sir in sirs for s in cells.get((rx, know, sir), [])]
+            print(f"| {rx} | {ms([s['ser_pre'] for s in allc])} | " + " | ".join(row)
+                  + f" | {ms([s['ser_post'] for s in cells.get((rx, know, 0.0), [])])} | {ms([s['recovery_blocks'] for s in cells.get((rx, know, 0.0), [])], '{:.1f}')} | "
+                  f"{ms([s.get('gate_reject_rate_attacked') for s in allc], '{:.2f}')} | {ms([s.get('gate_false_reject_rate_clean') for s in allc], '{:.3f}')} |")
+
+
 def e4():
     recs = load("e4")
     print("\n### E4 — A2 targeted drift spoofing of user 0 (Jakes fD·Tb = 0.05), SIR 0 dB\n")
@@ -137,4 +161,4 @@ if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     for exp in sys.argv[1:] or ["e2", "e1", "ablate", "e7", "e4"]:
         {"e2": e2, "e2nl": lambda: e2("e2nl"), "e2cost": lambda: e2("e2cost"), "e1": e1, "ablate": ablate,
-         "e7": e7, "e4": e4}[exp]()
+         "e7": e7, "e4": e4, "e3": lambda: e3("e3"), "e3nl": lambda: e3("e3nl"), "e3cost": lambda: e3("e3cost")}[exp]()

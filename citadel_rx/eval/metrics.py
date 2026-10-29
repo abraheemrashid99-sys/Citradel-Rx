@@ -70,7 +70,13 @@ def degradation_db(snr_grid: np.ndarray, ser_clean: np.ndarray, ser_attacked: np
     out = np.full_like(snr_grid, np.nan, dtype=float)
     order = np.argsort(ls_a)
     for i, target in enumerate(ls_c):
-        if target < ls_a.min() or target > ls_a.max():
+        if target < ls_a.min():
+            # the attacked curve never reaches the clean SER within the grid: lower-bound the shift
+            out[i] = snr_grid.max() - snr_grid[i] + 1e-9 if ls_a.min() > target else np.nan
+            out[i] = np.inf if snr_grid.max() == snr_grid[i] else out[i]
+            continue
+        if target > ls_a.max():
+            out[i] = 0.0  # attacked SER is below the clean SER everywhere: no degradation
             continue
         snr_needed = np.interp(target, ls_a[order], snr_grid[order])
         out[i] = snr_needed - snr_grid[i]

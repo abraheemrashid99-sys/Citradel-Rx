@@ -160,7 +160,10 @@ def table_degradation(recs, out):
         sa = np.array([np.mean(curves[(rx, "a1")][s]) for s in snrs])
         dd = degradation_db(np.array(snrs, dtype=float), sc, sa)
         for s, a, b_, d in zip(snrs, sc, sa, dd):
-            lines.append(f"| {rx} | {s} | {a:.4f} | {b_:.4f} | {d:.2f} |")
+            # a value equal to the remaining grid span means the attacked curve never reaches the clean
+            # SER inside the grid: report it as a lower bound
+            txt = "∞ (never within grid)" if np.isinf(d) else (f"> {d:.1f}" if abs(d - (max(snrs) - s)) < 1e-6 and d > 0 else f"{d:.2f}")
+            lines.append(f"| {rx} | {s} | {a:.4f} | {b_:.4f} | {txt} |")
     path = os.path.join(out, "table_degradation_db.md")
     with open(path, "w") as f:
         f.write("\n".join(lines) + "\n")

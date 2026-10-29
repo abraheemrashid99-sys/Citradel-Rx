@@ -151,6 +151,54 @@ its clean level (0.010) with 82 % rejection. G3 on/off makes no measurable diffe
 G1/G2 catch this attack anyway. G3's value has to be shown on A3 (E5) or reported as
 not needed in these settings.
 
+## E3 on the nonlinear (tanh PA) and COST2100 channels (3 seeds; `results/e3nl/`, `results/e3cost/`)
+
+Nonlinear channel, white-box A1, SER in attack window at SIR −10 / −5 / 0 / 5 / 10 dB:
+online 0.97 / 0.94 / 0.78 / 0.54 / 0.32 (recovery 12 blocks); Meta 0.87 / 0.80 / 0.66 / 0.46 / 0.31
+(never recovers, post 0.20); drift 0.97 / 0.94 / 0.79 / 0.52 / 0.32; MedBN 0.91 / 0.82 / 0.71 /
+0.51 / 0.36 (never recovers); single-memory Titans 0.97 / 0.94 / 0.80 / 0.53 / 0.31;
+**Citadel 0.026 / 0.026 / 0.026 / 0.026 / 0.029** (clean 0.042, recovery 0, rejection 0.98,
+false rejection 0.008). COST2100 (SNR 10 dB, where all receivers are at SER ≤ 1e-3 clean):
+online 0.93 / 0.85 / 0.64 / 0.28 / 0.13, Meta 0.79 / 0.66 / 0.35 / 0.16 / 0.07 (never recovers),
+Citadel rows pending (the sweep lost them to the machine shutdown; re-run queued). The
+picture is identical to the linear channel on every channel family tried.
+
+## E2 on the nonlinear and COST2100 channels (3 seeds; `results/e2nl/`, `results/e2cost/`)
+
+Nonlinear channel: Citadel is the best receiver at every SNR (10 dB: 0.033 vs LMMSE 0.056,
+online 0.065, Meta 0.060, Titans 0.057). COST2100 (a nearly diagonal 4×4 channel on which
+LMMSE is close to optimal): Citadel matches LMMSE within 2–15 % at 4–8 dB (0.139 / 0.035 /
+0.0047 vs 0.134 / 0.034 / 0.0041) while every DeepSIC baseline is 1.5–2.3× worse than LMMSE;
+above 10 dB all receivers sit at the 1e-4 floor of a 100-block run. The clean gain is
+therefore channel-dependent — large where interference cancellation matters, nil where
+LMMSE is already optimal — and the paper must say so.
+
+## E3snr — degradation Δ_dB (3 seeds; `results/e3snr/`; `figures/e3snr/table_degradation_db.md`)
+
+Δ_dB = extra SNR needed under white-box A1 at SIR 0 dB to reach the clean SER. For every
+baseline the attacked SER stays at 0.45–0.91 across the whole 4–16 dB grid, so Δ_dB is
+unbounded (> 12 dB at 4 dB, never reached within the grid). For Citadel: Δ_dB ≤ 0 at 4–10 dB
+(the attacked window is detected by the slow memory and happens to sit on the easy part of
+the fade), 1.8 dB at 12 dB, > 2 dB at 14 dB and unbounded at 16 dB — at high SNR the
+clean SER is 1e-4–7e-4 and the attacked window runs on a frozen slow memory plus the
+rare leaked block (3e-3–6e-3). This is the honest limit of the defence: it holds the
+receiver near 1e-2–1e-3 under attack, it does not preserve a 1e-4 operating point.
+Reported as such; the mechanism to improve it is a faster re-admission of clean blocks
+(the gate's clean-EMA warm-up) and is left as future work.
+
+## E5 — boiling-frog A3 and the retention certificate (3 seeds; `results/e5/`; `docs/figures/fig_e5_certificate.png`)
+
+A3 (per-block budget 5 % of the pilot energy, 300 attacked blocks, objective: push the
+receiver toward a spoofed-channel basin while keeping the SER within the gate's slack)
+passes the gates by construction (rejection 0.00) and raises the window SER by one point
+(0.029–0.032 → 0.039–0.040, post 0.023). The paired displacement of the slowest level,
+‖θ^(K)_adv − θ^(K)_clean‖, grows linearly in the number of attacked blocks with slope
+0.084 / 0.029 / 0.0083 per block for C_K = 8 / 32 / 128 — ratios 1 : 0.35 : 0.10 against the
+certificate's 1 : 0.25 : 0.0625 (i.e. ∝ C_K^−0.85). End-of-window displacement 30.5 / 9.1 /
+2.0. Corollary 2.2's 1/C_K structure is confirmed within a factor 1.6 over a 16× range of
+C_K; the constant (η_K ρ ε G (1 − p^rej)) is not yet measured and must be, for the bound
+line to be drawn on the figure.
+
 ## 3-seed replication of the key cells (seeds 0, 1, 2; mean ± std over seeds)
 
 | receiver | clean SER (no attack, 100 blocks) | pre-attack SER | SER in attack window (SIR 10 dB) | SER after | recovery |
