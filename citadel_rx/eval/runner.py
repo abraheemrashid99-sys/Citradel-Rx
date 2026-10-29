@@ -117,10 +117,20 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
               "receiver": getattr(receiver, "name", cfg.receiver.type), "summary": summary, "blocks": blocks,
               "device": str(device)}
     if level_snaps:
-        record["level_snapshots"] = level_snaps
+        # displacement curves go into the JSON; the raw snapshots into a compressed side file
+        K = len(level_snaps[0]["levels"])
+        stacks = []
+        for k in range(K):
+            keys = sorted(level_snaps[0]["levels"][k].keys())
+            stacks.append(np.stack([np.concatenate([np.asarray(s["levels"][k][key], dtype=np.float32).ravel()
+                                                    for key in keys]) for s in level_snaps]))
+        record["self_disp"] = [np.linalg.norm(lv - lv[0], axis=1).tolist() for lv in stacks]
     if save:
         path = save_record(record, cfg.run.out_dir, f"{cfg.run.name}_s{seed}_{cfg.hash()}")
         record["path"] = path
+        if level_snaps:
+            np.savez_compressed(path.replace(".json", ".levels.npz"),
+                                **{f"level{k + 1}": lv.astype(np.float16) for k, lv in enumerate(stacks)})
         if verbose:
             print(f"saved {path}")
     return record
