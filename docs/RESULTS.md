@@ -159,9 +159,16 @@ online 0.97 / 0.94 / 0.78 / 0.54 / 0.32 (recovery 12 blocks); Meta 0.87 / 0.80 /
 0.51 / 0.36 (never recovers); single-memory Titans 0.97 / 0.94 / 0.80 / 0.53 / 0.31;
 **Citadel 0.026 / 0.026 / 0.026 / 0.026 / 0.029** (clean 0.042, recovery 0, rejection 0.98,
 false rejection 0.008). COST2100 (SNR 10 dB, where all receivers are at SER ≤ 1e-3 clean):
-online 0.93 / 0.85 / 0.64 / 0.28 / 0.13, Meta 0.79 / 0.66 / 0.35 / 0.16 / 0.07 (never recovers),
-Citadel rows pending (the sweep lost them to the machine shutdown; re-run queued). The
-picture is identical to the linear channel on every channel family tried.
+online 0.93 / 0.85 / 0.64 / 0.28 / 0.13 (recovery 18 blocks), Meta 0.79 / 0.66 / 0.35 / 0.16 /
+0.07 (never recovers), **Citadel 0.0022 / 0.0032 / 0.0054 / 0.0122 / 0.0111** (clean 0.0003,
+post 0.0006, recovery 13 blocks, rejection 0.64 ± 0.33, false rejection 0.004). Citadel is
+50–400× better than online DeepSIC at every budget, but this is the one setting where it
+does *not* stay on its clean trajectory: at a 3e-4 operating point the CRC gate's SER
+slack (an absolute 1 percentage point, Prop. 2.3) is 30× the clean SER, so the attacker
+can degrade the receiver to ~1e-2 while passing G2 (rejection falls to 0.64). The same
+effect appears at 14–16 dB in E3snr. It is a threshold-design limit, not a structural one;
+a relative slack (a multiple of the reference SER) is the fix and is being tested
+(`results/e3cost_slack/`).
 
 ## E2 on the nonlinear and COST2100 channels (3 seeds; `results/e2nl/`, `results/e2cost/`)
 
