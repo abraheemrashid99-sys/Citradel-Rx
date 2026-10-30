@@ -121,7 +121,9 @@ def main() -> None:
     out_dir = f"results/{args.exp}"
     cmds = []
     for j in jobs:
-        ov = [f"{k}={v}" for k, v in j.items()] + [f"run.out_dir={out_dir}"] + args.extra
+        # tiny per-user MLPs: CPU is as fast as the GPU and many CUDA processes side by side crash
+        # (illegal memory access / CUBLAS errors). Override with --extra run.device=cuda if wanted.
+        ov = [f"{k}={v}" for k, v in j.items()] + [f"run.out_dir={out_dir}", "run.device=cpu"] + args.extra
         cmds.append([sys.executable, RUN, cfg, "--quiet", "--seeds", *map(str, args.seeds), "--set", *ov])
     print(f"{len(cmds)} jobs x {len(args.seeds)} seeds")
     if args.dry:
