@@ -277,7 +277,20 @@ on easy blocks — 10× tighter than the absolute rule that had worked, and insi
 statistical resolution of the pass fraction (std ≈ 0.011 at n = 781 sub-blocks). Clean SER was
 unaffected (0.039, the fallback detector is as good on those blocks) but a 15 % false-rejection
 rate is not acceptable in a paper. Second calibration (ρ = 1.0, δ_min = 0.002 ≈ 5 sd of the pass
-fraction): `results/e3rel2/`, reported below when finished.
+fraction; `results/e3rel2/`, 3 seeds) — **adopted as the default of the relative mode**:
+
+| cell | pre | attack window | post | recovery | rejection | false rejection |
+|---|---|---|---|---|---|---|
+| COST2100, absolute slack 0.01 (old) | 0.0003 | 0.0042 / 0.0050 / 0.0070 | 0.0006 | 9–16 | 0.72–0.80 | 0.00 |
+| COST2100, relative (ρ=1, δ_min=0.002) | 0.0003 | **0.0009 / 0.0012 / 0.0016** | 0.0004 | 1–14 | 0.82–0.88 | 0.00 |
+| linear, absolute slack 0.01 (old) | 0.039 | 0.0245 / 0.0270 / 0.0272 | 0.029 | 0 | 0.95–1.00 | 0.00–0.02 |
+| linear, relative (ρ=1, δ_min=0.002) | 0.040 | **0.0237 / 0.0241 / 0.0245** | 0.029 | 0 | 1.00 | 0.02 |
+
+The relative rule removes the low-SER weakness (4–5× lower attack-window SER on COST2100,
+back within 3–5× of the clean level instead of 15–25×) and leaves the linear cell exactly
+where it was, with the same 2 % false rejections. The full relative-slack grid
+(`sweep.py e3rel`: five budgets on COST2100, SNR 10–16 dB, the linear SIR grid) runs on
+the GPU box and will replace the absolute-slack rows of the COST2100 and E3snr sections.
 
 ## Gate operating characteristics and per-block cost (`scripts/gate_roc.py`; `docs/figures/fig_gate_roc.png`)
 
