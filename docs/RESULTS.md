@@ -265,11 +265,19 @@ Absolute slack 0.001 instead of 0.01, COST2100, white-box A1 at SIR 0 dB: attack
 0.0009 / 0.0008 / 0.0009 (seeds 0–2) against 0.0050 / 0.0070 / 0.0042 with the default slack;
 pre-attack 0.0003–0.0004, post 0.0004; rejection 0.88 / 0.93 / 0.85 (was 0.72–0.80); false
 rejection 0.00; recovery 2–9 blocks (was 9–16). The low-SER weakness is the threshold, not
-the architecture. Adopted fix: `citadel.g2_slack_mode=relative` with slack
-max(0.001, 0.3 × SER_ref) — identical to the absolute rule at the linear operating point
-(0.3 × 0.03 = 0.009) and 0.001 at COST2100/high SNR. Confirmation runs (`results/e3rel/`,
-COST2100 and linear at SIR 0, 3 seeds each) are reported below when finished; the full
-relative-slack grid (`sweep.py e3rel`) runs on the GPU box.
+the architecture. Fix: `citadel.g2_slack_mode=relative`, slack = max(δ_min, ρ · p_ref) with
+p_ref the per-symbol error probability implied by the reference pass rate (Prop. 1).
+
+First calibration (ρ = 0.3, δ_min = 0.001; `results/e3rel/`, 3 seeds): COST2100 fixed
+(attack SER 0.0008–0.0010, rejection 0.78–0.88, false rejection 0) and the linear attack cell
+unchanged (0.024–0.025), **but linear false rejections rose to 15–20 %**. Cause, measured from
+the records: the reference per-symbol SER on the linear channel is p_ref ≈ 0.009 (median),
+0.0003–0.02 across the fade, not the 0.03 any-user SER, so 0.3 · p_ref sat on the 0.001 floor
+on easy blocks — 10× tighter than the absolute rule that had worked, and inside the
+statistical resolution of the pass fraction (std ≈ 0.011 at n = 781 sub-blocks). Clean SER was
+unaffected (0.039, the fallback detector is as good on those blocks) but a 15 % false-rejection
+rate is not acceptable in a paper. Second calibration (ρ = 1.0, δ_min = 0.002 ≈ 5 sd of the pass
+fraction): `results/e3rel2/`, reported below when finished.
 
 ## Gate operating characteristics and per-block cost (`scripts/gate_roc.py`; `docs/figures/fig_gate_roc.png`)
 

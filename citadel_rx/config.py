@@ -84,9 +84,9 @@ class CitadelConfig:
     g2_ser_slack: float = 0.01        # tolerated SER excess over the reference; tau2 = (1 - slack)^L (Prop. 2.3)
     g2_slack_mode: str = "absolute"   # absolute: slack = g2_ser_slack | relative: slack = max(g2_abs_min_slack,
                                       #   g2_rel_slack * SER_ref) with SER_ref inferred from the reference pass rate
-    g2_rel_slack: float = 0.3         # relative mode: tolerate at most (1 + rel) x the reference SER (0.3 x 0.03 = 0.009 at the
-                                      #   linear reference point, i.e. the absolute default; 0.001 floor at low SER)
-    g2_abs_min_slack: float = 0.001   # relative mode: floor on the slack (CRC/statistical resolution)
+    g2_rel_slack: float = 1.0         # relative mode: tolerate at most (1 + rel) x the reference per-symbol SER (p_ref ~ 0.01 at the
+                                      #   linear 10 dB point, ~1e-4 on COST2100; the floor covers the CRC statistical resolution)
+    g2_abs_min_slack: float = 0.002   # relative mode: floor on the slack (about 5 sd of the pass fraction at n=781, L=32)
     g3_tau: float = 4.0               # innovation energy relative to its running level
     g3_quantile: float = 0.999        # chi-square floor for the innovation test
     adaptive_thresholds: bool = True

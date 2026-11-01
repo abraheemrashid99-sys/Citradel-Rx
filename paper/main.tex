@@ -228,8 +228,11 @@ definition, caused less than $\delta$ of harm. Our first version used an absolut
 $\delta=0.01$; at a $3\cdot10^{-4}$ operating point (COST2100 at 10\,dB) that is $30\times$
 the clean SER and the attacker can degrade the receiver to $10^{-2}$ while passing
 G2 (Sec.~\ref{sec:cost}). The \emph{relative} slack $\delta=\max(\delta_{\min},\rho\,p_{\rm
-ref})$ with $\rho=0.3$, $\delta_{\min}=10^{-3}$ coincides with the absolute rule at the
-linear operating point ($0.3\times0.03=0.009$) and fixes the low-SER regime.
+ref})$, with $p_{\rm ref}$ the per-symbol error probability implied by the reference pass
+rate, $\rho=1$ and $\delta_{\min}=2\cdot10^{-3}$ (about five standard deviations of the
+pass fraction over $n=781$ sub-blocks), tracks the operating point: $\approx10^{-2}$ on
+the linear channel at 10\,dB ($p_{\rm ref}\approx0.009$), the floor on COST2100
+($p_{\rm ref}\approx10^{-4}$).
 
 \textbf{G3 (channel prior).} The innovation energy of the LS channel estimate against
 its AR(1) prediction, relative to its running level on accepted blocks and floored by
