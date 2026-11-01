@@ -259,6 +259,52 @@ trade-off against G1 alone (rejection 0.80 → 0.85 → 0.30, SER 0.046 → 0.04
 0.074: evading the residual test costs poisoning strength); against the full
 gate set the best-effort attacker gains nothing (rejection 0.95, SER 0.027).
 
+## Tighter / relative CRC slack on COST2100 (31 Oct–1 Nov; 3 seeds; `results/e3cost_slack/`, `results/e3rel/`)
+
+Absolute slack 0.001 instead of 0.01, COST2100, white-box A1 at SIR 0 dB: attack-window SER
+0.0009 / 0.0008 / 0.0009 (seeds 0–2) against 0.0050 / 0.0070 / 0.0042 with the default slack;
+pre-attack 0.0003–0.0004, post 0.0004; rejection 0.88 / 0.93 / 0.85 (was 0.72–0.80); false
+rejection 0.00; recovery 2–9 blocks (was 9–16). The low-SER weakness is the threshold, not
+the architecture. Adopted fix: `citadel.g2_slack_mode=relative` with slack
+max(0.001, 0.3 × SER_ref) — identical to the absolute rule at the linear operating point
+(0.3 × 0.03 = 0.009) and 0.001 at COST2100/high SNR. Confirmation runs (`results/e3rel/`,
+COST2100 and linear at SIR 0, 3 seeds each) are reported below when finished; the full
+relative-slack grid (`sweep.py e3rel`) runs on the GPU box.
+
+## Gate operating characteristics and per-block cost (`scripts/gate_roc.py`; `docs/figures/fig_gate_roc.png`)
+
+ROC of the gate verdict γ as a detector of poisoned blocks, pooled over seeds and
+budgets, blocks ≥ 5 (gate warm-up excluded):
+
+| experiment | attack | poisoned / clean blocks | AUC γ | AUC G1 | AUC G2 | AUC G3 | rejection at γ<0.5 | false rejection at γ<0.5 |
+|---|---|---|---|---|---|---|---|---|
+| e3 (linear) | A1 | 1200 / 1650 | 0.989 | 0.988 | 0.999 | 0.963 | 0.944 | 0.007 |
+| e3 | data jamming | 120 / 165 | 1.000 | 0.135 | 1.000 | 0.375 | 1.000 | 0.000 |
+| e3nl | A1 | 600 / 825 | 0.989 | 0.989 | 0.999 | 0.973 | 0.982 | 0.008 |
+| e3cost (absolute slack) | A1 | 600 / 825 | 0.932 | 0.884 | 0.925 | 0.921 | 0.637 | 0.005 |
+| e4 (Jakes) | A2 | 240 / 330 | 0.992 | 0.976 | 0.999 | – | 0.821 | 0.003 |
+| e7 | gate-aware | 560 / 770 | 0.982 | 0.987 | – | – | 0.912 | 0.004 |
+
+G2 is the strongest single gate against A1 (AUC 0.999), G1 is close, G3 is weak against
+A1 as designed; the min-combination inherits the best of them at every operating point.
+Under data jamming G1 is *inverted* (AUC 0.135: the fast level's decisions are more
+consistent with the model than the reference's under jamming) and G2 alone carries the
+verdict — a reminder that the gates are not interchangeable.
+
+Per-block compute, CPU single thread, 300 adaptation epochs (mean ± sd over all records):
+LMMSE 0.09 s; online DeepSIC 4.32 ± 1.71 s (pre-training 30 s); drift 6.95 s; Meta-DeepSIC
+9.50 s; single-memory Titans 12.18 s; **Citadel 11.15 ± 6.48 s (2.6× online DeepSIC)**;
+MedBN 29.93 s. The white-box attacker's PGD costs 3.20 ± 1.70 s per poisoned block.
+Citadel's overhead over the single-memory receiver is the gate (one LMMSE detection and one
+CRC check of the data block); the levels cost memory (K copies of the adaptable
+parameters), not compute.
+
+## Certificate with measured constants (`scripts/certificate_check.py`; `docs/figures/fig_e5_certificate_bound.png`)
+
+See `docs/certificate_constants.json` (G_Φ, L_θ, L_a, ε measured on clean blocks of the E5
+configuration) and the table printed by the script; the statement proved is Theorem 1 of
+`docs/THEORY.md`. (Filled in below when the measurement finishes.)
+
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
 2. The attacked blocks' SER (0.03) is *lower* than the clean run's mean
