@@ -2,7 +2,7 @@
 """Draw the retention certificate (Corollary 2.2) with *measured* constants on the E5 figure.
 
 Certificate (Corollary 2.2, implemented form):
-    Delta_f(W) = eps * G_adapt * min{ 1 / (1 - L),  rho_blk * (1 - p_rej) * W },  L = L_theta + L_a
+    Delta_f(W) = eps * G_adapt * min{ 1,  (1 - L_theta) * rho_blk * (1 - p_rej) * W } / (1 - L),  L = L_theta + L_a
     D_K(W)    <= Delta_f(W) * (1 - (1 - eta_K)^(W / C_K))  <=  eta_K * Delta_f * W / C_K
   eta_K   : level-K consolidation rate (config, level_lr[K-2] for K levels)
   rho_blk : fraction of attacked blocks (A3: 1)
@@ -12,8 +12,7 @@ Certificate (Corollary 2.2, implemented form):
             (theory.bound.estimate_adaptation_lipschitz; a lower bound of the true constant)
   L_theta : parameter-contraction factor of the same map; L_a its sensitivity to the slow anchor.
             L = L_theta + L_a < 1 means the paired fast trajectories forget a displacement
-            geometrically (delta-rule decay + proximal pull); otherwise the min() above falls back
-            to the per-window injection count, which needs no contraction.
+            geometrically (delta-rule decay + proximal pull); Theorem 1 of docs/THEORY.md needs L < 1.
   p_rej   : gate rejection rate of the attacked blocks in the E5 records (A3 passes: ~0)
   G       : the single-gradient input-Lipschitz constant of the proposal's statement is also
             printed for reference
@@ -75,13 +74,18 @@ def measure_constants(cfg: Config, n_blocks: int = 20, seed: int = 0):
 
 def main(cfg_path: str):
     cfg = Config.from_yaml(cfg_path)
-    c0 = measure_constants(cfg, n_blocks=int(os.environ.get("CERT_BLOCKS", "12")))
+    cache = "docs/certificate_constants.json"
+    if os.environ.get("CERT_REUSE") and os.path.exists(cache):
+        c0 = {k: v for k, v in json.load(open(cache)).items() if k != "rows"}
+    else:
+        c0 = measure_constants(cfg, n_blocks=int(os.environ.get("CERT_BLOCKS", "12")))
     eps, G_adapt = c0["eps"], c0["G_adapt_max"]
     L_tot = c0["L_theta_max"] + c0["L_a_max"]
     print(json.dumps(c0, indent=1))
     if L_tot >= 1:
-        print("NOTE: L_theta + L_a >= 1: no measured contraction; the certificate uses the injection count only")
-    geo_cap = 1.0 / (1.0 - L_tot) if L_tot < 1 else np.inf
+        print("NOTE: L_theta + L_a >= 1: the fast map is not a measured contraction, Theorem 1 does not apply")
+    inv = 1.0 / (1.0 - L_tot) if L_tot < 1 else np.inf
+    one_minus_lt = 1.0 - c0["L_theta_max"]
     recs = defaultdict(list)
     for fn in glob.glob("results/e5/*.json"):
         r = json.load(open(fn))
@@ -105,8 +109,8 @@ def main(cfg_path: str):
         DK = np.array([r["paired_disp"][-1] for r in rs]).mean(0)
         slope = np.polyfit(np.arange(a1 - a0), DK[a0:a1], 1)[0]
         W = np.arange(0, a1 - a0)
-        delta_f = eps * G_adapt * np.minimum(geo_cap, 1.0 * (1 - p_rej) * W)
-        bound_slope = eta_K * eps * G_adapt * min(geo_cap, (1 - p_rej) * (a1 - a0)) / ck
+        delta_f = eps * G_adapt * np.minimum(1.0, one_minus_lt * 1.0 * (1 - p_rej) * W) * inv
+        bound_slope = eta_K * eps * G_adapt * inv / ck
         cert = delta_f * (1 - (1 - eta_K) ** (W / ck))
         meas = DK[a0:a1] - DK[a0]
         ratio = float(np.max(meas[1:] / cert[1:]))
