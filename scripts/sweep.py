@@ -65,6 +65,28 @@ def grid(exp: str, args) -> List[Dict[str, str]]:
                          "run.save_params": "true", "run.name": f"e5_citadel_CK{ck}"})
             jobs.append({"receiver.type": "citadel", "citadel.periods": f"[1,{max(2, ck // 4)},{ck}]", "attack.type": "none",
                          "run.save_params": "true", "run.name": f"e5_citadel_CK{ck}_clean"})
+    elif exp == "e3rel":  # relative G2 slack on the low-SER cells where the absolute slack is loose
+        rel = {"receiver.type": "citadel", "citadel.g2_slack_mode": "relative"}
+        for sir in args.sirs or [-10, -5, 0, 5, 10]:
+            jobs.append({**rel, "channel.model": "cost2100", "attack.type": "a1", "attack.sir_db": str(sir),
+                         "run.name": f"e3rel_cost_citadel_sir{sir}"})
+        jobs.append({**rel, "channel.model": "cost2100", "attack.type": "none", "run.name": "e3rel_cost_citadel_clean"})
+        for snr, atk in itertools.product(args.snrs or [10, 12, 14, 16], ["none", "a1"]):
+            jobs.append({**rel, "channel.snr_db": str(snr), "attack.type": atk, "attack.sir_db": "0",
+                         "run.name": f"e3rel_snr_citadel_{atk}_snr{snr}"})
+        for sir in args.sirs or [-10, -5, 0, 5, 10]:  # sanity: the linear reference cell must not regress
+            jobs.append({**rel, "attack.type": "a1", "attack.sir_db": str(sir), "run.name": f"e3rel_lin_citadel_sir{sir}"})
+    elif exp == "e8":  # larger system: 8x8 QPSK, clean and A1 white-box
+        big = {"channel.n_user": "8", "channel.n_ant": "8"}
+        for r in rx:
+            jobs.append({**big, "receiver.type": r, "attack.type": "none", "run.name": f"e8_{r}_clean"})
+            for sir in args.sirs or [-10, 0, 10]:
+                jobs.append({**big, "receiver.type": r, "attack.type": "a1", "attack.sir_db": str(sir),
+                             "run.name": f"e8_{r}_sir{sir}"})
+    elif exp == "e9":  # 16-QAM-free alternative: BPSK and higher Doppler, robustness of the gates to the modulation/fading
+        for r, fad, fd in itertools.product(rx, ["jakes"], [0.01, 0.05, 0.1]):
+            jobs.append({"receiver.type": r, "channel.fading": fad, "channel.jakes_fd_tb": str(fd), "attack.type": "a1",
+                         "attack.sir_db": "0", "run.name": f"e9_{r}_jakes_fd{fd}"})
     elif exp == "e7":
         for gates in ["[g1]", "[g1,g2]", "[g1,g2,g3]", "[]"]:
             tag = gates.strip("[]").replace(",", "") or "nogate"
@@ -116,7 +138,8 @@ def main() -> None:
         "e2nl": "e2_clean_parity.yaml", "e2cost": "e2_clean_parity.yaml",
         "e3nl": "e3_a1_defence.yaml", "e3cost": "e3_a1_defence.yaml",
         "e3snr": "e3_a1_defence.yaml", "e4": "e4_a2_drift_spoof.yaml", "e5": "e5_a3_boiling_frog.yaml",
-        "e7": "e7_adaptive_attacker.yaml", "ablate": "e3_a1_defence.yaml"}[args.exp])
+        "e7": "e7_adaptive_attacker.yaml", "ablate": "e3_a1_defence.yaml",
+        "e3rel": "e3_a1_defence.yaml", "e8": "e3_a1_defence.yaml", "e9": "e3_a1_defence.yaml"}[args.exp])
     jobs = grid(args.exp, args)
     out_dir = f"results/{args.exp}"
     cmds = []

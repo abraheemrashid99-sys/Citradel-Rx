@@ -75,9 +75,11 @@ class CitadelRx(DeepSICReceiver):
         # level's SER exceeds the reference's by more than `slack`
         L = cfg.frame.crc_subblock_symbols
         g2_tau = cc.g2_tau if cc.g2_tau is not None else float((1.0 - cc.g2_ser_slack) ** L)
+        g2_rel = ({"L": L, "rel": cc.g2_rel_slack, "abs_min": cc.g2_abs_min_slack}
+                  if cc.g2_slack_mode == "relative" else None)
         self.gate = GateController(gates, cc.gate_mode, cc.g1_tau, g2_tau, cc.g3_tau, cc.g3_quantile,
                                    cc.adaptive_thresholds, dof=self.n_ant * self.n_user,
-                                   tighten_floor=cc.tighten_floor)
+                                   tighten_floor=cc.tighten_floor, g2_relative=g2_rel)
         self.reject_action = cc.reject_action
         self.fallback = cc.fallback_on_reject
         self.noise_var = 10 ** (-0.1 * cfg.channel.snr_db)

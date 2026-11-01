@@ -21,6 +21,24 @@ from citadel_rx.config import Config  # noqa: E402
 from citadel_rx.eval import run_experiment  # noqa: E402
 
 
+def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
+    """A finished record of the same experiment: exact config hash, or (for records written before
+    a config option was added) the same non-default settings."""
+    import glob
+    import json
+    exact = os.path.join(out_dir, f"{name}_s{seed}_{probe.hash()}.json")
+    if os.path.exists(exact):
+        return exact
+    for fn in glob.glob(os.path.join(out_dir, f"{name}_s{seed}_*.json")):
+        try:
+            rec = json.load(open(fn))
+        except Exception:
+            continue
+        if rec.get("seed") == seed and probe.matches_record(rec.get("config", {})):
+            return fn
+    return ""
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("config", nargs="?", default=None)
@@ -54,8 +72,8 @@ def main() -> None:
         import copy
         probe = copy.deepcopy(cfg)
         probe.channel.seed = s
-        existing = os.path.join(cfg.run.out_dir, f"{cfg.run.name}_s{s}_{probe.hash()}.json")
-        if os.path.exists(existing) and not args.force and not args.no_save:
+        existing = find_existing(cfg.run.out_dir, cfg.run.name, s, probe)
+        if existing and not args.force and not args.no_save:
             print(f"== {cfg.run.name} seed {s}: exists, skipped ({existing})")
             continue
         rec = run_experiment(cfg, seed=s, save=not args.no_save, verbose=not args.quiet)

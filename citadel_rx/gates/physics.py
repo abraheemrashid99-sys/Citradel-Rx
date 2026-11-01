@@ -80,12 +80,14 @@ def g3_prior(innov_norm: float) -> float:
 class GateController:
     def __init__(self, gates: List[str], mode: str, g1_tau: float, g2_tau: float, g3_tau: float,
                  g3_quantile: float, adaptive: bool, dof: int, kappa: float = 0.1, ema: float = 0.9,
-                 tighten_floor: float = 0.7):
+                 tighten_floor: float = 0.7, g2_relative: Optional[Dict[str, float]] = None):
         self.gates = [g.lower() for g in gates]
         self.mode = mode
         self.g1_tau, self.g2_tau = g1_tau, g2_tau
         self.adaptive = adaptive
         self.tighten_floor = tighten_floor
+        # relative-slack G2: {"L": sub-block symbols, "rel": multiple of the reference SER, "abs_min": floor}
+        self.g2_relative = g2_relative
         self.dof = max(dof, 1)
         self.kappa = kappa
         self.ema = ema
@@ -116,7 +118,19 @@ class GateController:
         if "g2" in self.gates and pass_nn is not None and pass_mm is not None:
             s = g2_crc(pass_nn, pass_mm) / max(self.clean_g2_ema or 1.0, 1e-9)
             stats["g2"] = s
-            verdicts["g2"] = _soft_step(s, th["g2"], self.kappa, accept_below=False)
+            tau2 = th["g2"]
+            if self.g2_relative is not None:
+                # Prop. 2.3 inverted: the reference pass rate gives the reference SER p_ref; tolerate
+                # p_ref + delta with delta = max(abs_min, rel * p_ref), i.e. a slack that scales with
+                # the operating point instead of a fixed percentage point.
+                L = self.g2_relative["L"]
+                p_ref = 1.0 - float(np.clip(pass_mm, 1e-9, 1.0)) ** (1.0 / L)
+                delta = max(self.g2_relative["abs_min"], self.g2_relative["rel"] * p_ref)
+                tau2 = float(((1.0 - min(p_ref + delta, 0.999)) / max(1.0 - p_ref, 1e-9)) ** L)
+                if self.adaptive and surprise_ratio > 1:
+                    tau2 = 1 - (1 - tau2) * float(np.clip(1.0 / surprise_ratio, self.tighten_floor, 1.0))
+                stats["g2_tau"] = tau2
+            verdicts["g2"] = _soft_step(s, tau2, self.kappa, accept_below=False)
         if "g3" in self.gates and innov_norm is not None:
             stats["g3"] = innov_norm
             verdicts["g3"] = _soft_step(innov_norm, th["g3"], self.kappa, accept_below=True)

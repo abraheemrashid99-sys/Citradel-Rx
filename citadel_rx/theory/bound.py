@@ -68,3 +68,48 @@ def figure_adversary_term(out_path: str = "figures/fig_adversary_term.png") -> N
 
 if __name__ == "__main__":
     figure_adversary_term()
+
+
+def estimate_adaptation_lipschitz(rx, yf: torch.Tensor, idx: torch.Tensor, eta: float, n_probe: int = 4,
+                                  radius_in: float = 0.05, radius_par: float = 0.05, seed: int = 0):
+    """Finite-difference constants of the *block adaptation map* Φ(θ; y) = fast level after one
+    block of adaptation on pilots y, as implemented by ``rx._fast_update``:
+
+      G_adapt = sup_e ‖Φ(θ; y+e) − Φ(θ; y)‖ / ‖e‖      (input sensitivity, ‖e‖ = radius_in·‖y‖)
+      L_theta = sup_d ‖Φ(θ+d; y) − Φ(θ; y)‖ / ‖d‖      (parameter contraction, ‖d‖ = radius_par·‖θ_A‖)
+      L_a     = sup_d ‖Φ(θ; y; a+d) − Φ(θ; y; a)‖ / ‖d‖  (sensitivity to the slow anchor a)
+
+    All are lower bounds of the true suprema (random probes); L_theta + L_a < 1 certifies that the
+    paired fast trajectories forget a displacement geometrically (Lemma 1 in docs/THEORY.md).
+    Returns (G_adapt, L_theta, L_a)."""
+    g = torch.Generator(device="cpu").manual_seed(seed)
+    keys = rx.A
+    base = {k: v.detach().clone() for k, v in rx.params.items()}
+    flat = lambda p: torch.cat([p[k].reshape(-1) for k in keys])
+
+    anchor0 = rx._anchor()
+
+    def phi(params, y, anchor=None):
+        rx.params = {k: v.detach().clone() for k, v in params.items()}
+        a = anchor0 if anchor is None else anchor
+        out = rx.core.sequential_adapt(rx.params, y, idx, lambda p, q, X, t: rx._fast_stage(p, q, X, t, eta, a))
+        rx.params = {k: v.detach().clone() for k, v in base.items()}
+        return flat(out)
+
+    p0 = phi(base, yf)
+    G, L, La = 0.0, 0.0, 0.0
+    for _ in range(n_probe):
+        e = torch.randn(yf.shape, generator=g).to(yf.device)
+        e = e / e.norm() * (radius_in * yf.norm())
+        G = max(G, float((phi(base, yf + e) - p0).norm() / e.norm()))
+        d = {k: torch.randn(base[k].shape, generator=g).to(base[k].device) for k in keys}
+        dn = torch.sqrt(sum((v ** 2).sum() for v in d.values()))
+        scale = radius_par * flat(base).norm() / dn
+        pert = dict(base)
+        for k in keys:
+            pert[k] = base[k] + scale * d[k]
+        L = max(L, float((phi(pert, yf) - p0).norm() / (scale * dn)))
+        if anchor0 is not None:
+            da = {k: anchor0[k] + scale * d[k] for k in keys}
+            La = max(La, float((phi(base, yf, da) - p0).norm() / (scale * dn)))
+    return G, L, La

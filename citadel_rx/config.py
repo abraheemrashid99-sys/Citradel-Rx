@@ -82,6 +82,11 @@ class CitadelConfig:
     g1_tau: float = 1.25              # residual ratio threshold (relative to the clean EMA)
     g2_tau: Optional[float] = None    # explicit CRC pass-rate ratio threshold; None -> derived from g2_ser_slack
     g2_ser_slack: float = 0.01        # tolerated SER excess over the reference; tau2 = (1 - slack)^L (Prop. 2.3)
+    g2_slack_mode: str = "absolute"   # absolute: slack = g2_ser_slack | relative: slack = max(g2_abs_min_slack,
+                                      #   g2_rel_slack * SER_ref) with SER_ref inferred from the reference pass rate
+    g2_rel_slack: float = 0.3         # relative mode: tolerate at most (1 + rel) x the reference SER (0.3 x 0.03 = 0.009 at the
+                                      #   linear reference point, i.e. the absolute default; 0.001 floor at low SER)
+    g2_abs_min_slack: float = 0.001   # relative mode: floor on the slack (CRC/statistical resolution)
     g3_tau: float = 4.0               # innovation energy relative to its running level
     g3_quantile: float = 0.999        # chi-square floor for the innovation test
     adaptive_thresholds: bool = True
@@ -141,6 +146,18 @@ class Config:
     def hash(self) -> str:
         return hashlib.sha256(json.dumps(self.to_dict(), sort_keys=True).encode()).hexdigest()[:12]
 
+    def nondefault(self) -> Dict[str, Any]:
+        """Flattened {section.key: value} of every entry that differs from the dataclass default."""
+        return _nondefault(self.to_dict(), Config().to_dict())
+
+    def matches_record(self, record_config: Dict[str, Any], ignore=("run.out_dir", "run.device", "run.seeds")) -> bool:
+        """True if a saved record's config describes the same experiment: every non-default entry of
+        either side agrees, with keys absent from the record (added to the code later) taken at their
+        default. This keeps old records valid when new options are added with a default value."""
+        a = {k: v for k, v in self.nondefault().items() if k not in ignore}
+        b = {k: v for k, v in _nondefault(record_config, Config().to_dict()).items() if k not in ignore}
+        return a == b
+
     @classmethod
     def from_dict(cls, d: Dict[str, Any]) -> "Config":
         return _dc_from_dict(cls, d)
@@ -175,6 +192,17 @@ class Config:
     @property
     def data_symbols(self) -> int:
         return self.frame.data_bits // self.bits_per_symbol
+
+
+def _nondefault(d: Dict[str, Any], ref: Dict[str, Any], prefix: str = "") -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for k, v in (d or {}).items():
+        key = f"{prefix}{k}"
+        if isinstance(v, dict) and isinstance(ref.get(k), dict):
+            out.update(_nondefault(v, ref[k], key + "."))
+        elif k not in ref or v != ref[k]:
+            out[key] = v
+    return out
 
 
 def _dc_from_dict(cls, d):

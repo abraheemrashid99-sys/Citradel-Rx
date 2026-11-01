@@ -63,7 +63,9 @@ class BlockFadingChannel:
         H = self.H_mean.copy()
         mode = self.cfg.fading
         if mode == "cosine":
-            fade = _SED_FADE_DEPTH + (1 - _SED_FADE_DEPTH) * np.cos(2 * np.pi * b / _SED_FADE_PERIODS[: self.n_user])
+            # reference periods for the first four users; further users (8x8) get co-prime periods
+            periods = np.concatenate([_SED_FADE_PERIODS, np.array([47, 29, 43, 23, 37, 19, 41, 17])])[: self.n_user]
+            fade = _SED_FADE_DEPTH + (1 - _SED_FADE_DEPTH) * np.cos(2 * np.pi * b / periods)
             H = H * fade[None, :]
         elif mode == "jakes":
             if self._H_prev is None:
