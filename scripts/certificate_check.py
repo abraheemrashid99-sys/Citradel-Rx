@@ -98,8 +98,8 @@ def main(cfg_path: str):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     fig, ax = plt.subplots(figsize=(5.6, 3.6))
-    rows = ["| C_K | eta_K | p_rej (measured) | Delta_f | certificate slope eta_K Delta_f / C_K | measured slope | max_W measured / certificate |",
-            "|---|---|---|---|---|---|---|"]
+    rows = ["| C_K | eta_K | p_rej | Delta_f measured (max paired fast displacement) | max_W D_K / Thm 1(i) | Delta_f Lipschitz (needs L<1) | Thm 1(ii) slope | measured slope | max_W D_K / Thm 1(ii) |",
+            "|---|---|---|---|---|---|---|---|---|"]
     for ck in sorted(recs):
         rs = recs[ck]
         c = rs[0]["config"]
@@ -109,17 +109,28 @@ def main(cfg_path: str):
         DK = np.array([r["paired_disp"][-1] for r in rs]).mean(0)
         slope = np.polyfit(np.arange(a1 - a0), DK[a0:a1], 1)[0]
         W = np.arange(0, a1 - a0)
+        # Theorem 1 (i), structural: Delta_f := measured running max of the paired fast-level displacement
+        d_fast = np.array([r["paired_disp"][0] for r in rs]).mean(0)[a0:a1]
+        delta_meas = np.maximum.accumulate(d_fast)
+        n_cons = np.floor((a0 + W) / ck) - np.floor(a0 / ck)       # level-K consolidations inside the window
+        cert_i = delta_meas * (1 - (1 - eta_K) ** n_cons)
+        # Theorem 1 (ii), Lipschitz: needs L < 1
         delta_f = eps * G_adapt * np.minimum(1.0, one_minus_lt * 1.0 * (1 - p_rej) * W) * inv
         bound_slope = eta_K * eps * G_adapt * inv / ck
         cert = delta_f * (1 - (1 - eta_K) ** (W / ck))
         meas = DK[a0:a1] - DK[a0]
-        ratio = float(np.max(meas[1:] / cert[1:]))
-        line, = ax.plot(W, meas, label=f"measured, $C_K$={ck}")
-        ax.plot(W, cert, "--", color=line.get_color(), alpha=0.7, label=f"certificate, $C_K$={ck}")
-        rows.append(f"| {ck} | {eta_K:g} | {p_rej:.2f} | {float(delta_f[-1]):.3f} | {bound_slope:.4f} | {slope:.4f} | {ratio:.3f} |")
+        ok = cert_i > 0
+        ratio_i = float(np.max(meas[ok] / cert_i[ok])) if ok.any() else float("nan")
+        ratio = float(np.max(meas[1:] / cert[1:])) if np.isfinite(inv) else float("nan")
+        line, = ax.plot(W, meas, label=f"measured $D_K$, $C_K$={ck}")
+        ax.plot(W, cert_i, "--", color=line.get_color(), alpha=0.8, label=f"Thm 1(i), $C_K$={ck}")
+        if np.isfinite(inv):
+            ax.plot(W, cert, ":", color=line.get_color(), alpha=0.7, label=f"Thm 1(ii), $C_K$={ck}")
+        rows.append(f"| {ck} | {eta_K:g} | {p_rej:.2f} | {float(delta_meas[-1]):.2f} | {ratio_i:.3f} | "
+                    f"{float(delta_f[-1]) if np.isfinite(inv) else float('nan'):.2f} | {bound_slope:.4f} | {slope:.4f} | {ratio:.3f} |")
     ax.set_xlabel("attacked blocks $W$"); ax.set_ylabel("$\\|\\theta^{(K)}_{adv}-\\theta^{(K)}_{clean}\\|$")
-    ax.set_yscale("log"); ax.legend(fontsize=7, ncol=2); ax.grid(alpha=0.3, which="both")
-    ax.set_title(f"Cor. 2.2: measured $G_\\Phi$={G_adapt:.2f}, $L_\\theta+L_a$={L_tot:.2f}, $\\epsilon$={eps:.2f}", fontsize=9)
+    ax.set_yscale("log"); ax.legend(fontsize=6, ncol=2); ax.grid(alpha=0.3, which="both")
+    ax.set_title(f"Theorem 1: $\\eta_K$={eta_K:g}; measured $G_\\Phi$={G_adapt:.2f}, $L_\\theta$={c0['L_theta_max']:.2f}, $L_a$={c0['L_a_max']:.2f}, $\\epsilon$={eps:.2f}", fontsize=8)
     fig.tight_layout()
     os.makedirs("docs/figures", exist_ok=True)
     fig.savefig("docs/figures/fig_e5_certificate_bound.png", dpi=200)

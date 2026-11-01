@@ -108,41 +108,67 @@ and by induction over k, with D_1 := d,
 ## 4. Theorem 1 (retention certificate; Corollary 2.2 of the proposal, implemented form)
 
 Let the attack occupy a window of W consecutive blocks, with equal verdicts in the
-paired runs, and let n_W := Σ_{b∈window} χ_b = ρ_blk (1 − p_rej) W be the number of
-attacked *and accepted* blocks in it. Define
+paired runs, let n(W) be the number of level-K consolidation instants inside the window
+(n(W) = ⌊(b_0+W)/C_K⌋ − ⌊b_0/C_K⌋ ≤ ⌈W/C_K⌉ for a window starting at block b_0), and let
+n_W := Σ_{b∈window} χ_b = ρ_blk (1 − p_rej) W be the number of attacked *and accepted*
+blocks in it.
 
-    Δ_f(W) := G_Φ ε · min{ 1,  (1 − L_θ) n_W } / (1 − L),        assuming L < 1.
+**(i) Structural part (no Lipschitz assumption).** With Δ_f^meas(W) := max over the
+window of the paired fast-level displacement d_b,
 
-Then, for the top level,
+    D_K(W) ≤ Δ_f^meas(W) · ( 1 − (1 − η^{(K)})^{n(W)} )  ≤  η^{(K)} Δ_f^meas(W) · n(W).      (5)
 
-    D_K(W) ≤ Δ_f(W) · ( 1 − (1 − η^{(K)})^{⌊W/C_K⌋} )  ≤  η^{(K)} Δ_f(W) · W / C_K.      (5)
+**(ii) Lipschitz part.** Under (A1)–(A2) with L := L_θ + L_a < 1,
 
-In particular, for short windows ((1 − L_θ) n_W ≤ 1),
-D_K(W) ≤ η^{(K)} ρ_blk (1 − p_rej) ε G_Φ (1 − L_θ) W² / ((1 − L) C_K), and for long ones
-D_K(W) ≤ η^{(K)} ε G_Φ W / ((1 − L) C_K): the proposal's form
-η^{(K)} ρ_blk ε G (1 − p_rej) W / C_K holds with G := G_Φ /(1 − L) and the
-(1 − p_rej) factor entering through n_W in the saturating minimum.
+    Δ_f^meas(W) ≤ Δ_f(W) := G_Φ ε · min{ 1, (1 − L_θ) n_W } / (1 − L),                  (5′)
 
-*Proof.* Step 1 (uniform fast displacement). Combine (2) and (4). Let m_b := max_{j≤b} d_j.
-From (2), d_b ≤ G_Φ ε Σ_{j≤b} L_θ^{b−j} χ_j + L_a m_{b−1} Σ_{j≤b} L_θ^{b−j}
-≤ G_Φ ε Σ_{j≤b} L_θ^{b−j} χ_j + (L_a/(1−L_θ)) m_{b−1}. Since Σ_{j≤b} L_θ^{b−j} χ_j ≤
+so that D_K(W) ≤ η^{(K)} ρ_blk (1 − p_rej) ε G_Φ (1−L_θ) W n(W)/(1−L) for short windows and
+D_K(W) ≤ η^{(K)} ε G_Φ n(W)/(1 − L) for long ones: the proposal's
+η^{(K)} ρ_blk ε G (1 − p_rej) W / C_K with G := G_Φ/(1 − L), the Lipschitz constant of the
+*block adaptation map* in place of the gradient's, and the (1 − p_rej) factor entering
+through n_W in the saturating minimum.
+
+*Proof of (i).* Level K consolidates n(W) times inside the window. Each time, by (3)
+with D_{K−1} ≤ max_j d_j ≤ Δ_f^meas (using (4) for the intermediate levels),
+D_K ← (1 − s) D_K + s Δ_f^meas with s ≤ η^{(K)}. Starting from D_K = 0 and iterating n(W)
+times gives D_K ≤ Δ_f^meas (1 − (1 − η^{(K)})^{n(W)}) ≤ η^{(K)} n(W) Δ_f^meas. ∎
+
+*Proof of (ii).* Let m_b := max_{j≤b} d_j. From (2) and (4),
+d_b ≤ G_Φ ε Σ_{j≤b} L_θ^{b−j} χ_j + (L_a/(1−L_θ)) m_{b−1}. Since Σ_{j≤b} L_θ^{b−j} χ_j ≤
 min{1/(1−L_θ), n_W} inside the window, taking the maximum over the window and
 solving for m gives m ≤ G_Φ ε min{1/(1−L_θ), n_W} / (1 − L_a/(1−L_θ))
-= G_Φ ε min{1, (1−L_θ) n_W} / (1−L) = Δ_f(W). Before the window d ≡ 0.
+= G_Φ ε min{1, (1−L_θ) n_W} / (1−L) = Δ_f(W). Before the window d ≡ 0. ∎
 
-Step 2 (top level). Level K consolidates ⌊W/C_K⌋ times inside the window. Each
-time, by (3) with D_{K−1} ≤ m ≤ Δ_f, D_K ← (1 − s) D_K + s Δ_f with s ≤ η^{(K)}.
-Starting from D_K = 0 and iterating n = ⌊W/C_K⌋ times gives
-D_K ≤ Δ_f (1 − (1 − η^{(K)})^n) ≤ η^{(K)} n Δ_f ≤ η^{(K)} Δ_f W / C_K. ∎
+Remarks. (a) The 1/C_K factor is the *only* place the slow level's period enters (through
+n(W)); it is the retention mechanism, and it needs no regularity of the fast learner at
+all: part (i) is a statement about the consolidation rule alone. (b) The gate enters
+through n_W, i.e. through (1 − p_rej), and the fallback through the fact that rejected
+blocks inject nothing (revert). (c) Both parts are deterministic; no distributional
+assumption on the channel is needed. (d) Part (ii) needs L < 1. The measured constants
+of the default configuration (Section 8) give L_θ = 0.86, L_a = 0.35, L = 1.20: the
+random-probe estimates do *not* certify the contraction, so for the default receiver we
+report part (i) with the measured Δ_f^meas, and part (ii) as the statement of what a
+more strongly anchored configuration (larger `prox_lambda`, which lowers L_θ) buys.
+The measured fast displacement is nonetheless of the size the geometric sum predicts
+from L_θ alone (ε G_Φ /(1 − L_θ) = 1.05 × 5.21 / 0.14 ≈ 39 against measured maxima of
+16–34), which is consistent with L_a acting on a slowly moving anchor rather than
+compounding every block.
 
-Remarks. (i) The 1/C_K factor is the *only* place the slow level's period enters;
-it is the retention mechanism. (ii) The gate enters through n_W, i.e. through
-(1 − p_rej), and the fallback through the fact that rejected blocks inject
-nothing (revert). (iii) Theorem 1 is deterministic; no distributional assumption
-on the channel is needed. (iv) The bound is checked against the paired E5 snapshots
-with measured constants in `scripts/certificate_check.py`; the measured
-displacement must stay below (5) at every W, and its slope ratio across
-C_K ∈ {8, 32, 128} must follow 1/C_K.
+### Numerical check (`scripts/certificate_check.py`, `docs/figures/fig_e5_certificate_bound.png`)
+
+Paired A3 runs (E5, 300 attacked blocks, p_rej = 0, 3 seeds), η^{(K)} = 0.5:
+
+| C_K | Δ_f^meas (end of window) | max_W D_K(W) / bound (5) | measured slope of D_K per block |
+|---|---|---|---|
+| 8 | 33.4 | 0.94 | 0.084 |
+| 32 | 17.2 | 0.53 | 0.029 |
+| 128 | 15.9 | 0.26 | 0.0083 |
+
+The structural bound (5) holds at every W for every C_K, is nearly tight for C_K = 8
+(the slow level becomes a running average of the fast level), and the measured slopes
+scale as 1 : 0.35 : 0.10 against the 1 : 0.25 : 0.0625 of pure 1/C_K (∝ C_K^{−0.85};
+the deviation is Δ_f^meas itself decreasing with C_K, because a slower anchor moves less
+and the fast level is pulled back harder).
 
 ## 5. Theorem 2 (corruption-robust dynamic regret; Theorem 2.1 of the proposal)
 
@@ -150,7 +176,7 @@ Let ℓ_b(θ) be the per-block detection loss of the receiver with fast state θ
 clean data block, G_ℓ-Lipschitz in θ. Define the dynamic regret of a run against a
 comparator sequence u_b as R_T(u) = Σ_b ℓ_b(θ_b) − ℓ_b(u_b).
 
-Under the hypotheses of Theorem 1 applied to the whole horizon of T blocks
+Under the hypotheses of Theorem 1(ii) applied to the whole horizon of T blocks
 (n_T attacked and accepted blocks in total, L < 1), the attacked run satisfies
 
     R_T^{adv}(u) ≤ R_T^{clean}(u) + G_ℓ Σ_b d_b ≤ R_T^{clean}(u) + G_ℓ T Δ_f(T),           (6)
@@ -168,7 +194,7 @@ to every prefix,
 i.e. the adversary's contribution to level k is divided by C_k until it saturates.
 
 *Proof.* R_T^{adv} − R_T^{clean} = Σ_b [ℓ_b(θ_b^a) − ℓ_b(θ_b^c)] ≤ G_ℓ Σ_b d_b by the
-Lipschitz property, and Σ_b d_b ≤ T max_b d_b ≤ T Δ_f(T) by Step 1 of Theorem 1.
+Lipschitz property, and Σ_b d_b ≤ T max_b d_b ≤ T Δ_f(T) by Theorem 1(ii).
 Without the anchor (L_a = 0) the unrolled recursion (2) is d_b ≤ G_Φ ε Σ_{j≤b} L_θ^{b−j} χ_j;
 summing over b and exchanging the order of summation gives Σ_b d_b ≤ G_Φ ε n_T/(1−L_θ).
 (6′) follows from (5) applied to each prefix of
@@ -250,7 +276,10 @@ by its clean running level. ∎
 | η^{(K)}, C_K | config | `citadel.level_lr`, `citadel.periods` |
 | D_K(W) | paired level-K displacement | E5 records (`paired_disp`), `scripts/analyze_e5.py` |
 
-The random-probe estimates of G_Φ, L_θ, L_a are lower bounds of the true
-suprema; the certificate is therefore reported as "with the measured constants",
-and the empirical check (measured D_K below the certificate at every W, and the
-1/C_K scaling of the slope) is what supports the theorem numerically.
+Measured on 10 clean blocks of the E5 configuration (`docs/certificate_constants.json`):
+G_Φ = 5.21 (max; mean 3.13), L_θ = 0.86 (max; mean 0.76), L_a = 0.35 (max; mean 0.32),
+ε = 1.05, and the single-gradient constant of the proposal's statement G_grad = 2.96
+(max; mean 0.83). The random-probe estimates are lower bounds of the true suprema; the
+certificate is therefore reported as "with the measured constants", and the empirical
+check (measured D_K below bound (5) at every W, and the 1/C_K scaling of the slope) is
+what supports the theorem numerically.

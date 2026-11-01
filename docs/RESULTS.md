@@ -301,9 +301,23 @@ parameters), not compute.
 
 ## Certificate with measured constants (`scripts/certificate_check.py`; `docs/figures/fig_e5_certificate_bound.png`)
 
-See `docs/certificate_constants.json` (G_Φ, L_θ, L_a, ε measured on clean blocks of the E5
-configuration) and the table printed by the script; the statement proved is Theorem 1 of
-`docs/THEORY.md`. (Filled in below when the measurement finishes.)
+Constants measured by finite differences on 10 clean blocks of the E5 configuration
+(`docs/certificate_constants.json`): block-adaptation input sensitivity G_Φ = 5.21 (max over
+blocks and probes; mean 3.13), state contraction L_θ = 0.86 (mean 0.76), anchor sensitivity
+L_a = 0.35 (mean 0.32), A3 budget ε = 1.05 per block, single-gradient constant 2.96.
+
+* L_θ + L_a = 1.20 ≥ 1: the random probes do **not** certify the contraction that the
+  Lipschitz branch of Theorem 1 (part ii) needs, so the paper reports the structural
+  branch (part i), which needs no regularity of the fast learner and uses the measured
+  paired fast-level displacement Δ_f (max over the window: 33.4 / 17.2 / 15.9 for
+  C_K = 8 / 32 / 128).
+* Structural bound D_K(W) ≤ Δ_f (1 − (1 − η_K)^{n(W)}) holds at every W: max ratio measured /
+  bound 0.94 / 0.53 / 0.26. Nearly tight at C_K = 8, loose at 128 (the slow level has only
+  two consolidations in 300 blocks and the bound charges the full Δ_f to each).
+* The measured fast displacement is of the size the geometric sum predicts from L_θ alone
+  (ε G_Φ /(1 − L_θ) ≈ 39 vs 16–34 measured), i.e. the anchor coupling does not compound.
+* A `prox_lambda` sweep of the constants (1.0 / 2.0 / 4.0; `docs/certificate_constants_lambda.json`)
+  shows how much anchoring is needed for L < 1 (filled in when the run finishes).
 
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.

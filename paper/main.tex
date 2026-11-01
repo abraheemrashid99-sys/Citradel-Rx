@@ -264,17 +264,22 @@ Eq.~\eqref{eq:consol} is a convex combination of the pre-consolidation state and
 buffered states, with total weight at most $\eta^{(k+1)}$ on the latter.
 \end{lemma}
 \begin{theorem}[retention certificate]\label{thm:cert}
-Under Assumption~\ref{ass:lip}, with equal gate verdicts in the paired runs,
+With equal gate verdicts in the paired runs, let $n(W)\le\lceil W/C_K\rceil$ be the number
+of level-$K$ consolidations inside the window and $\Delta_f^{\rm meas}(W)$ the largest
+paired displacement of the fast level in it. (i) Without any regularity assumption,
 \begin{equation}\label{eq:cert}
-D_K(W)\le\Delta_f(W)\Big(1-(1-\eta^{(K)})^{\lfloor W/C_K\rfloor}\Big)\le
-\frac{\eta^{(K)}\,\Delta_f(W)\,W}{C_K},\quad
-\Delta_f(W)=\frac{G_\Phi\,\epsilon\,\min\{1,(1-L_\theta)n_W\}}{1-L}.
+D_K(W)\le\Delta_f^{\rm meas}(W)\Big(1-(1-\eta^{(K)})^{n(W)}\Big)\le
+\eta^{(K)}\Delta_f^{\rm meas}(W)\,n(W).
 \end{equation}
+(ii) Under Assumption~\ref{ass:lip},
+$\Delta_f^{\rm meas}(W)\le G_\Phi\,\epsilon\,\min\{1,(1-L_\theta)n_W\}/(1-L)$.
 \end{theorem}
-The slow level's exposure is divided by its period, multiplied by the gate's miss rate
-through $n_W$, and the fast level's displacement saturates geometrically. This is the
-proposal's $\eta^{(K)}\rho\,\epsilon\,G\,(1-p^{\rm rej})W/C_K$ with $G=G_\Phi/(1-L)$, the
-Lipschitz constant of the whole block adaptation rather than of a single gradient.
+Part (i) is a statement about the consolidation rule alone: the slow level's exposure
+is divided by its period, whatever the fast learner does. Part (ii) adds that the fast
+level's displacement saturates geometrically and is multiplied by the gate's miss rate
+through $n_W$; together they give the proposal's
+$\eta^{(K)}\rho\,\epsilon\,G\,(1-p^{\rm rej})W/C_K$ with $G=G_\Phi/(1-L)$, the Lipschitz
+constant of the whole block adaptation rather than of a single gradient.
 \begin{theorem}[corruption-robust dynamic regret]\label{thm:regret}
 Let $\ell_b$ be $G_\ell$-Lipschitz in $\theta$ and $R_T(u)$ the dynamic regret against a
 comparator sequence $u$. Then $R^{\rm adv}_T(u)\le R^{\rm clean}_T(u)+G_\ell\,T\,\Delta_f(T)$;
@@ -440,22 +445,31 @@ clean blocks; lower bounds of the true suprema). Script: \texttt{certificate\_ch
 \toprule
 $G_\Phi$ & $L_\theta$ & $L_a$ & $\epsilon$ (A3) & $\eta^{(K)}$\\
 \midrule
-\todo{$G_\Phi$} & \todo{$L_\theta$} & \todo{$L_a$} & 0.93 & 0.5\\
+5.21 (mean 3.13) & 0.86 (mean 0.76) & 0.35 (mean 0.32) & 1.05 & 0.5\\
 \bottomrule
 \end{tabular}
 \end{table}
 \begin{figure}[t]
 \centering\includegraphics[width=\columnwidth]{fig_e5_certificate_bound}
 \caption{Paired displacement of the slowest level under A3 (solid) against the
-certificate \eqref{eq:cert} with measured constants (dashed), for $C_K=8,32,128$.}
+structural certificate \eqref{eq:cert} with the measured fast-level displacement
+(dashed), for $C_K=8,32,128$, 300 attacked blocks, 3 seeds.}
 \label{fig:cert}
 \end{figure}
-Fig.~\ref{fig:cert} draws \eqref{eq:cert} with the constants of
-Table~\ref{tab:constants} against the paired adversarial/clean trajectories of the
-slowest level over 300 attacked blocks for $C_K\in\{8,32,128\}$. The measured slopes are
-$0.084/0.029/0.0083$ per block, ratios $1:0.35:0.10$ against the certificate's
-$1:0.25:0.0625$ ($\propto C_K^{-0.85}$ over a $16\times$ range); the measured curve stays
-below the certificate at every $W$ \todo{confirm from the regenerated figure}.
+Fig.~\ref{fig:cert} draws \eqref{eq:cert} against the paired adversarial/clean
+trajectories of the slowest level over 300 attacked blocks for $C_K\in\{8,32,128\}$. The
+bound holds at every $W$ (largest ratio of measured to bound $0.94/0.53/0.26$), is nearly
+tight at $C_K=8$, and the measured slopes $0.084/0.029/0.0083$ per block scale as
+$1:0.35:0.10$ against the $1:0.25:0.0625$ of pure $1/C_K$ ($\propto C_K^{-0.85}$ over a
+$16\times$ range; the deviation is the fast displacement itself shrinking with $C_K$,
+because a slower anchor pulls the fast level back harder). The measured constants
+(Table~\ref{tab:constants}) give $L_\theta+L_a=1.20$: the random probes do \emph{not}
+certify the contraction that part (ii) needs for the default receiver, so we claim part
+(i) with the measured fast displacement, and report that the fast displacement is of the
+size the geometric sum predicts from $L_\theta$ alone
+($\epsilon G_\Phi/(1-L_\theta)\approx39$ against measured maxima of $16$--$34$). A larger
+proximal weight lowers $L_\theta$ at the price of adaptation speed; we leave the
+exploration of that trade-off to future work.
 
 \subsection{COST2100 and the low-SER regime}\label{sec:cost}
 On COST2100 at 10\,dB every receiver is at SER $\le10^{-3}$ without attack. Under A1,
@@ -490,9 +504,9 @@ Theorem~\ref{thm:regret} follows at the level of blocks rather than gradients.
 (i) The clean gain is channel-dependent and vanishes where LMMSE is already optimal.
 (ii) The defence holds the receiver near its clean trajectory down to SER $\sim10^{-3}$;
 at a $10^{-4}$ operating point (16\,dB) the rare leaked block dominates and the
-degradation in dB is not bounded by our grid. (iii) The certificate's constants are
-random-probe lower bounds of suprema; the bound is reported as holding with the measured
-constants, not as a worst-case guarantee over all inputs. (iv) We claim no
+degradation in dB is not bounded by our grid. (iii) The certificate's Lipschitz constants are random-probe lower bounds of
+suprema and, for the default receiver, do not certify the contraction of part (ii); the
+guarantee we claim is the structural part (i) with the measured fast-level displacement. (iv) We claim no
 dynamic-regret rate for the clean term of the full-MLP receiver. (v) Results are for
 4$\times$4 QPSK with 100 pilot symbols; the 8$\times$8 grid and link-level simulations
 with LDPC coding are \todo{pending}.
