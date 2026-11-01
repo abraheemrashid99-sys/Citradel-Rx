@@ -312,4 +312,4 @@ configuration) and the table printed by the script; the statement proved is Theo
    metric is the per-block difference to the clean trajectory, which the
    figure shows (≤ 0.06 at the deepest fade).
 3. No nonlinear / COST2100 / Jakes runs yet (configs exist).
-4. Wu et al. numbers still unverified at the primary source (arXiv blocked here).
+4. Primary source verified by title/author search: K. Wu, W. Jiang, D. Niyato, Y. Li, C. Luo, "Transfer-based Adversarial Poisoning Attacks for Online (MIMO-)Deep Receviers", arXiv:2409.02430v3 (Sep 2024). Their specific dB figures could not be read here (arXiv not reachable from this session); the manuscript cites the paper qualitatively only.
