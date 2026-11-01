@@ -470,9 +470,14 @@ because a slower anchor pulls the fast level back harder). The measured constant
 certify the contraction that part (ii) needs for the default receiver, so we claim part
 (i) with the measured fast displacement, and report that the fast displacement is of the
 size the geometric sum predicts from $L_\theta$ alone
-($\epsilon G_\Phi/(1-L_\theta)\approx39$ against measured maxima of $16$--$34$). A larger
-proximal weight lowers $L_\theta$ at the price of adaptation speed; we leave the
-exploration of that trade-off to future work.
+($\epsilon G_\Phi/(1-L_\theta)\approx39$ against measured maxima of $16$--$34$). A sweep of the
+proximal weight shows why: raising $\lambda$ from $0.5$ to $4$ lowers $L_\theta$ from
+$0.86$ to $0.38$ and raises $L_a$ from $0.35$ to $1.01$; the fast map converges toward the
+anchor, so $L_\theta+L_a\approx1$ is structural. The joint system is non-expansive rather
+than contractive, which yields the injection-count form of part (ii),
+$\Delta_f^{\rm meas}(W)\le G_\Phi\epsilon\,n_W$, with no contraction assumed (supplementary
+theory document, remark (e)). The same sweep shows that $\lambda=1$ halves $G_\Phi$
+($5.2\to1.5$): a stronger prior makes the per-block fit less steerable by the pilots.
 
 \subsection{COST2100 and the low-SER regime}\label{sec:cost}
 On COST2100 at 10\,dB every receiver is at SER $\le10^{-3}$ without attack. Under A1,

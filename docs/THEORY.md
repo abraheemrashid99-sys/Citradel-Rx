@@ -152,7 +152,18 @@ more strongly anchored configuration (larger `prox_lambda`, which lowers L_θ) b
 The measured fast displacement is nonetheless of the size the geometric sum predicts
 from L_θ alone (ε G_Φ /(1 − L_θ) = 1.05 × 5.21 / 0.14 ≈ 39 against measured maxima of
 16–34), which is consistent with L_a acting on a slowly moving anchor rather than
-compounding every block.
+compounding every block. (e) A sweep of the proximal weight
+(`docs/certificate_constants_lambda.json`; λ = 0.5 / 1 / 2 / 4 gives L_θ = 0.86 / 0.54 /
+0.40 / 0.38 and L_a = 0.35 / 0.54 / 0.82 / 1.01) shows that L_θ + L_a ≈ 1 is structural:
+the proximal fast map drives θ toward the anchor, so what it forgets about its own
+past (1 − L_θ) it inherits from the anchor (L_a). The joint system is (approximately)
+*non-expansive*, not contractive, and the appropriate statement is the injection-count
+bound: if L_θ + L_a ≤ 1 then, by the same convexity argument as Lemma 2 applied to
+Lemma 1, d_b ≤ max{d_{b−1}, Δ_slow(b−1)} + G_Φ ε χ_b, hence with (4)
+max_{j≤b} d_j ≤ G_Φ ε n_b, where n_b is the number of accepted attacked blocks so far.
+This is the second branch of Δ_f(W) without the (1 − L_θ)/(1 − L) factors; it needs no
+contraction, only non-expansiveness, and it is what the measured constants support
+(within the probe error: the measured sums are 1.08–1.39).
 
 ### Numerical check (`scripts/certificate_check.py`, `docs/figures/fig_e5_certificate_bound.png`)
 

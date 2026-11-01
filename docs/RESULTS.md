@@ -324,8 +324,15 @@ L_a = 0.35 (mean 0.32), A3 budget ε = 1.05 per block, single-gradient constant 
   two consolidations in 300 blocks and the bound charges the full Δ_f to each).
 * The measured fast displacement is of the size the geometric sum predicts from L_θ alone
   (ε G_Φ /(1 − L_θ) ≈ 39 vs 16–34 measured), i.e. the anchor coupling does not compound.
-* A `prox_lambda` sweep of the constants (1.0 / 2.0 / 4.0; `docs/certificate_constants_lambda.json`)
-  shows how much anchoring is needed for L < 1 (filled in when the run finishes).
+* `prox_lambda` sweep of the constants (`docs/certificate_constants_lambda.json`, 5 clean
+  blocks each): λ = 0.5 (default) / 1 / 2 / 4 → G_Φ 5.21 / 1.54 / 2.22 / 2.21, L_θ 0.86 / 0.54 /
+  0.40 / 0.38, L_a 0.35 / 0.54 / 0.82 / 1.01. Anchoring lowers the state sensitivity exactly as
+  it raises the anchor sensitivity: L_θ + L_a ≈ 1 is structural (the fast map converges toward
+  the anchor), so the contraction branch of Theorem 1 cannot be bought with λ and the paper
+  claims the structural branch plus the injection-count bound (THEORY.md, remark (e)).
+  Side result worth a sentence in the paper: λ = 1 roughly halves the input sensitivity G_Φ
+  of the fast level (5.2 → 1.5) — a stronger prior makes the per-block fit less steerable by
+  the pilots, clean or poisoned.
 
 ## Caveats (to be closed before any number enters the manuscript)
 1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
