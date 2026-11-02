@@ -347,11 +347,95 @@ L_a = 0.35 (mean 0.32), A3 budget ε = 1.05 per block, single-gradient constant 
   of the fast level (5.2 → 1.5) — a stronger prior makes the per-block fit less steerable by
   the pilots, clean or poisoned.
 
+## Full relative-slack grid (GPU box, 2 Nov; 3 seeds; `results/e3rel/`, 57 records; ρ = 1, δ_min = 0.002)
+
+COST2100, white-box A1, SER in the attack window at SIR −10 / −5 / 0 / 5 / 10 dB:
+**0.0011 / 0.0012 / 0.0012 / 0.0015 / 0.0028** (clean 0.0003, post 0.0004, recovery 0–9 blocks;
+rejection 0.89 / 0.90 / 0.86 / 0.74 / 0.40; false rejection 0.00). Against the absolute-slack rows
+(0.0022 / 0.0032 / 0.0054 / 0.0122 / 0.0111) this is 2–8× lower and 4–9× the clean level instead
+of 7–40×. At SIR 10 dB the weak attacker slips under the slack more often (rejection 0.40)
+but the harm it can do while passing is, by construction, bounded by the slack.
+
+Linear channel, same grid (no-regression check): 0.0255 / 0.0252 / 0.0247 / 0.0250 / 0.0285
+at SIR −10 … 10 dB, clean 0.039, rejection 0.93–1.00, false rejection 0.00–0.02 — identical to
+the absolute-slack rows of the E3 table.
+
+SNR sweep at SIR 0 dB, clean / attacked window: 10 dB 0.0305 / 0.0250; 12 dB 0.0059 / 0.0062;
+14 dB 0.0008 / 0.0018; 16 dB 0.0001 / 0.0009 (rejection 0.97–1.00 / 0.97–1.00 / 0.93–0.97 /
+0.88–0.93). Δ_dB is now ≈ 0 at 12 dB (was 1.8) and the attacked window sits at 1e-3 at
+14–16 dB (was 3e-3–6e-3). Δ_dB at 14–16 dB remains outside the grid: the ~5 % of poisoned
+blocks that pass the gate set a floor near 1e-3 that a 1e-4 operating point cannot absorb.
+Stated as a limitation; closing it needs rejection → 1, not a different slack.
+
+Gate ROC on this grid: AUC 0.988 (γ), 0.956 (G1), 0.974 (G2), 0.947 (G3); rejection 0.90 at
+0.7 % false rejection (`docs/figures/fig_gate_roc.png`, regenerated with e3rel/e8/e9).
+
+## 8×8 QPSK (GPU box, 2 Nov; 3 seeds; `results/e8/`, 84 records)
+
+Linear SED channel with eight users (cosine fading periods extended with co-prime periods
+for users 5–8), SNR 10 dB, white-box A1 on blocks 30–69.
+
+| receiver | clean (no attack) | pre | attack window, SIR −10 / 0 / 10 dB | post (0 dB) | recovery | rejection / false rej. |
+|---|---|---|---|---|---|---|
+| LMMSE | 0.129 | 0.141 | 0.983 / 0.793 / 0.200 (transfer) | 0.129 | 7 | – |
+| online DeepSIC | 0.204 | 0.250 | 0.998 / 0.971 / 0.615 | 0.316 | 11 | – |
+| Meta-DeepSIC | 0.187 | 0.220 | 0.972 / 0.934 / 0.603 | 0.656 | 30† | – |
+| drift-detection | 0.217 | 0.259 | 0.997 / 0.971 / 0.608 | 0.316 | 11 | – |
+| MedBN-style | 0.177 | 0.158 | 0.995 / 0.923 / 0.644 | 0.396 | 30† | – |
+| single-memory Titans | 0.177 | 0.234 | 0.998 / 0.969 / 0.583 | 0.280 | 9 | – |
+| **Citadel-Rx** | **0.102** | 0.127 | **0.080 / 0.080 / 0.090** | 0.096 | 6 | 0.97–1.00 / 0.03–0.05 |
+
+With twice the users the clean gain grows (Citadel 0.102 vs LMMSE 0.129, online 0.204:
+interference cancellation matters more), the attack destroys every baseline at ≤ 0 dB
+(SER 0.92–0.998) and Meta-DeepSIC/MedBN again never recover (post-attack 0.40–0.66), and
+Citadel-Rx stays below its own pre-attack level at every budget. False rejections rise to
+3–5 % (the 8-user fade has deeper per-block dips) and are the reason the "recovery" column
+reads 6 rather than 0: the post-attack SER (0.096) is within 10 % of the pre-attack level
+only after the fade turns.
+
+## Doppler sweep (GPU box, 2 Nov; 3 seeds; `results/e9/`, 63 records)
+
+Jakes block fading, f_D T_b = 0.01 / 0.05 / 0.10, SNR 10 dB, white-box A1 at SIR 0 dB, SER in
+the attack window (pre-attack in parentheses):
+
+| receiver | 0.01 | 0.05 | 0.10 | recovery | post-attack |
+|---|---|---|---|---|---|
+| LMMSE (transfer) | 0.067 (0.015) | 0.067 (0.017) | 0.103 (0.021) | 0–1 | 0.002–0.009 |
+| online DeepSIC | 0.719 (0.017) | 0.719 (0.019) | 0.717 (0.026) | 3–6 | 0.017–0.021 |
+| Meta-DeepSIC | 0.496 (0.013) | 0.501 (0.017) | 0.531 (0.026) | 25–30† | 0.074–0.087 |
+| drift-detection | 0.728 (0.023) | 0.738 (0.029) | 0.717 (0.040) | 5–11 | 0.026–0.032 |
+| MedBN-style | 0.711 (0.015) | 0.692 (0.017) | 0.691 (0.025) | 30† | 0.16 |
+| single-memory Titans | 0.738 (0.015) | 0.749 (0.018) | 0.736 (0.023) | 4–5 | 0.015–0.020 |
+| **Citadel-Rx** | **0.0066 (0.0071)** | **0.0069 (0.0098)** | **0.0075 (0.0147)** | 0–1 | 0.001–0.003 |
+
+Rejection 0.92 / 0.94 / 0.97, false rejection 0.006 / 0.011 / 0.033. Faster fading raises the
+clean SER of every receiver and raises Citadel's false rejections (a fast channel looks more
+"surprising"), but the defence does not weaken: the attack-window SER is flat at 0.007 across
+a 10× range of Doppler. Gate AUC 0.996.
+
+## Five seeds on the headline cells (seeds 0–4; `results/e3/`, `results/e2/`)
+
+| cell | online DeepSIC | Meta-DeepSIC | Citadel-Rx |
+|---|---|---|---|
+| clean SER, cosine, 10 dB | 0.0590 ± 0.0008 | 0.0527 ± 0.0008 | **0.0302 ± 0.0004** |
+| clean SER, Jakes 0.05, 10 dB | 0.0128 ± 0.0058 | 0.0115 ± 0.0049 | **0.0059 ± 0.0028** |
+| pre-attack SER (E3) | 0.0714 ± 0.0014 | 0.0617 ± 0.0010 | 0.0397 ± 0.0007 |
+| white-box A1, SIR −10 dB | 0.973 ± 0.003 | 0.861 ± 0.009 | **0.0261 ± 0.0017** |
+| white-box A1, SIR 0 dB | 0.772 ± 0.013 | 0.593 ± 0.011 | **0.0277 ± 0.0021** |
+| white-box A1, SIR 10 dB | 0.277 ± 0.005 | 0.241 ± 0.006 | **0.0344 ± 0.0029** |
+| transfer A1, SIR 0 dB | 0.347 ± 0.013 | 0.213 ± 0.012 | **0.0270 ± 0.0026** |
+| data jamming, 0 dB | 0.855 ± 0.001 | 0.851 ± 0.001 | 0.848 ± 0.001 |
+
+(The Jakes clean cell has a large seed spread for every receiver because the realised
+fade differs per seed; the ranking is the same in all five seeds.)
+
+Record count after this round: 1926 JSON records in `results/`.
+
 ## Caveats (to be closed before any number enters the manuscript)
-1. One seed. Three seeds and the 5-point SIR grid are the next sweep.
+1. Closed: three seeds everywhere, five on the headline cells.
 2. The attacked blocks' SER (0.03) is *lower* than the clean run's mean
    because the window happens to cover the easy part of the fade; the honest
    metric is the per-block difference to the clean trajectory, which the
    figure shows (≤ 0.06 at the deepest fade).
-3. No nonlinear / COST2100 / Jakes runs yet (configs exist).
+3. Closed: nonlinear, COST2100, Jakes (three Dopplers) and 8×8 all run.
 4. Primary source verified by title/author search: K. Wu, W. Jiang, D. Niyato, Y. Li, C. Luo, "Transfer-based Adversarial Poisoning Attacks for Online (MIMO-)Deep Receviers", arXiv:2409.02430v3 (Sep 2024). Their specific dB figures could not be read here (arXiv not reachable from this session); the manuscript cites the paper qualitatively only.

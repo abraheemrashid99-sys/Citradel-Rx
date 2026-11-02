@@ -45,8 +45,8 @@ displacement that a budget-$\epsilon$ poisoning can cause in level $K$ over $W$ 
 bounded by $\eta^{(K)}\epsilon\,G\,(1-p^{\rm rej})\,W/C_K$, with every constant measured
 from the receiver, and a corruption-robust dynamic-regret decomposition in which the
 adversary's term is additive, scaled by the gate's miss rate and divided by the level
-period. Across 1\,800 runs on synthetic linear and nonlinear channels, Jakes fading and
-COST2100 traces, three seeds, white-box, transfer, targeted, boiling-frog and
+period. Across 1\,900 recorded runs on synthetic linear and nonlinear channels, Jakes fading at
+three Doppler rates, COST2100 traces, $4\times4$ and $8\times8$ systems, three to five seeds, white-box, transfer, targeted, boiling-frog and
 gate-aware attackers, Citadel-Rx keeps its clean symbol error rate at every attack
 budget from $-10$ to $+10$\,dB signal-to-interference ratio (attack-window SER
 $0.025$--$0.037$ against $0.28$--$0.97$ for online DeepSIC and $0.24$--$0.86$ for
@@ -111,8 +111,8 @@ $10^{-3}$ operating points.
 for the slow memory (Thm.~\ref{thm:cert}) and a corruption-robust dynamic-regret
 decomposition (Thm.~\ref{thm:regret}), both for the algorithm as implemented, with
 constants the code measures.
-\item \textbf{Evidence} (Sec.~\ref{sec:exp}): 1\,800 recorded runs, three seeds,
-seven receivers, five attackers, four channel families, a full ablation, the gate's
+\item \textbf{Evidence} (Sec.~\ref{sec:exp}): 1\,900 recorded runs, three to five seeds,
+seven receivers, five attackers, four channel families, two system sizes, a full ablation, the gate's
 receiver operating characteristic, the per-block cost, and the certificate drawn with
 measured constants against paired adversarial/clean memory trajectories.
 \end{enumerate}
@@ -240,11 +240,19 @@ the $\chi^2$ quantile of the degrees of freedom; it targets physically implausib
 jumps (A2) and is the only gate that is not fooled by an attacker who keeps the SER
 low.
 
+\begin{figure}[t]
+\centering\includegraphics[width=\columnwidth]{fig_gate_roc}
+\caption{Receiver operating characteristic of the gate verdict $\gamma$ as a detector of
+poisoned blocks, pooled over seeds and budgets (left: per experiment; right: individual
+gates on the linear A1 grid). Script: \texttt{gate\_roc.py}.}
+\label{fig:roc}
+\end{figure}
 The verdict is $\gamma_b=\min$ of the three soft verdicts. The gate's receiver operating
 characteristic is in Fig.~\ref{fig:roc}: area under the curve $0.989$ (A1, linear),
-$0.989$ (nonlinear), $0.992$ (A2), $0.982$ (gate-aware), $1.000$ (jamming), $0.932$
-(COST2100, absolute slack); at the operating point used, $94\%$ of poisoned blocks are
-rejected at a $0.7\%$ false-rejection rate.
+$0.989$ (nonlinear), $0.988$ (relative-slack grid incl. COST2100), $0.985$ (8$\times$8),
+$0.996$ (Jakes), $0.992$ (A2), $0.982$ (gate-aware), $1.000$ (jamming); at the operating
+point used, $94\%$ of poisoned blocks are rejected at a $0.6\%$ false-rejection rate on
+the linear grid.
 
 \section{Theory}\label{sec:theory}
 We state the results for the algorithm as implemented; proofs are in the supplementary
@@ -297,9 +305,10 @@ for the last-layer-adaptable variant the standard $O(\sqrt{T(1+P_T)})$ dynamic-r
 bound applies with the bounded step size.
 
 \section{Experiments}\label{sec:exp}
-\textbf{Protocol.} 4$\times$4 QPSK, $N_p=100$ pilot symbols (200 bits) and $N_d=25\,000$
-data symbols per user per block, 100 blocks per run (400 for A3), SNR 10\,dB unless
-swept, A1 on blocks 30--69, 3 seeds (mean reported; seed standard deviations are in the
+\textbf{Protocol.} 4$\times$4 QPSK (8$\times$8 in Sec.~\ref{sec:88}), $N_p=100$ pilot
+symbols (200 bits) and $N_d=25\,000$ data symbols per user per block, 100 blocks per run
+(400 for A3), SNR 10\,dB unless swept, A1 on blocks 30--69, 3 seeds (5 on the headline
+cells; means reported, seed standard deviations are in Table~\ref{tab:seeds} and the
 repository tables and are an order of magnitude below every effect we discuss). SER is
 the fraction of symbol slots in which any user is wrong, the metric of
 \cite{shlezinger2021deepsic,raviv2023meta,wu2024poison}. Baselines: LMMSE; online
@@ -388,6 +397,55 @@ DeepSIC $0.32$--$0.97$, Meta-DeepSIC $0.31$--$0.87$ never recovering) and in the
 degradation metric of \cite{wu2024poison}: the extra SNR needed under attack to reach
 the clean SER is unbounded for every baseline over the whole 4--16\,dB grid (attacked
 SER $0.45$--$0.91$), and $\le0$\,dB for Citadel-Rx from 4 to 10\,dB, 1.8\,dB at 12\,dB.
+
+\begin{table}[t]
+\centering\caption{Headline cells with five seeds (mean $\pm$ standard deviation over
+seeds). Scripts: \texttt{sweep.py e3/e2 --seeds 0 1 2 3 4}.}\label{tab:seeds}
+\small
+\begin{tabular}{lccc}
+\toprule
+cell & online DeepSIC & Meta-DeepSIC & Citadel-Rx\\
+\midrule
+clean, cosine 10\,dB & $0.0590\pm0.0008$ & $0.0527\pm0.0008$ & $\mathbf{0.0302\pm0.0004}$\\
+clean, Jakes 10\,dB & $0.0128\pm0.0058$ & $0.0115\pm0.0049$ & $\mathbf{0.0059\pm0.0028}$\\
+A1 white-box, SIR $-10$ & $0.973\pm0.003$ & $0.861\pm0.009$ & $\mathbf{0.026\pm0.002}$\\
+A1 white-box, SIR $0$ & $0.772\pm0.013$ & $0.593\pm0.011$ & $\mathbf{0.028\pm0.002}$\\
+A1 white-box, SIR $10$ & $0.277\pm0.005$ & $0.241\pm0.006$ & $\mathbf{0.034\pm0.003}$\\
+A1 transfer, SIR $0$ & $0.347\pm0.013$ & $0.213\pm0.012$ & $\mathbf{0.027\pm0.003}$\\
+jamming, 0\,dB & $0.855\pm0.001$ & $0.851\pm0.001$ & $0.848\pm0.001$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Larger system and faster fading}\label{sec:88}
+\begin{table}[t]
+\centering\caption{8$\times$8 QPSK, 10\,dB, white-box A1, 3 seeds: clean SER and SER in
+the attack window. Script: \texttt{sweep.py e8}.}\label{tab:88}
+\small
+\begin{tabular}{lcccc}
+\toprule
+receiver & clean & SIR $-10$ & SIR $0$ & SIR $10$\\
+\midrule
+LMMSE (transfer) & 0.129 & 0.983 & 0.793 & 0.200\\
+online DeepSIC & 0.204 & 0.998 & 0.971 & 0.615\\
+Meta-DeepSIC & 0.187 & 0.972 & 0.934 & 0.603\\
+drift-detection & 0.217 & 0.997 & 0.971 & 0.608\\
+MedBN-style & 0.177 & 0.995 & 0.923 & 0.644\\
+single-memory Titans & 0.177 & 0.998 & 0.969 & 0.583\\
+\textbf{Citadel-Rx} & \textbf{0.102} & \textbf{0.080} & \textbf{0.080} & \textbf{0.090}\\
+\bottomrule
+\end{tabular}
+\end{table}
+With eight users (Table~\ref{tab:88}) the clean gain grows (interference cancellation
+matters more: Citadel-Rx $0.102$ against LMMSE $0.129$ and online DeepSIC $0.204$), every
+baseline is destroyed at SIR $\le0$\,dB, Meta-DeepSIC and MedBN again never recover
+(post-attack SER $0.40$--$0.66$), and Citadel-Rx stays below its own pre-attack level at
+every budget with $97$--$100\%$ rejection and $3$--$5\%$ false rejections. Under Jakes
+fading at $f_DT_b=0.01/0.05/0.10$ and SIR 0\,dB the attack-window SER of Citadel-Rx is flat
+at $0.0066/0.0069/0.0075$ (pre-attack $0.007/0.010/0.015$; rejection $0.92/0.94/0.97$,
+false rejection $0.6/1.1/3.3\%$), while online DeepSIC sits at $0.72$ and Meta-DeepSIC at
+$0.50$--$0.53$ without recovering: faster fading raises everyone's clean SER and the
+gate's false alarms, not the attacker's success.
 
 \subsection{Ablation}
 \begin{table}[t]
@@ -486,10 +544,21 @@ recovering); Citadel-Rx with the absolute CRC slack to $0.002$--$0.012$ (clean
 $3\cdot10^{-4}$), $50$--$400\times$ better than online DeepSIC but off its clean
 trajectory, with rejection falling to $0.64$: at that operating point a one-point SER
 slack is $30\times$ the clean SER and the attacker can pass G2 while doing damage. With
-the relative slack of Prop.~\ref{prop:crc} the attack-window SER at SIR 0\,dB returns to
-$0.0009$ (tight-slack pilot test, 3 seeds; rejection $0.85$--$0.93$, no false rejections);
-the full relative-slack grid is \todo{E3rel, pending}. We report this as the one
-threshold-design limit found, and its fix.
+the relative slack of Prop.~\ref{prop:crc} the attack-window SER on COST2100
+becomes $0.0011/0.0012/0.0012/0.0015/0.0028$ at SIR $-10/-5/0/5/10$\,dB (3 seeds; clean
+$0.0003$, post-attack $0.0004$, rejection $0.89/0.90/0.86/0.74/0.40$, no false rejections):
+$2$--$8\times$ lower than with the absolute slack, and $4$--$9\times$ the clean level instead
+of $7$--$40\times$; the weak attacker at $10$\,dB passes the gate more often but can do,
+by construction, at most the slack's worth of harm. The linear SIR grid is unchanged
+($0.025$--$0.029$, rejection $0.93$--$1.00$, false rejection $\le2\%$), and on the SNR sweep
+the attacked-window SER is $0.0062$ at 12\,dB (clean $0.0059$, i.e. no degradation),
+$0.0018$ at 14\,dB and $0.0009$ at 16\,dB (clean $0.0008$ and $0.0001$). A first
+calibration with a tighter floor ($10^{-3}$) had fixed COST2100 but raised linear false
+rejections to $15$--$20\%$, because the floor sat inside the statistical resolution of the
+pass fraction; the floor of $2\cdot10^{-3}$ is five standard deviations of it. What
+remains is a floor near $10^{-3}$ at $14$--$16$\,dB set by the $\sim5\%$ of poisoned blocks
+that pass the gate, which a $10^{-4}$ operating point cannot absorb; we state it as a
+limitation.
 
 \subsection{Cost}
 Per block on one CPU thread, with 300 adaptation steps: LMMSE 0.09\,s, online DeepSIC
@@ -515,16 +584,17 @@ at a $10^{-4}$ operating point (16\,dB) the rare leaked block dominates and the
 degradation in dB is not bounded by our grid. (iii) The certificate's Lipschitz constants are random-probe lower bounds of
 suprema and, for the default receiver, do not certify the contraction of part (ii); the
 guarantee we claim is the structural part (i) with the measured fast-level displacement. (iv) We claim no
-dynamic-regret rate for the clean term of the full-MLP receiver. (v) Results are for
-4$\times$4 QPSK with 100 pilot symbols; the 8$\times$8 grid and link-level simulations
-with LDPC coding are \todo{pending}.
+dynamic-regret rate for the clean term of the full-MLP receiver. (v) Results are for QPSK with 100 pilot symbols per user and uncoded data (the CRC
+framing is the only code); link-level simulation with LDPC coding and a 3GPP channel
+model is future work.
 
 \section{Conclusion}
 Memory at several time-scales, consolidated only through physics-consistent evidence
 and used as both a prior and a fallback, makes an adaptive neural receiver hard to
 poison: the adversary's reach into the slow memory is divided by its period and
-multiplied by the gate's miss rate, provably and measurably, and in 1\,800 runs no
-attacker in our threat model moved the receiver off its clean trajectory except in the
+multiplied by the gate's miss rate, provably and measurably, and in 1\,900 runs no
+attacker in our threat model moved the receiver off its clean trajectory, at either
+system size, at any Doppler, on any of the four channel families, except in the
 low-SER regime whose fix we derived.
 
 \bibliographystyle{IEEEtran}

@@ -1,4 +1,6 @@
-# Remaining runs for the GPU workstation (PowerShell, Windows)
+# Runs for the GPU workstation (PowerShell, Windows)
+
+Status 2 Nov 2026: sections 1–4 are done and pushed (commit 2ddc21e); the commands stay here for reruns.
 
 Every command below resumes: records that already exist are skipped, so a reboot
 costs nothing but time. Run them in order; each block says what it closes in the
@@ -8,7 +10,7 @@ crashed), so `--workers 8` on the 20-core box is the right setting.
 ## 0. Update the code and the environment
 
 ```powershell
-cd $HOME\Citradel-Rx
+cd C:\Users\athawerani\Documents\Abraheem_work\paper2\Citradel-Rx
 .\.venv\Scripts\Activate.ps1
 git pull origin claude/fervent-cray-ah5drn
 python -c "import torch; print(torch.__version__)"
@@ -75,7 +77,7 @@ never be force-added: that is what produced the 13 GB pushes).
 ## Checking progress (second terminal)
 
 ```powershell
-cd $HOME\Citradel-Rx
+cd C:\Users\athawerani\Documents\Abraheem_work\paper2\Citradel-Rx
 foreach ($e in "e3rel","e8","e9","e3","e2") { "$e : $((Get-ChildItem results\$e -Filter *.json -ErrorAction SilentlyContinue).Count)" }
 ```
 
