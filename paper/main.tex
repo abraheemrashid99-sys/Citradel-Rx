@@ -105,6 +105,7 @@ the defence reported alongside its benefit.
 \centering\caption{Positioning by method class (--: not addressed; the attack surface is
 what the adversary can write to).}\label{tab:pos}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lllll@{}}
 \toprule
 Class & Adapts & Memory & Attack surface & Defence\\
@@ -118,7 +119,7 @@ Byzantine aggregation \cite{blanchard2017} & -- & -- & gradients & needs many ve
 Nested / continuum memory \cite{behrouz2025nested,behrouz2025titans} & every token & multi-rate & input & --\\
 Citadel-Rx (ours) & every block & 3 rates, gated & pilots & physics gates, certified retention\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 Prior work addresses these properties separately (Table~\ref{tab:pos}). Test-time
@@ -197,6 +198,7 @@ are used (Section~\ref{sec:setup}).
 \centering\caption{Simulation setup, read from the configuration files and the code.}
 \label{tab:setup}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}ll@{}}
 \toprule
 Item & Value\\
@@ -212,7 +214,7 @@ DeepSIC & $Q=3$ iterations, per-user MLP $64\cdot$order hidden units, ReLU \cite
 Adaptation & Adam, lr $5\cdot10^{-3}$, 300 epochs per block on the pilots; joint pre-training at 2--16\,dB\\
 Attacker & PGD, 20 steps, step $0.25\,\epsilon$, 2 unrolled adaptation steps \cite{wu2024,madry2018}\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 The receiver is DeepSIC \cite{shlezinger2021}: $Q$ soft-interference-cancellation
@@ -277,7 +279,7 @@ study from configuration to every reported number.
 \node[box,text width=62mm,below=of d] (e) {tables, figures, bootstrap intervals, Holm--Wilcoxon tests, certificate check};
 \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d); \draw[arr] (d)--(e);
 \node[dbox,fit=(a)(e),inner sep=2mm] (f) {};
-\node[lbl,rotate=90,anchor=south] at ($(f.west)+(-1mm,0)$) {\texttt{sweep.py}, \texttt{analyze.py}, \texttt{stats.py}, \texttt{certificate\_check.py}};
+\node[lbl,rotate=90,anchor=south] at ($(f.west)+(-2.5mm,0)$) {\texttt{sweep.py}, \texttt{analyze.py}, \texttt{stats.py}, \texttt{certificate\_check.py}};
 \end{tikzpicture}
 \caption{Study pipeline from configuration to every reported number; finished records are
 skipped on re-run, so every stage is resumable.}
@@ -291,32 +293,42 @@ gates accept. Fig.~\ref{fig:arch} shows the architecture.
 
 \begin{figure*}[t]
 \centering
-\begin{tikzpicture}[node distance=3mm and 6mm]
-\node[box,text width=30mm] (fast) {Level 1: fast state $\theta^{(1)}$\\ delta-rule Adam, $T$ steps, rate $\eta_b$};
-\node[box,text width=30mm,below=of fast] (l2) {Level 2: $\theta^{(2)}$, period $C_2=8$\\ gated mean of level-1 states};
-\node[box,text width=30mm,below=of l2] (l3) {Level 3: $\theta^{(3)}$, period $C_3=32$\\ gated mean of level-2 states};
-\node[box,text width=26mm,right=14mm of fast] (det) {DeepSIC detector\\ data of block $b$};
-\node[box,text width=26mm,below=of det] (gate) {gates G1, G2, G3\\ $\gamma_b=\min(\cdot)$};
-\node[box,text width=26mm,below=of gate] (ref) {reference on the same block:\\ LS channel estimate, LMMSE, anchor detector};
-\node[box,text width=22mm,left=10mm of fast] (pil) {pilots $\bm Y_b(+\bm E_b)$};
-\node[box,text width=22mm,below=of pil] (sur) {surprise $S_b$\\ $\eta_b=\eta_{\max}\frac{2r_b}{1+r_b}$};
-\node[box,text width=22mm,below=of sur] (anc) {anchor $a_b=\sum_k w_k\theta^{(k)}$};
-\node[box,text width=26mm,right=10mm of det] (out) {decisions $\hat{\bm s}$\\ (fallback: anchor detector if $\gamma_b<\tfrac12$)};
-\draw[arr] (pil)--(fast) node[midway,lbl,above]{adapt};
-\draw[arr] (pil)--(sur); \draw[arr] (sur)--(fast) node[midway,lbl,right]{$\eta_b$};
-\draw[arr] (anc)-- (fast.south west) node[midway,lbl,above,sloped]{proximal pull};
-\draw[arr] (fast)--(det) node[midway,lbl,above]{$\theta^{(1)}_b$};
+\begin{tikzpicture}[x=1mm,y=1mm]
+% nested memory
+\node[box,text width=24mm] (pil) at (0,20) {pilots $\bm Y_b$\\ ($+\bm E_b$ if attacked)};
+\node[box,text width=24mm] (sur) at (0,8) {surprise $S_b$,\\ step $\eta_b$ from \eqref{eq:eta}};
+\node[box,text width=24mm] (anc) at (0,-10) {anchor\\ $a_b=\tfrac12\theta^{(2)}+\tfrac12\theta^{(3)}$};
+\node[box,text width=34mm] (l1) at (40,20) {Level 1: fast state $\theta^{(1)}$\\ $T$ steps of \eqref{eq:delta}--\eqref{eq:adam}};
+\node[box,text width=34mm] (l2) at (40,4) {Level 2: $\theta^{(2)}$, period $C_2=8$\\ gated mean of level-1 states \eqref{eq:consol}};
+\node[box,text width=34mm] (l3) at (40,-12) {Level 3: $\theta^{(3)}$, period $C_3=32$\\ gated mean of level-2 states \eqref{eq:consol}};
+% detection and gates
+\node[box,text width=30mm] (det) at (90,20) {DeepSIC detector\\ on the data of block $b$};
+\node[box,text width=30mm] (gate) at (90,4) {gates G1, G2, G3\\ $\gamma_b=\min(\gamma_1,\gamma_2,\gamma_3)$};
+\node[box,text width=30mm] (ref) at (90,-12) {reference on the same block:\\ LS estimate $\hat{\bm H}_b$, LMMSE,\\ anchor detector};
+\node[box,text width=26mm] (out) at (132,20) {decisions $\hat{\bm s}_b$};
+\node[box,text width=26mm] (fb) at (132,4) {fallback: anchor decisions\\ if $\gamma_b<\tfrac12$};
+% arrows
+\draw[arr] (pil)--(l1) node[midway,lbl,above]{adapt};
+\draw[arr] (pil)--(sur);
+\draw[arr] (sur.east)--(l1.west|-sur.east) node[midway,lbl,above]{$\eta_b$};
+\draw[arr] (l1)--(det) node[midway,lbl,above]{$\theta^{(1)}_b$};
 \draw[arr] (det)--(out);
-\draw[arr] (det)--(gate) node[midway,lbl,right]{decisions, CRC};
+\draw[arr] (det)--(gate) node[midway,lbl,right]{decisions, CRC checks};
 \draw[arr] (ref)--(gate) node[midway,lbl,right]{residual, pass rate, innovation};
-\draw[darr] (gate.west)-- (l2.east) node[midway,lbl,above,sloped]{$\gamma_b$ weights the buffer};
-\draw[darr] (gate.west)-- (fast.south east) node[pos=0.3,lbl,below,sloped]{reject: revert};
-\draw[arr] (fast)--(l2) node[midway,lbl,right]{every $C_2$ blocks};
+\draw[arr] (l1)--(l2) node[midway,lbl,right]{every $C_2$ blocks, weights $\gamma$};
 \draw[arr] (l2)--(l3) node[midway,lbl,right]{every $C_3$ blocks};
-\draw[darr] (l3.west) -| (anc.south) ; \draw[darr] (l2.west) -| ($(anc.south)+(2mm,0)$);
-\draw[darr] (gate.east) -| (out.south) node[pos=0.25,lbl,above]{$\gamma_b$};
-\node[dbox,fit=(fast)(l2)(l3)(pil)(sur)(anc),inner sep=2mm,label={[font=\scriptsize]above:nested memory}] {};
-\node[dbox,fit=(det)(gate)(ref)(out),inner sep=2mm,label={[font=\scriptsize]above:detection and physics gates}] {};
+\draw[darr] (l2.west)--(15,4)--(15,-6)--(14,-6);
+\draw[darr] (l3.west)--(anc.east|-l3.west);
+\draw[darr] (14,-14)--(19,-14)--(19,15)--(23,15);
+\node[lbl,rotate=90] at (17.5,1) {proximal pull \eqref{eq:prox}};
+\draw[darr] ([yshift=-1.5mm]gate.west)--([yshift=-1.5mm]l2.east) node[midway,lbl,below]{$\gamma_b$ weights the buffer};
+\draw[darr] ([yshift=1.5mm]gate.west)--(62,5.5)--(62,20)--(l1.east);
+\node[lbl,rotate=90] at (63.5,13) {reject: revert};
+\draw[darr] (gate)--(fb) node[midway,lbl,above]{$\gamma_b$};
+\draw[arr] (fb)--(out);
+\draw[darr] (anc.south)--(0,-24)--(90,-24)--(ref.south) node[pos=0.5,lbl,below]{anchor parameters};
+\node[dbox,fit=(pil)(sur)(anc)(l1)(l2)(l3),inner sep=2.5mm,label={[font=\scriptsize]above:nested memory with gated consolidation}] {};
+\node[dbox,fit=(det)(gate)(ref)(out)(fb),inner sep=2.5mm,label={[font=\scriptsize]above:detection and physics gates}] {};
 \end{tikzpicture}
 \caption{Citadel-Rx. Solid arrows carry parameters and decisions; dashed arrows carry the
 gate verdict and the slow projection fed back. Level $k{+}1$ receives the gated mean of
@@ -354,8 +366,10 @@ Every $C_{k+1}$ blocks, level $k{+}1$ receives the gated mean of the level-$k$ s
 buffered since its last update, each weighted by the gate verdict $\gamma_j\in[0,1]$ of
 its block (level 1) or by the mean verdict of its period (level 2):
 \begin{equation}\label{eq:consol}
-\theta^{(k+1)}\leftarrow\theta^{(k+1)}+s\Big(\frac{\sum_j\gamma_j\theta^{(k)}_j}{\max(1,\sum_j\gamma_j)}-\theta^{(k+1)}\Big),\quad
-s=\eta^{(k+1)}\min\big(1,\textstyle\sum_j\gamma_j\big),
+\begin{aligned}
+\theta^{(k+1)}&\leftarrow\theta^{(k+1)}+s\Big(\frac{\sum_j\gamma_j\theta^{(k)}_j}{\max(1,\sum_j\gamma_j)}-\theta^{(k+1)}\Big),\\
+s&=\eta^{(k+1)}\min\big(1,\textstyle\sum_j\gamma_j\big),
+\end{aligned}
 \end{equation}
 with $\eta^{(2)}=1$ (level 2 is a running mean of the fast level) and $\eta^{(3)}=0.5$.
 Eq.~\eqref{eq:consol} is a convex combination (Lemma~\ref{lem:convex}): a level never
@@ -377,6 +391,7 @@ $0.245$, with it $0.028$). Table~\ref{tab:hyper} lists every hyperparameter.
 \centering\caption{Hyperparameters, read from the configuration file and the code.}
 \label{tab:hyper}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}ll@{}}
 \toprule
 Levels & $K=3$, periods $C=(1,8,32)$, $\eta^{(2)}=1$, $\eta^{(3)}=0.5$, anchor weights $(\tfrac12,\tfrac12)$\\
@@ -388,7 +403,7 @@ G3 & innovation ratio $\tau_3=4$, floored by the $\chi^2_{0.999}$ quantile per d
 Gate & soft step of width $0.1\tau$, $\gamma=\min$, thresholds tightened up to 30\% under surprise\\
 Reject & revert the fast update, detect the block with the anchor\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \subsection{Relative Physics Gates}\label{sec:gates}
@@ -418,17 +433,17 @@ is the only gate not fooled by an attacker who keeps the SER low.
 
 \begin{figure}[t]
 \centering
-\begin{tikzpicture}[node distance=1.8mm]
-\node[box,text width=48mm] (a) {fast update on the pilots $\to\theta^{(1)}_b$; detect data $\to\hat{\bm s}_{\rm nn}$};
-\node[box,text width=48mm,below=of a] (b) {reference on the same block: $\hat{\bm H}_b$ (LS), $\hat{\bm s}_{\rm ref}$ = better of LMMSE and anchor detector};
-\node[box,text width=48mm,below=of b] (c) {G1: $r(\hat{\bm s}_{\rm nn})/r(\hat{\bm s}_{\rm ref})$ \quad G2: $F_{\rm nn}/F_{\rm ref}$ \quad G3: innovation ratio};
-\node[box,text width=48mm,below=of c] (d) {$\gamma_b=\min(\gamma_1,\gamma_2,\gamma_3)$, thresholds tightened if $r_b>1$};
-\node[box,text width=22mm,below left=3mm and -4mm of d] (e) {$\gamma_b\ge\tfrac12$: keep $\theta^{(1)}_b$,\\ output $\hat{\bm s}_{\rm nn}$};
-\node[box,text width=24mm,below right=3mm and -4mm of d] (f) {$\gamma_b<\tfrac12$: revert $\theta^{(1)}_b\leftarrow\theta^{(1)}_{b-1}$,\\ output anchor decisions};
-\node[box,text width=48mm,below=9mm of d] (g) {buffer $(\gamma_b,\theta^{(1)}_b)$; consolidate if $(b{+}1)\bmod C_k=0$; update clean EMAs if accepted};
+\begin{tikzpicture}[x=1mm,y=1mm]
+\node[box,text width=56mm] (a) at (0,0) {fast update on the pilots $\to\theta^{(1)}_b$; detect the data $\to\hat{\bm s}_{\rm nn}$};
+\node[box,text width=56mm] (b) at (0,-10) {reference on the same block: $\hat{\bm H}_b$ (LS); $\hat{\bm s}_{\rm ref}$ = better of LMMSE and anchor detector};
+\node[box,text width=56mm] (c) at (0,-20) {G1: $r(\hat{\bm s}_{\rm nn})/r(\hat{\bm s}_{\rm ref})$ \quad G2: $F_{\rm nn}/F_{\rm ref}$ \quad G3: innovation ratio};
+\node[box,text width=56mm] (d) at (0,-30) {$\gamma_b=\min(\gamma_1,\gamma_2,\gamma_3)$; thresholds tightened if $r_b>1$};
+\node[box,text width=25mm] (e) at (-16,-42) {$\gamma_b\ge\tfrac12$: keep $\theta^{(1)}_b$,\\ output $\hat{\bm s}_{\rm nn}$};
+\node[box,text width=25mm] (f) at (16,-42) {$\gamma_b<\tfrac12$: revert $\theta^{(1)}_b\!\leftarrow\!\theta^{(1)}_{b-1}$,\\ output anchor decisions};
+\node[box,text width=56mm] (g) at (0,-54) {buffer $(\gamma_b,\theta^{(1)}_b)$; consolidate if $(b{+}1)\bmod C_k=0$ \eqref{eq:consol}; update the clean EMAs if accepted};
 \draw[arr] (a)--(b); \draw[arr] (b)--(c); \draw[arr] (c)--(d);
-\draw[arr] (d)--(e) node[midway,lbl,left]{yes}; \draw[arr] (d)--(f) node[midway,lbl,right]{no};
-\draw[arr] (e)--(g); \draw[arr] (f)--(g);
+\draw[arr] (d.south)--(e.north) node[pos=0.4,lbl,left]{yes}; \draw[arr] (d.south)--(f.north) node[pos=0.4,lbl,right]{no};
+\draw[arr] (e.south)--(g.north-|e.south); \draw[arr] (f.south)--(g.north-|f.south);
 \end{tikzpicture}
 \caption{Decision inside one block.}
 \label{fig:gateflow}
@@ -522,6 +537,7 @@ energy of the fast level and the mismatch only compresses it toward one.
 clean blocks of the A3 configuration (maximum over 10 blocks and 3 random probes; means
 in parentheses). Script: \texttt{certificate\_check.py}.}\label{tab:constants}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccccc@{}}
 \toprule
 $\lambda$ & $G_\Phi$ & $L_\theta$ & $L_a$ & $L_\theta+L_a$ & $\epsilon$ (A3)\\
@@ -531,7 +547,7 @@ $\lambda$ & $G_\Phi$ & $L_\theta$ & $L_a$ & $L_\theta+L_a$ & $\epsilon$ (A3)\\
 2 & 2.22 (1.97) & 0.40 (0.35) & 0.82 (0.80) & 1.22 & 1.11\\
 4 & 2.21 (2.06) & 0.38 (0.29) & 1.01 (0.99) & 1.39 & 1.11\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Table~\ref{tab:constants} gives the measured constants. $L_\theta+L_a$ stays near one at
 every proximal weight: what the fast map forgets about its own past ($1-L_\theta$) it
@@ -552,6 +568,7 @@ Table~\ref{tab:scen} lists the scenarios.
 \centering\caption{Evaluation scenarios (all with 3 seeds; E3 and E2 at 10\,dB with 5).}
 \label{tab:scen}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}llll@{}}
 \toprule
 Id & Channel & Attacker & Sweep\\
@@ -567,7 +584,7 @@ E8 & SED cosine, $8\times8$ & A1 white-box & SIR $-10/0/10$\,dB\\
 E9 & Jakes 0.01 / 0.05 / 0.10 & A1 white-box, SIR 0 & Doppler\\
 Ablation & SED cosine, 10\,dB & A1 white-box, SIR 0 & 16 variants\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 
 \textit{Baselines.} LMMSE on the least-squares pilot estimate (no adaptation, the
@@ -604,6 +621,7 @@ and Citadel, 3 otherwise). Pre: blocks 0--29. Post and recovery at SIR 0\,dB (30
 within the run). LMMSE has no adaptation map; its attacked row is the transfer one.
 Script: \texttt{sweep.py e3}, \texttt{analyze.py}.}\label{tab:main}
 \scriptsize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lcccccccc@{}}
 \toprule
 Receiver & Pre & White-box A1: $-10$ / $-5$ / $0$ / $5$ / $10$\,dB & Post & Rec. & Transfer A1: $-10$ / $-5$ / $0$ / $5$ / $10$\,dB & Rec. & Jamming $0$\,dB\\
@@ -617,7 +635,7 @@ Single-memory Titans & 0.068 & 0.975 / 0.939 / 0.788 / 0.486 / 0.276 & 0.075 & 6
 \midrule
 Citadel-Rx (proposed) & \textbf{0.040} & \textbf{0.026 / 0.025 / 0.028 / 0.030 / 0.034} & \textbf{0.029} & \textbf{0} & \textbf{0.025 / 0.025 / 0.027 / 0.030 / 0.037} & \textbf{0} & 0.848\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table*}
 
 \begin{figure*}[t]
@@ -665,6 +683,7 @@ rejection rate of poisoned blocks / false-rejection rate of clean blocks, and th
 under the ROC of the verdict as a detector (pooled over seeds and budgets).}
 \label{tab:gate}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccccc@{}}
 \toprule
 Attacker & $-10$\,dB & $-5$\,dB & $0$\,dB & $5$\,dB & $10$\,dB\\
@@ -675,7 +694,7 @@ Transfer A1 & 0.99 / 0.013 & 0.99 / 0.017 & 0.97 / 0.003 & 0.94 / 0.000 & 0.78 /
 AUC of $\gamma$ (A1, pooled) & \multicolumn{5}{c}{0.989 (G1 alone 0.986, G2 alone 0.999, G3 alone 0.967)}\\
 Jamming control & \multicolumn{5}{c}{rejection 1.00, false rejection 0.000, AUC 1.000}\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Table~\ref{tab:gate} views the same runs from the gate. Rejection falls with the
 attacker's budget ($0.98\to0.86$) because a weak perturbation does less damage and more
@@ -713,6 +732,7 @@ set the floor. Closing it needs a rejection rate of one, not a different slack.
 Citadel-Rx minus baseline, 95\% bootstrap interval, Holm-corrected Wilcoxon $p$. Full
 tables for every cell: \texttt{docs/STATS.md}.}\label{tab:paired}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Citadel-Rx vs. & $\Delta$SER, white-box 0\,dB & $\Delta$SER, clean cosine 10\,dB & $p_{\rm Holm}$\\
@@ -724,12 +744,13 @@ MedBN-style & $-0.712$ [$-0.736$, $-0.686$] & $-0.034$ [$-0.036$, $-0.032$] & $<
 Single-memory Titans & $-0.761$ [$-0.776$, $-0.745$] & $-0.023$ [$-0.025$, $-0.021$] & $<0.001$\\
 LMMSE & $-0.420$ [$-0.432$, $-0.409$] (transfer) & $-0.024$ [$-0.025$, $-0.022$] & $<0.001$\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 \begin{table}[t]
 \centering\caption{Headline cells with five seeds: mean $\pm$ standard deviation over
 seeds.}\label{tab:seeds}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccc@{}}
 \toprule
 Cell & Online DeepSIC & Meta-DeepSIC & Citadel-Rx\\
@@ -742,7 +763,7 @@ A1 white-box, SIR $10$ & $0.277\pm0.005$ & $0.241\pm0.006$ & $\mathbf{0.034\pm0.
 A1 transfer, SIR $0$ & $0.347\pm0.013$ & $0.213\pm0.012$ & $\mathbf{0.027\pm0.003}$\\
 Jamming, 0\,dB & $0.855\pm0.001$ & $0.851\pm0.001$ & $0.848\pm0.001$\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Differences of a few SER points need a significance test. Table~\ref{tab:paired} compares
 like with like: every pair of receivers sees the same channel, noise and attack draw, and
@@ -759,6 +780,7 @@ the same in all five.
 \centering\caption{SER without attack, 100 blocks, 3 seeds (5 at 10\,dB cosine/Jakes).
 Script: \texttt{sweep.py e2/e2nl/e2cost}, \texttt{analyze.py}.}\label{tab:clean}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 Receiver & Cosine 10\,dB & Jakes 10\,dB & $\tanh$ PA 10\,dB & COST2100 8\,dB\\
@@ -771,7 +793,7 @@ MedBN-style & 0.0644 & 0.0142 & 0.0605 & 0.0080\\
 Single-memory Titans & 0.0529 & 0.0092 & 0.0567 & 0.0102\\
 Citadel-Rx (proposed) & \textbf{0.0302} & \textbf{0.0059} & \textbf{0.0331} & 0.0047\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 A defence is only useful if it costs nothing when there is no attack. Citadel-Rx costs
 less than nothing on three of the four channel families (Table~\ref{tab:clean}): it is the
@@ -790,6 +812,7 @@ where interference cancellation has nothing to cancel.
 \centering\caption{Stress attackers, SER in the attack window (3 seeds; E7 cells with
 weight 50 and 500 have 1 seed). Rej.: rejection of poisoned blocks.}\label{tab:stress}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}llccc@{}}
 \toprule
 Attacker & Receiver & Pre & Window & Rej.\\
@@ -811,7 +834,7 @@ A3 boiling frog, 300 blocks & Citadel-Rx, $C_K=8$ & 0.029 & 0.040 (post 0.023) &
  & Citadel-Rx, $C_K=32$ & 0.031 & 0.039 (post 0.023) & 0.00\\
  & Citadel-Rx, $C_K=128$ & 0.032 & 0.039 (post 0.023) & 0.00\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Table~\ref{tab:stress} stresses the gates. The targeted attacker on a Jakes channel
 takes every user of online DeepSIC and Meta-DeepSIC down (window SER $0.44$ and $0.35$; the
@@ -839,6 +862,7 @@ structural certificate \eqref{eq:cert} with the measured fast-level displacement
 \centering\caption{Certificate check on the paired A3 runs ($\eta^{(K)}=0.5$, $p^{\rm
 rej}=0$).}\label{tab:cert}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lccc@{}}
 \toprule
 $C_K$ & $\Delta_f$ (end of window) & $\max_W D_K(W)/\text{bound}$ & slope of $D_K$ per block\\
@@ -847,7 +871,7 @@ $C_K$ & $\Delta_f$ (end of window) & $\max_W D_K(W)/\text{bound}$ & slope of $D_
 32 & 17.2 & 0.53 & 0.029\\
 128 & 15.9 & 0.26 & 0.0083\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Fig.~\ref{fig:cert} and Table~\ref{tab:cert} draw \eqref{eq:cert} against the paired
 adversarial/clean trajectories of the slowest level. The bound holds at every $W$ for
@@ -864,6 +888,7 @@ does not compound even though $L_\theta+L_a>1$.
 \centering\caption{Ablations under white-box A1 at SIR 0\,dB, 3 seeds (complete receiver
 on the same seeds). Script: \texttt{sweep.py ablate}.}\label{tab:ablate}
 \scriptsize
+\resizebox{\columnwidth}{!}{%
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 Configuration & Pre & Window & Rej. & False rej.\\
@@ -886,7 +911,7 @@ Jump re-anchor ($\beta=0.25$) \cite{behrouz2025nested} & 0.058 & 0.031 & 0.97 & 
 No fallback & 0.040 & \textbf{0.245} & 0.97 & 0.011\\
 Keep (not revert) rejected update & 0.040 & 0.025 & 1.00 & 0.017\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table}
 Each component is removed in turn (Table~\ref{tab:ablate}). Three carry the result. The
 slow memory: with one level the gates fire but there is nothing uncorrupted to fall back
@@ -909,6 +934,7 @@ the attack window under white-box A1 (3 seeds; pre-attack SER in parentheses; Ci
 on COST2100 with the relative slack). Scripts: \texttt{sweep.py e3nl/e3rel/e8/e9}.}
 \label{tab:gen}
 \scriptsize
+\resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}lccccccc@{}}
 \toprule
  & \multicolumn{2}{c}{$\tanh$ PA, $4\times4$} & \multicolumn{2}{c}{COST2100, $4\times4$} & \multicolumn{2}{c}{SED, $8\times8$} & Jakes $f_DT_b=0.01/0.05/0.10$\\
@@ -923,7 +949,7 @@ Single-memory Titans & 0.971 (0.075) & 0.799 & 0.917 (0.0011) & 0.627 & 0.998 (0
 Citadel-Rx (proposed) & \textbf{0.026} (0.042) & \textbf{0.026} & \textbf{0.0011} (0.0003) & \textbf{0.0013} & \textbf{0.080} (0.127) & \textbf{0.080} & \textbf{0.0066 / 0.0069 / 0.0075} (0.007--0.015)\\
 Rejection / false rej. & 0.99 / 0.017 & 0.98 / 0.006 & 0.89 / 0.00 & 0.86 / 0.00 & 1.00 / 0.05 & 1.00 / 0.05 & 0.92 / 0.94 / 0.97, 0.006--0.033\\
 \bottomrule
-\end{tabular}
+\end{tabular}}
 \end{table*}
 Table~\ref{tab:gen} repeats the main comparison on the nonlinear channel, the COST2100
 traces, an $8\times8$ system and three Doppler rates. On every one, every baseline is

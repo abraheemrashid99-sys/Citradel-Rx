@@ -44,7 +44,7 @@ def fig_run():
                 return r
     att = {rt: pick(e3, rt, "a1", {("attack", "knowledge"): "whitebox", ("attack", "sir_db"): 0}) for rt in ("online_deepsic", "meta_deepsic", "citadel")}
     cln = {rt: pick(e3snr, rt, "none", {("channel", "snr_db"): 10}) for rt in ("online_deepsic", "citadel")}
-    fig, ax = plt.subplots(1, 3, figsize=(7.16, 2.0))
+    fig, ax = plt.subplots(1, 3, figsize=(7.16, 2.4))
     a0, a1 = 30, 70
     for a in ax:
         a.axvspan(a0, a1, color="0.9", zorder=0)
@@ -67,8 +67,8 @@ def fig_run():
     ax[2].plot(bl, [b["level3_disp"] for b in rc["blocks"]], color="#003f5c", ls="--", lw=0.9, label="level 3, no attack")
     ax[2].set_xlabel("block"); ax[2].set_ylabel("$\\|\\theta^{(k)}_b-\\theta^{(k)}_0\\|$"); ax[2].set_title("(c) Memory-level displacement", loc="left")
     for a in ax:
-        a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.42), ncol=1, frameon=False)
-    fig.tight_layout(h_pad=0.2)
+        a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, frameon=False, handlelength=1.6, columnspacing=0.8)
+    fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.42, wspace=0.35)
     fig.savefig(f"{OUT}/fig_run.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_run.png", bbox_inches="tight")
 
 
