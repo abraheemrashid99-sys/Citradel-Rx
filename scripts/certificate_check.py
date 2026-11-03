@@ -96,7 +96,7 @@ def main(cfg_path: str):
         return
     from paper_style import save, panel_title
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(3.45, 1.9))
+    fig, ax = plt.subplots(figsize=(3.45, 2.15))
     palette = {8: "#0072B2", 32: "#D55E00", 128: "#009E73"}
     rows = ["| C_K | eta_K | p_rej | Delta_f measured (max paired fast displacement) | max_W D_K / Thm 1(i) | Delta_f Lipschitz (needs L<1) | Thm 1(ii) slope | measured slope | max_W D_K / Thm 1(ii) |",
             "|---|---|---|---|---|---|---|---|---|"]
@@ -129,7 +129,8 @@ def main(cfg_path: str):
                     f"{float(delta_f[-1]) if np.isfinite(inv) else float('nan'):.2f} | {bound_slope:.4f} | {slope:.4f} | {ratio:.3f} |")
     ax.set_xlabel("attacked blocks $W$"); ax.set_ylabel("$D_K(W)=\\|\\theta^{(K)}_{\\rm adv}-\\theta^{(K)}_{\\rm clean}\\|$")
     ax.set_yscale("log"); ax.set_ylim(0.8, 60)
-    ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.28), fontsize=6.5)
+    ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.26), fontsize=6.5)
+    fig.subplots_adjust(left=0.16, right=0.99, top=0.97, bottom=0.36)
     ax.grid(alpha=0.25, which="major")
     save(fig, "fig_cert")
     print("\n".join(rows))

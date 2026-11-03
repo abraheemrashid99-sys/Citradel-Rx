@@ -36,7 +36,7 @@ def fig_run():
                 return r
     att = {rt: pick(e3, rt, "a1", {("attack", "knowledge"): "whitebox", ("attack", "sir_db"): 0}) for rt in ("online_deepsic", "meta_deepsic", "citadel")}
     cln = {rt: pick(e3snr, rt, "none", {("channel", "snr_db"): 10}) for rt in ("online_deepsic", "citadel")}
-    fig, ax = plt.subplots(1, 3, figsize=(7.16, 1.95))
+    fig, ax = plt.subplots(1, 3, figsize=(7.16, 2.2))
     a0, a1 = 30, 70
     for a in ax:
         a.axvspan(a0, a1, color="0.9", zorder=0)
@@ -59,8 +59,8 @@ def fig_run():
     ax[2].plot(bl, [b["level3_disp"] for b in rc["blocks"]], color="#003f5c", ls="--", lw=0.9, label="level 3, no attack")
     ax[2].set_xlabel("block"); ax[2].set_ylabel("$\\|\\theta^{(k)}_b-\\theta^{(k)}_0\\|$"); panel_title(ax[2], "(c) Memory-level displacement")
     for a in ax:
-        a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, frameon=False, handlelength=1.6, columnspacing=0.8)
-    fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.42, wspace=0.35)
+        a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.30), ncol=2, frameon=False, handlelength=1.6, columnspacing=0.8)
+    fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.46, wspace=0.38)
     save(fig, "fig_run")
 
 
@@ -71,7 +71,7 @@ def fig_sir():
         c = r["config"]
         if c["attack"]["type"] == "a1":
             d[(c["receiver"]["type"], c["attack"]["knowledge"], c["attack"]["sir_db"])].append(r["summary"]["ser_attack"])
-    fig, ax = plt.subplots(1, 2, figsize=(7.16, 1.85), sharey=True)
+    fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.15), sharey=True)
     for i, know in enumerate(("whitebox", "transfer")):
         for rt in ("lmmse", "online_deepsic", "meta_deepsic", "drift_deepsic", "medbn_deepsic", "titans_single", "citadel"):
             sirs = sorted({k[2] for k in d if k[0] == rt and k[1] == know})
@@ -87,8 +87,8 @@ def fig_sir():
     h, l = ax[1].get_legend_handles_labels()
     order = ["LMMSE", "Online DeepSIC", "Meta-DeepSIC", "Drift-detection", "MedBN-style", "Single-memory Titans", "Citadel-Rx (proposed)"]
     hl = dict(zip(l, h)); h, l = [hl[k] for k in order if k in hl], [k for k in order if k in hl]
-    fig.legend(h, l, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.12))
-    fig.tight_layout()
+    fig.legend(h, l, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, 0.0))
+    fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.36, wspace=0.12)
     save(fig, "fig_sir")
 
 
@@ -102,7 +102,7 @@ def fig_snr():
         rel = c["citadel"].get("g2_slack_mode", "absolute") == "relative"
         key = (c["receiver"]["type"] + ("_rel" if rel else ""), c["attack"]["type"], c["channel"]["snr_db"])
         d[key].append(r["summary"]["ser_attack"] if c["attack"]["type"] == "a1" else r["summary"]["ser_mean"])
-    fig, ax = plt.subplots(1, 2, figsize=(7.16, 1.85), sharey=True)
+    fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.3), sharey=True)
     for i, rts in enumerate((("online_deepsic", "meta_deepsic", "lmmse"), ("citadel", "citadel_rel"))):
         for rt in rts:
             for atk, ls in (("none", "--"), ("a1", "-")):
@@ -114,10 +114,10 @@ def fig_snr():
                 ax[i].plot(snrs, [np.mean(d[(rt, atk, s)]) for s in snrs], ls=ls, marker="o", ms=2.5, color=C[base],
                            alpha=0.6 if rt.endswith("_rel") else 1.0, label=lab)
         ax[i].set_yscale("log"); ax[i].set_xlabel("SNR (dB)")
-        ax[i].legend(loc="lower left", frameon=False)
+        ax[i].legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, frameon=False)
     ax[0].set_ylabel("SER"); panel_title(ax[0], "(a) Baselines: the attacked curve never meets the clean one")
     panel_title(ax[1], "(b) Citadel-Rx, absolute and relative CRC slack")
-    fig.tight_layout()
+    fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.40, wspace=0.12)
     save(fig, "fig_snr")
 
 
