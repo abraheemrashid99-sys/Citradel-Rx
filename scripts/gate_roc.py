@@ -52,7 +52,7 @@ def main():
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from paper_style import save, panel_title
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 2, figsize=(7.16, 2.4))
+    fig, axes = plt.subplots(1, 2, figsize=(7.16, 1.9))
     NAMES = {"e3/a1": "A1, SED 4x4", "e3/data_jam": "data jamming, SED 4x4", "e3nl/a1": "A1, tanh PA",
              "e3rel/a1": "A1, COST2100 + SED, relative slack", "e8/a1": "A1, SED 8x8", "e9/a1": "A1, Jakes",
              "e4/a2": "A2 targeted, Jakes", "e7/adaptive": "gate-aware, SED 4x4"}
@@ -86,7 +86,7 @@ def main():
                         f"{tp_op:.3f} | {fp_op:.3f} |")
     axes[0].set_xlabel("false-rejection rate (clean blocks)")
     axes[0].set_ylabel("rejection rate (poisoned blocks)"); axes[0].legend(loc="lower right", fontsize=6.5)
-    axes[0].set_xlim(0, 0.25); axes[0].set_ylim(0.5, 1.005)
+    axes[0].set_xlim(0, 0.25); axes[0].set_ylim(0.3, 1.005)
     panel_title(axes[0], "(a) Combined verdict $\\gamma$, per experiment")
     # per-gate ROC on the primary folder
     recs = load(args.folders[0])
@@ -99,7 +99,7 @@ def main():
     fpr, tpr, auc = roc(np.array([1 - b["gamma"] for b in blocks]), y)
     axes[1].plot(fpr, tpr, "k", lw=1.4, label=f"combined $\\gamma=\\min$ (AUC {auc:.3f})")
     axes[1].set_xlabel("false-rejection rate (clean blocks)"); axes[1].legend(loc="lower right", fontsize=6.5)
-    axes[1].set_xlim(0, 0.25); axes[1].set_ylim(0.5, 1.005)
+    axes[1].set_xlim(0, 0.25); axes[1].set_ylim(0.3, 1.005)
     panel_title(axes[1], "(b) Individual gates, A1 on the SED 4x4 grid")
     fig.tight_layout(w_pad=1.5); save(fig, "fig_roc")
 

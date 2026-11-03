@@ -96,7 +96,7 @@ def main(cfg_path: str):
         return
     from paper_style import save, panel_title
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(3.45, 2.3))
+    fig, ax = plt.subplots(figsize=(3.45, 1.9))
     palette = {8: "#0072B2", 32: "#D55E00", 128: "#009E73"}
     rows = ["| C_K | eta_K | p_rej | Delta_f measured (max paired fast displacement) | max_W D_K / Thm 1(i) | Delta_f Lipschitz (needs L<1) | Thm 1(ii) slope | measured slope | max_W D_K / Thm 1(ii) |",
             "|---|---|---|---|---|---|---|---|---|"]

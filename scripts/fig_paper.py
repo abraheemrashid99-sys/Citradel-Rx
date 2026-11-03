@@ -36,7 +36,7 @@ def fig_run():
                 return r
     att = {rt: pick(e3, rt, "a1", {("attack", "knowledge"): "whitebox", ("attack", "sir_db"): 0}) for rt in ("online_deepsic", "meta_deepsic", "citadel")}
     cln = {rt: pick(e3snr, rt, "none", {("channel", "snr_db"): 10}) for rt in ("online_deepsic", "citadel")}
-    fig, ax = plt.subplots(1, 3, figsize=(7.16, 2.4))
+    fig, ax = plt.subplots(1, 3, figsize=(7.16, 1.95))
     a0, a1 = 30, 70
     for a in ax:
         a.axvspan(a0, a1, color="0.9", zorder=0)
@@ -71,7 +71,7 @@ def fig_sir():
         c = r["config"]
         if c["attack"]["type"] == "a1":
             d[(c["receiver"]["type"], c["attack"]["knowledge"], c["attack"]["sir_db"])].append(r["summary"]["ser_attack"])
-    fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.3), sharey=True)
+    fig, ax = plt.subplots(1, 2, figsize=(7.16, 1.85), sharey=True)
     for i, know in enumerate(("whitebox", "transfer")):
         for rt in ("lmmse", "online_deepsic", "meta_deepsic", "drift_deepsic", "medbn_deepsic", "titans_single", "citadel"):
             sirs = sorted({k[2] for k in d if k[0] == rt and k[1] == know})
@@ -102,7 +102,7 @@ def fig_snr():
         rel = c["citadel"].get("g2_slack_mode", "absolute") == "relative"
         key = (c["receiver"]["type"] + ("_rel" if rel else ""), c["attack"]["type"], c["channel"]["snr_db"])
         d[key].append(r["summary"]["ser_attack"] if c["attack"]["type"] == "a1" else r["summary"]["ser_mean"])
-    fig, ax = plt.subplots(1, 2, figsize=(7.16, 2.3), sharey=True)
+    fig, ax = plt.subplots(1, 2, figsize=(7.16, 1.85), sharey=True)
     for i, rts in enumerate((("online_deepsic", "meta_deepsic", "lmmse"), ("citadel", "citadel_rel"))):
         for rt in rts:
             for atk, ls in (("none", "--"), ("a1", "-")):
