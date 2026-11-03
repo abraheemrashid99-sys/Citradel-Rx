@@ -49,10 +49,13 @@ def main():
     ap.add_argument("folders", nargs="+")
     ap.add_argument("--write", action="store_true")
     args = ap.parse_args()
-    import matplotlib
-    matplotlib.use("Agg")
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from paper_style import save, panel_title
     import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 2, figsize=(8.4, 3.6))
+    fig, axes = plt.subplots(1, 2, figsize=(7.16, 2.4))
+    NAMES = {"e3/a1": "A1, SED 4x4", "e3/data_jam": "data jamming, SED 4x4", "e3nl/a1": "A1, tanh PA",
+             "e3rel/a1": "A1, COST2100 + SED, relative slack", "e8/a1": "A1, SED 8x8", "e9/a1": "A1, Jakes",
+             "e4/a2": "A2 targeted, Jakes", "e7/adaptive": "gate-aware, SED 4x4"}
     rows = ["| experiment | attack | n blocks (poisoned/clean) | AUC gamma | AUC G1 | AUC G2 | AUC G3 | TPR at gamma<0.5 | FPR at gamma<0.5 |",
             "|---|---|---|---|---|---|---|---|---|"]
     for folder in args.folders:
@@ -77,13 +80,14 @@ def main():
             hard = np.array([b["gamma"] < 0.5 for b in blocks])
             tp_op, fp_op = hard[y == 1].mean(), hard[y == 0].mean()
             tag = f"{os.path.basename(folder)}/{atk}"
-            axes[0].plot(fpr, tpr, label=f"{tag} (AUC {aucs['gamma']:.3f})")
+            axes[0].plot(fpr, tpr, label=f"{NAMES.get(tag, tag)} (AUC {aucs['gamma']:.3f})")
             rows.append(f"| {os.path.basename(folder)} | {atk} | {int(y.sum())}/{int((1-y).sum())} | {aucs['gamma']:.3f} | "
                         f"{aucs.get('g1', float('nan')):.3f} | {aucs.get('g2', float('nan')):.3f} | {aucs.get('g3', float('nan')):.3f} | "
                         f"{tp_op:.3f} | {fp_op:.3f} |")
-    axes[0].plot([0, 1], [0, 1], "k:", lw=0.8); axes[0].set_xlabel("false rejection rate (clean blocks)")
-    axes[0].set_ylabel("rejection rate (poisoned blocks)"); axes[0].legend(fontsize=6); axes[0].grid(alpha=0.3)
-    axes[0].set_title("gate verdict $\\gamma$ as a poisoning detector")
+    axes[0].set_xlabel("false-rejection rate (clean blocks)")
+    axes[0].set_ylabel("rejection rate (poisoned blocks)"); axes[0].legend(loc="lower right", fontsize=6.5)
+    axes[0].set_xlim(0, 0.25); axes[0].set_ylim(0.5, 1.005)
+    panel_title(axes[0], "(a) Combined verdict $\\gamma$, per experiment")
     # per-gate ROC on the primary folder
     recs = load(args.folders[0])
     blocks = [b for r in recs if r["config"]["attack"]["type"] == "a1" for b in r["blocks"] if b["block"] >= 5]
@@ -93,10 +97,11 @@ def main():
         fpr, tpr, auc = roc(v, y)
         axes[1].plot(fpr, tpr, label=f"{lab} (AUC {auc:.3f})")
     fpr, tpr, auc = roc(np.array([1 - b["gamma"] for b in blocks]), y)
-    axes[1].plot(fpr, tpr, "k", lw=1.5, label=f"min-combined $\\gamma$ (AUC {auc:.3f})")
-    axes[1].plot([0, 1], [0, 1], "k:", lw=0.8); axes[1].set_xlabel("false rejection rate"); axes[1].legend(fontsize=7)
-    axes[1].grid(alpha=0.3); axes[1].set_title(f"individual gates, {os.path.basename(args.folders[0])} A1")
-    fig.tight_layout(); os.makedirs("docs/figures", exist_ok=True); fig.savefig("docs/figures/fig_gate_roc.png", dpi=200)
+    axes[1].plot(fpr, tpr, "k", lw=1.4, label=f"combined $\\gamma=\\min$ (AUC {auc:.3f})")
+    axes[1].set_xlabel("false-rejection rate (clean blocks)"); axes[1].legend(loc="lower right", fontsize=6.5)
+    axes[1].set_xlim(0, 0.25); axes[1].set_ylim(0.5, 1.005)
+    panel_title(axes[1], "(b) Individual gates, A1 on the SED 4x4 grid")
+    fig.tight_layout(w_pad=1.5); save(fig, "fig_roc")
 
     # ---- cost table -------------------------------------------------------------------------
     cost = defaultdict(list); pre = defaultdict(list); tatk = []

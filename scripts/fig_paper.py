@@ -11,23 +11,15 @@ from __future__ import annotations
 import glob
 import json
 import os
+import sys
 from collections import defaultdict
 
-import matplotlib
 import numpy as np
 
-matplotlib.use("Agg")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paper_style import C, L, OUT, panel_title, save  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
-
-plt.rcParams.update({"font.size": 7.5, "axes.titlesize": 8, "axes.labelsize": 7.5, "legend.fontsize": 7,
-                     "xtick.labelsize": 7, "ytick.labelsize": 7, "lines.linewidth": 1.2, "axes.grid": True,
-                     "grid.alpha": 0.3, "figure.dpi": 200})
-C = {"online_deepsic": "#d55e00", "meta_deepsic": "#7b4f9d", "citadel": "#0072b2", "lmmse": "#777777",
-     "drift_deepsic": "#009e73", "medbn_deepsic": "#cc79a7", "titans_single": "#e69f00"}
-L = {"online_deepsic": "Online DeepSIC", "meta_deepsic": "Meta-DeepSIC", "citadel": "Citadel-Rx (proposed)",
-     "lmmse": "LMMSE", "drift_deepsic": "Drift-detection", "medbn_deepsic": "MedBN-style",
-     "titans_single": "Single-memory Titans"}
-OUT = "docs/figures"
+L = {**L, "citadel": "Citadel-Rx (proposed)"}
 
 
 def recs(folder):
@@ -52,24 +44,24 @@ def fig_run():
         ax[0].plot([b["block"] for b in r["blocks"]], [b["ser"] for b in r["blocks"]], color=C[rt], label=L[rt])
     for rt, r in cln.items():
         ax[0].plot([b["block"] for b in r["blocks"]], [b["ser"] for b in r["blocks"]], color=C[rt], ls="--", lw=0.9, label=f"{L[rt].split(' (')[0]}, no attack")
-    ax[0].set_yscale("log"); ax[0].set_xlabel("block"); ax[0].set_ylabel("SER"); ax[0].set_title("(a) SER per block, white-box A1, SIR 0 dB", loc="left")
+    ax[0].set_yscale("log"); ax[0].set_xlabel("block"); ax[0].set_ylabel("SER"); panel_title(ax[0], "(a) SER per block, white-box A1, SIR 0 dB")
     r = att["citadel"]
     bl = [b["block"] for b in r["blocks"]]
     ax[1].plot(bl, [b["gamma"] for b in r["blocks"]], color=C["citadel"], label="gate verdict $\\gamma_b$")
     ax[1].plot(bl, [b["verdict_g1"] for b in r["blocks"]], color="#009e73", lw=0.8, ls=":", label="G1 residual")
     ax[1].plot(bl, [b["verdict_g2"] for b in r["blocks"]], color="#e69f00", lw=0.8, ls=":", label="G2 CRC")
     ax[1].axhline(0.5, color="k", lw=0.6, ls="--"); ax[1].set_ylim(-0.03, 1.03)
-    ax[1].set_xlabel("block"); ax[1].set_title("(b) Citadel-Rx gate verdicts", loc="left")
+    ax[1].set_xlabel("block"); panel_title(ax[1], "(b) Citadel-Rx gate verdicts")
     ax[2].plot(bl, [b["level1_disp"] for b in r["blocks"]], color=C["citadel"], lw=0.9, label="level 1 (fast)")
     ax[2].plot(bl, [b["level2_disp"] for b in r["blocks"]], color="#56b4e9", label="level 2 ($C_2=8$)")
     ax[2].plot(bl, [b["level3_disp"] for b in r["blocks"]], color="#003f5c", label="level 3 ($C_3=32$)")
     rc = cln["citadel"]
     ax[2].plot(bl, [b["level3_disp"] for b in rc["blocks"]], color="#003f5c", ls="--", lw=0.9, label="level 3, no attack")
-    ax[2].set_xlabel("block"); ax[2].set_ylabel("$\\|\\theta^{(k)}_b-\\theta^{(k)}_0\\|$"); ax[2].set_title("(c) Memory-level displacement", loc="left")
+    ax[2].set_xlabel("block"); ax[2].set_ylabel("$\\|\\theta^{(k)}_b-\\theta^{(k)}_0\\|$"); panel_title(ax[2], "(c) Memory-level displacement")
     for a in ax:
         a.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, frameon=False, handlelength=1.6, columnspacing=0.8)
     fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.42, wspace=0.35)
-    fig.savefig(f"{OUT}/fig_run.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_run.png", bbox_inches="tight")
+    save(fig, "fig_run")
 
 
 def fig_sir():
@@ -88,12 +80,16 @@ def fig_sir():
             m = [np.mean(d[(rt, know, s)]) for s in sirs]; sd = [np.std(d[(rt, know, s)]) for s in sirs]
             ax[i].errorbar(sirs, m, yerr=sd, color=C[rt], marker="o", ms=2.5, capsize=2, label=L[rt], lw=1.6 if rt == "citadel" else 1.0)
         ax[i].set_yscale("log"); ax[i].set_xlabel("SIR of the pilot perturbation (dB)")
-        ax[i].set_title(f"({'ab'[i]}) {'White-box' if know == 'whitebox' else 'Transfer'} A1, SER in the attack window", loc="left")
+        panel_title(ax[i], f"({'ab'[i]}) {'White-box' if know == 'whitebox' else 'Transfer'} A1, SER in the attack window")
     ax[0].set_ylabel("SER (any user wrong)")
-    h, l = ax[0].get_legend_handles_labels()
+    for a in ax:
+        a.set_xticks([-10, -5, 0, 5, 10])
+    h, l = ax[1].get_legend_handles_labels()
+    order = ["LMMSE", "Online DeepSIC", "Meta-DeepSIC", "Drift-detection", "MedBN-style", "Single-memory Titans", "Citadel-Rx (proposed)"]
+    hl = dict(zip(l, h)); h, l = [hl[k] for k in order if k in hl], [k for k in order if k in hl]
     fig.legend(h, l, loc="lower center", ncol=4, frameon=False, bbox_to_anchor=(0.5, -0.12))
     fig.tight_layout()
-    fig.savefig(f"{OUT}/fig_sir.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_sir.png", bbox_inches="tight")
+    save(fig, "fig_sir")
 
 
 def fig_snr():
@@ -119,10 +115,10 @@ def fig_snr():
                            alpha=0.6 if rt.endswith("_rel") else 1.0, label=lab)
         ax[i].set_yscale("log"); ax[i].set_xlabel("SNR (dB)")
         ax[i].legend(loc="lower left", frameon=False)
-    ax[0].set_ylabel("SER"); ax[0].set_title("(a) Baselines: attacked SER never meets the clean curve", loc="left")
-    ax[1].set_title("(b) Citadel-Rx: $\\Delta_{\\rm dB}$ is the horizontal gap", loc="left")
+    ax[0].set_ylabel("SER"); panel_title(ax[0], "(a) Baselines: the attacked curve never meets the clean one")
+    panel_title(ax[1], "(b) Citadel-Rx, absolute and relative CRC slack")
     fig.tight_layout()
-    fig.savefig(f"{OUT}/fig_snr.pdf", bbox_inches="tight"); fig.savefig(f"{OUT}/fig_snr.png", bbox_inches="tight")
+    save(fig, "fig_snr")
 
 
 if __name__ == "__main__":

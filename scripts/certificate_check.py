@@ -94,10 +94,10 @@ def main(cfg_path: str):
     if not recs:
         print("no paired E5 records; run scripts/compact_e5.py first")
         return
-    import matplotlib
-    matplotlib.use("Agg")
+    from paper_style import save, panel_title
     import matplotlib.pyplot as plt
-    fig, ax = plt.subplots(figsize=(5.6, 3.6))
+    fig, ax = plt.subplots(figsize=(3.45, 2.3))
+    palette = {8: "#0072B2", 32: "#D55E00", 128: "#009E73"}
     rows = ["| C_K | eta_K | p_rej | Delta_f measured (max paired fast displacement) | max_W D_K / Thm 1(i) | Delta_f Lipschitz (needs L<1) | Thm 1(ii) slope | measured slope | max_W D_K / Thm 1(ii) |",
             "|---|---|---|---|---|---|---|---|---|"]
     for ck in sorted(recs):
@@ -122,18 +122,16 @@ def main(cfg_path: str):
         ok = cert_i > 0
         ratio_i = float(np.max(meas[ok] / cert_i[ok])) if ok.any() else float("nan")
         ratio = float(np.max(meas[1:] / cert[1:])) if np.isfinite(inv) else float("nan")
-        line, = ax.plot(W, meas, label=f"measured $D_K$, $C_K$={ck}")
-        ax.plot(W, cert_i, "--", color=line.get_color(), alpha=0.8, label=f"Thm 1(i), $C_K$={ck}")
-        if np.isfinite(inv):
-            ax.plot(W, cert, ":", color=line.get_color(), alpha=0.7, label=f"Thm 1(ii), $C_K$={ck}")
+        col = palette.get(ck, None)
+        ax.plot(W, meas, color=col, label=f"measured, $C_K={ck}$")
+        ax.plot(W, cert_i, "--", color=col, alpha=0.9, label=f"bound (9), $C_K={ck}$")
         rows.append(f"| {ck} | {eta_K:g} | {p_rej:.2f} | {float(delta_meas[-1]):.2f} | {ratio_i:.3f} | "
                     f"{float(delta_f[-1]) if np.isfinite(inv) else float('nan'):.2f} | {bound_slope:.4f} | {slope:.4f} | {ratio:.3f} |")
-    ax.set_xlabel("attacked blocks $W$"); ax.set_ylabel("$\\|\\theta^{(K)}_{adv}-\\theta^{(K)}_{clean}\\|$")
-    ax.set_yscale("log"); ax.legend(fontsize=6, ncol=2); ax.grid(alpha=0.3, which="both")
-    ax.set_title(f"Theorem 1: $\\eta_K$={eta_K:g}; measured $G_\\Phi$={G_adapt:.2f}, $L_\\theta$={c0['L_theta_max']:.2f}, $L_a$={c0['L_a_max']:.2f}, $\\epsilon$={eps:.2f}", fontsize=8)
-    fig.tight_layout()
-    os.makedirs("docs/figures", exist_ok=True)
-    fig.savefig("docs/figures/fig_e5_certificate_bound.png", dpi=200)
+    ax.set_xlabel("attacked blocks $W$"); ax.set_ylabel("$D_K(W)=\\|\\theta^{(K)}_{\\rm adv}-\\theta^{(K)}_{\\rm clean}\\|$")
+    ax.set_yscale("log"); ax.set_ylim(0.8, 60)
+    ax.legend(ncol=3, loc="upper center", bbox_to_anchor=(0.5, -0.28), fontsize=6.5)
+    ax.grid(alpha=0.25, which="major")
+    save(fig, "fig_cert")
     print("\n".join(rows))
     json.dump({**c0, "rows": rows}, open("docs/certificate_constants.json", "w"), indent=1)
     print("wrote docs/figures/fig_e5_certificate_bound.png")
