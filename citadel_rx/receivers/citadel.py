@@ -75,11 +75,16 @@ class CitadelRx(DeepSICReceiver):
         # level's SER exceeds the reference's by more than `slack`
         L = cfg.frame.crc_subblock_symbols
         g2_tau = cc.g2_tau if cc.g2_tau is not None else float((1.0 - cc.g2_ser_slack) ** L)
-        g2_rel = ({"L": L, "rel": cc.g2_rel_slack, "abs_min": cc.g2_abs_min_slack}
-                  if cc.g2_slack_mode == "relative" else None)
+        g2_rel = None
+        if cc.g2_slack_mode in ("relative", "derived"):
+            g2_rel = {"L": L, "rel": cc.g2_rel_slack, "abs_min": cc.g2_abs_min_slack, "mode": cc.g2_slack_mode,
+                      "z": cc.g2_derived_z}
         self.gate = GateController(gates, cc.gate_mode, cc.g1_tau, g2_tau, cc.g3_tau, cc.g3_quantile,
-                                   cc.adaptive_thresholds, dof=self.n_ant * self.n_user,
+                                   cc.adaptive_thresholds, dof=self.n_ant * self.n_user, kappa=cc.gate_kappa,
                                    tighten_floor=cc.tighten_floor, g2_relative=g2_rel)
+        self.cc = cc
+        self.streak = 0
+        self.ref_stats = {"pass": None, "pass_var": None, "res": None, "res_var": None}
         self.reject_action = cc.reject_action
         self.fallback = cc.fallback_on_reject
         self.noise_var = 10 ** (-0.1 * cfg.channel.snr_db)
@@ -126,7 +131,7 @@ class CitadelRx(DeepSICReceiver):
 
     # ---- fast rule --------------------------------------------------------------
     def _fast_stage(self, p: ParamDict, q: int, X: torch.Tensor, idx: torch.Tensor, eta: float,
-                    anchor: Optional[ParamDict]) -> ParamDict:
+                    anchor: Optional[ParamDict], sample_w: Optional[torch.Tensor] = None) -> ParamDict:
         keys = [k for k in self.core.keys_for(q) if k in self.A]
         if not keys:
             return p
@@ -145,7 +150,8 @@ class CitadelRx(DeepSICReceiver):
             logits, h = self.core.module_forward(pp, q, X, return_hidden=True)
             tgt = idx.transpose(0, 1)
             ce = torch.nn.functional.cross_entropy(logits.reshape(-1, self.core.order), tgt.reshape(-1),
-                                                   reduction="none").reshape(self.core.U, -1).mean(dim=1).sum()
+                                                   reduction="none").reshape(self.core.U, -1)
+            ce = ce.mean(dim=1).sum() if sample_w is None else (ce * sample_w[None, :]).sum()
             grads = torch.autograd.grad(ce, list(leaves.values()))
             with torch.no_grad():
                 if use_delta:
@@ -172,10 +178,20 @@ class CitadelRx(DeepSICReceiver):
             p[k] = t.detach()
         return p
 
-    def _fast_update(self, yf: torch.Tensor, idx: torch.Tensor, eta: float) -> ParamDict:
+    def _fast_update(self, yf: torch.Tensor, idx: torch.Tensor, eta: float,
+                     sample_w: Optional[torch.Tensor] = None, start: Optional[ParamDict] = None) -> ParamDict:
         anchor = self._anchor()
-        return self.core.sequential_adapt(self.params, yf, idx,
-                                          lambda p, q, X, t: self._fast_stage(p, q, X, t, eta, anchor))
+        p0 = self.params if start is None else start
+        p = self.core.sequential_adapt(p0, yf, idx,
+                                       lambda p, q, X, t: self._fast_stage(p, q, X, t, eta, anchor, sample_w))
+        R = self.cc.fast_radius
+        if R > 0:   # H1: the block's total update lies in a ball of radius R around its start
+            d = param_dist(p, p0, self.A)
+            if d > R:
+                p = dict(p)
+                for k in self.A:
+                    p[k] = p0[k] + (p[k] - p0[k]) * (R / d)
+        return p
 
     # ---- consolidation ------------------------------------------------------------
     def _consolidate(self, b: int) -> Dict[str, Any]:
@@ -189,15 +205,27 @@ class CitadelRx(DeepSICReceiver):
             eta_k = self.level_lr[k + 1]
             # with Σγ < 1 (everything rejected) the update is scaled down accordingly
             scale = eta_k * min(1.0, float(gs.sum()))
-            inc_norm = 0.0
+            # quantities of the extended retention bound (audit A2), logged for paired analysis
+            radius = max(param_dist(st, mean_state, self.A) for _, st in self.buf[k])
+            d_mean = param_dist(self.levels[k + 1], mean_state, self.A)
+            incs = {key: scale * (mean_state[key] - self.levels[k + 1][key]) for key in self.A}
+            inc_norm = float(np.sqrt(sum(float((v ** 2).sum().item()) for v in incs.values())))
+            clip = self.cc.consol_clip[k] if k < len(self.cc.consol_clip) else 0.0
+            clipped = clip > 0 and inc_norm > clip
+            if clipped:   # H1: every consolidation moves level k+2 by at most `clip`
+                incs = {key: v * (clip / inc_norm) for key, v in incs.items()}
             for key in self.A:
-                inc = scale * (mean_state[key] - self.levels[k + 1][key])
-                self.levels[k + 1][key] = self.levels[k + 1][key] + inc
-                inc_norm += float((inc ** 2).sum().item())
+                self.levels[k + 1][key] = self.levels[k + 1][key] + incs[key]
+            if k + 1 == self.K - 1 and self.cc.drift_guard > 0 and hasattr(self, "pretrained_params"):
+                xi = self.cc.drift_guard   # H5: weak pull of the slowest level toward the pre-trained weights
+                for key in self.A:
+                    self.levels[k + 1][key] = self.levels[k + 1][key] - xi * (self.levels[k + 1][key] - self.pretrained_params[key])
             self.buf[k + 1].append((float(gs.mean()), clone_params(self.levels[k + 1])))
             self.buf[k] = []
             events.append({"level": k + 2, "block": b, "mean_gamma": float(gs.mean()),
-                           "sum_gamma": float(gs.sum()), "inc_norm": float(np.sqrt(inc_norm))})
+                           "sum_gamma": float(gs.sum()), "inc_norm": inc_norm, "clipped": bool(clipped),
+                           "w": [float(g / denom) for g in gs], "s": float(scale), "r": float(radius),
+                           "d_to_mean": float(d_mean)})
         if events and self.reanchor_mode == "jump" and self.beta > 0:
             proj = self._anchor()
             for key in self.A:
@@ -205,11 +233,68 @@ class CitadelRx(DeepSICReceiver):
         return {"consolidations": events}
 
     # ---- block ---------------------------------------------------------------------
+    def _crc_pass(self, framer, idx: np.ndarray) -> np.ndarray:
+        return framer.framer.check(framer.decided_bits_to_subblocks(idx))          # (n_sub, U)
+
+    def _crc_select(self, framer, cands: List[np.ndarray]) -> (np.ndarray, Dict[str, float]):
+        """H6: per (sub-block, user) output the first candidate whose CRC passes; if none
+        passes, keep the first candidate (the gate's choice)."""
+        L, n_sub = framer.framer.L, framer.n_sub
+        out = cands[0].copy()
+        done = self._crc_pass(framer, cands[0])
+        for c in cands[1:]:
+            ok = self._crc_pass(framer, c) & ~done
+            if ok.any():
+                js, us = np.nonzero(ok)
+                for j, u in zip(js, us):
+                    out[j * L:(j + 1) * L, u] = c[j * L:(j + 1) * L, u]
+                done |= ok
+        return out, {"crc_select_frac": float(done.mean())}
+
+    def _revert_users(self, before: ParamDict, users: np.ndarray) -> None:
+        """H7: restore the listed users' slices of every adaptable tensor (leading axis = user)."""
+        self.params = dict(self.params)
+        for k in self.A:
+            t = self.params[k].clone()
+            t[users] = before[k][users]
+            self.params[k] = t
+
+    def _abstain_check(self, pass_ref: Optional[float], r_mm: Optional[float], n_checks: int) -> bool:
+        """H3: the reference itself is degraded (its CRC pass rate or LMMSE residual is far from its
+        running level on accepted blocks), so neither the fast level nor the ratios can be trusted."""
+        st, z = self.ref_stats, self.cc.abstain_z
+        bad = False
+        if pass_ref is not None and st["pass"] is not None:
+            var = max(st["pass_var"] or 0.0, pass_ref * (1 - pass_ref) / max(n_checks, 1))
+            bad |= pass_ref < st["pass"] - z * np.sqrt(var)
+        if r_mm is not None and st["res"] is not None:
+            bad |= r_mm > st["res"] + z * np.sqrt(max(st["res_var"] or 0.0, (0.05 * st["res"]) ** 2))
+        return bool(bad)
+
+    def _update_ref_stats(self, pass_ref: Optional[float], r_mm: Optional[float], ema: float = 0.9) -> None:
+        st = self.ref_stats
+        for key, v in (("pass", pass_ref), ("res", r_mm)):
+            if v is None:
+                continue
+            if st[key] is None:
+                st[key], st[key + "_var"] = v, 0.0
+            else:
+                st[key + "_var"] = ema * st[key + "_var"] + (1 - ema) * (v - st[key]) ** 2
+                st[key] = ema * st[key] + (1 - ema) * v
+
     def process_block(self, b, y_p, idx_p, y_d, aux=None) -> BlockOutput:
+        from ..gates.physics import model_residual
         aux = aux or {}
+        cc = self.cc
         framer = aux.get("framer")
+        has_crc = framer is not None and framer.framer.enabled
         yf_p, it_p, yf_d = self.to_feat(y_p), self.to_idx(idx_p), self.to_feat(y_d)
         stats: Dict[str, Any] = {}
+
+        # 0. H1: the fast level starts every block from the anchor (so its state carries no memory)
+        if cc.fast_init == "anchor" and self.K > 1:
+            self.params = dict(self.params)
+            self.params.update(clone_params(self._anchor()))
 
         # 1. surprise and self-generated learning rate
         S = self._surprise(yf_p, it_p)
@@ -217,9 +302,37 @@ class CitadelRx(DeepSICReceiver):
         eta = self.eta_max * (2 * r / (1 + r)) if self.use_surprise else self.eta_max
         stats.update(surprise=S, surprise_ratio=r, eta=eta)
 
-        # 2. fast update
+        # model-based reference and anchor detections (also used before adaptation by H2)
+        need_ref = bool(self.gate.gates) or cc.crc_select or self.cfg.receiver.dd_weight > 0 or cc.streak_k > 0
+        H = nv = idx_mm = probs_slow = idx_slow = fused = None
+        if need_ref:
+            s_p = self.mod.modulate_indices(idx_p)
+            H_ls = ls_channel_estimate(y_p, s_p, self.noise_var)
+            nv = estimate_noise_var(y_p, s_p, H_ls)
+            fused = self.tracker.fuse(H_ls, nv, y_p.shape[0], accept=False)
+            H = fused["H"]
+            idx_mm = hard_from_probs(lmmse_soft_symbols(y_d, H, nv, self.mod))
+            if self.K > 1:
+                p_slow = dict(self.params)
+                p_slow.update(self._anchor())
+                with torch.no_grad():
+                    probs_slow = self.core.detect(p_slow, yf_d)
+                idx_slow = self.hard(probs_slow)
+
+        # 2. fast update (H2: pilots plus CRC-verified data symbols)
         before = clone_params(self.params)
-        self.params = self._fast_update(yf_p, it_p, eta)
+        yf_tr, it_tr, sw = yf_p, it_p, None
+        if self.cfg.receiver.dd_weight > 0 and has_crc:
+            with torch.no_grad():
+                cand = [self.hard(self.core.detect(self.params, yf_d))] + [c for c in (idx_slow, idx_mm) if c is not None]
+            ver = self.verified_data(yf_d, framer, cand, self.cfg.receiver.dd_max_symbols)
+            if ver is not None:
+                yv, iv = ver
+                n_p, n_v = yf_p.shape[0], yv.shape[0]
+                yf_tr, it_tr = torch.cat([yf_p, yv]), torch.cat([it_p, iv])
+                sw = torch.cat([torch.full((n_p,), 1.0 / n_p), torch.full((n_v,), self.cfg.receiver.dd_weight / n_v)]).to(yf_p.device)
+                stats["dd_symbols"] = int(n_v)
+        self.params = self._fast_update(yf_tr, it_tr, eta, sample_w=sw)
         stats["fast_step_norm"] = param_dist(self.params, before, self.A)
         with torch.no_grad():
             stats["pilot_loss_post"] = float(self.core.detect_loss(self.params, yf_p, it_p).item())
@@ -229,44 +342,47 @@ class CitadelRx(DeepSICReceiver):
         idx_hat = self.hard(probs)
 
         # 4. gates (all statistics relative to the model-based reference on the same block)
-        gamma = 1.0
+        gamma, abstain, reject = 1.0, False, False
         if self.gate.gates:
-            s_p = self.mod.modulate_indices(idx_p)
-            H_ls = ls_channel_estimate(y_p, s_p, self.noise_var)
-            nv = estimate_noise_var(y_p, s_p, H_ls)
-            fused = self.tracker.fuse(H_ls, nv, y_p.shape[0], accept=False)
-            H = fused["H"]
-            idx_mm = hard_from_probs(lmmse_soft_symbols(y_d, H, nv, self.mod))
-            # the uncorrupted slow memory is a second, model-free reference on the same block
-            probs_slow = idx_slow = None
-            if self.K > 1:
-                p_slow = dict(self.params)
-                p_slow.update(self._anchor())
-                with torch.no_grad():
-                    probs_slow = self.core.detect(p_slow, yf_d)
-                idx_slow = self.hard(probs_slow)
             g1 = g1_residual(y_d, idx_hat, idx_mm, H, self.mod, idx_slow) if "g1" in self.gate.gates else None
             pass_nn = pass_mm = None
-            if "g2" in self.gate.gates and framer is not None and framer.framer.enabled:
-                chk = lambda i: float(framer.framer.check(framer.decided_bits_to_subblocks(i)).mean())
-                pass_nn = chk(idx_hat)
-                pass_mm = chk(idx_mm)
+            ok_nn = ok_mm = ok_slow = None
+            if "g2" in self.gate.gates and has_crc:
+                ok_nn, ok_mm = self._crc_pass(framer, idx_hat), self._crc_pass(framer, idx_mm)
+                pass_nn, pass_mm = float(ok_nn.mean()), float(ok_mm.mean())
+                stats["pass_lmmse"] = pass_mm
+                if self.gate.g2_relative is not None:
+                    self.gate.g2_relative["n"] = int(ok_nn.size)
                 if idx_slow is not None:
-                    pass_slow = chk(idx_slow)
-                    stats["pass_slow"] = pass_slow
-                    pass_mm = max(pass_mm, pass_slow)
+                    ok_slow = self._crc_pass(framer, idx_slow)
+                    stats["pass_slow"] = float(ok_slow.mean())
+                    pass_mm = max(pass_mm, float(ok_slow.mean()))
             innov = fused["innov_norm"] if "g3" in self.gate.gates else None
-            verdict = self.gate.evaluate(g1, pass_nn, pass_mm, innov, r)
-            accepted = self.gate.update_clean(verdict, g1, pass_nn, pass_mm)
-            if accepted:  # a rejected block must not raise the innovation reference it is tested against
-                self.tracker.commit(fused["innov"])
+            r_mm = model_residual(y_d, idx_mm, H, self.mod) if cc.abstain else None
+            if cc.abstain and self.gate.n_accepted >= 3:
+                abstain = self._abstain_check(pass_mm, r_mm, ok_nn.size if ok_nn is not None else 1)
+            g2_block = None if cc.per_user_gate else pass_nn
+            verdict = self.gate.evaluate(g1, g2_block, pass_mm if g2_block is not None else None, innov, r)
             gamma = verdict.gamma
+            if cc.per_user_gate and ok_nn is not None:
+                ref_u = np.maximum(ok_mm.mean(axis=0), ok_slow.mean(axis=0) if ok_slow is not None else 0.0)
+                v_u = self.gate.g2_user_verdicts(ok_nn.mean(axis=0), ref_u, ok_nn.shape[0], r)
+                stats["verdict_g2_user"] = [float(v) for v in v_u]
+            if abstain:
+                gamma, reject = 0.0, True
+                stats["abstain"] = True
+            else:
+                accepted = self.gate.update_clean(verdict, g1, pass_nn, pass_mm)
+                if accepted:  # a rejected block must not raise the reference it is tested against
+                    self.tracker.commit(fused["innov"])
+                    self._update_ref_stats(pass_mm, r_mm)
+            reject = reject or gamma < 0.5
             stats.update({f"gate_{k}": v for k, v in verdict.stats.items()})
             stats.update({f"verdict_{k}": v for k, v in verdict.verdicts.items()})
             stats.update(pass_nn=pass_nn, pass_mm=pass_mm, innov_norm=fused["innov_norm"])
             # 4b. a rejected block: the fast update is not trusted. Discard it (revert / snap to the
             #     slow projection) and, if enabled, detect the data with the slow projection instead.
-            if gamma < 0.5 and self.K > 1:
+            if reject and self.K > 1:
                 anchor = self._anchor()
                 if self.reject_action == "revert":
                     self.params = before
@@ -276,11 +392,56 @@ class CitadelRx(DeepSICReceiver):
                 if self.fallback and probs_slow is not None:
                     probs, idx_hat = probs_slow, idx_slow
                     stats["fallback"] = True
+            elif reject and self.K == 1:
+                # single level: the only uncorrupted state is the last accepted one (rollback)
+                if self.reject_action != "keep":
+                    self.params = before
+                if self.fallback:
+                    with torch.no_grad():
+                        probs = self.core.detect(before, yf_d)
+                    idx_hat = self.hard(probs)
+                    stats["fallback"] = True
+            elif cc.per_user_gate and "verdict_g2_user" in stats:
+                bad = np.where(np.array(stats["verdict_g2_user"]) < 0.5)[0]
+                if bad.size:   # H7: only the users whose CRC test fails revert and fall back
+                    self._revert_users(before, bad)
+                    fb = idx_slow if idx_slow is not None else self.hard(self.core.detect(before, yf_d))
+                    idx_hat = idx_hat.copy()
+                    idx_hat[:, bad] = fb[:, bad]
+                    stats["users_reverted"] = [int(u) for u in bad]
+
+            # H4: a streak of rejections is either a legitimate abrupt change or denial of adaptation.
+            # Re-fit from the anchor on CRC-verified data only and accept it if it verifies better.
+            self.streak = self.streak + 1 if reject else 0
+            if reject and cc.streak_k > 0 and self.streak >= cc.streak_k and has_crc and self.K > 1:
+                cand = [c for c in (idx_hat, idx_slow, idx_mm) if c is not None]
+                ver = self.verified_data(yf_d, framer, cand, max(self.cfg.receiver.dd_max_symbols, 400))
+                if ver is not None:
+                    yv, iv = ver
+                    start = dict(self.params)
+                    start.update(clone_params(self._anchor()))
+                    p_rec = self._fast_update(yv, iv, self.eta_max, start=start)
+                    with torch.no_grad():
+                        idx_rec = self.hard(self.core.detect(p_rec, yf_d))
+                    pass_rec = float(self._crc_pass(framer, idx_rec).mean())
+                    stats["recovery_pass"] = pass_rec
+                    if pass_rec > (pass_mm or 0.0):
+                        self.params = p_rec
+                        idx_hat, gamma, reject = idx_rec, 0.5, False
+                        self.streak = 0
+                        stats["recovered"] = True
+
+        # H6: per sub-block CRC selection among the gate's choice, the anchor and LMMSE
+        if cc.crc_select and has_crc:
+            idx_hat, sel = self._crc_select(framer, [c for c in (idx_hat, idx_slow, idx_mm) if c is not None])
+            stats.update(sel)
         stats["gamma"] = gamma
 
-        # 5. store the gated state and consolidate / re-anchor
-        if self.K > 1:
+        # 5. store the gated state and consolidate / re-anchor (an abstained block is not stored)
+        if self.K > 1 and not abstain:
             self.buf[0].append((gamma, clone_params(self.params)))
+            stats.update(self._consolidate(b))
+        elif self.K > 1:
             stats.update(self._consolidate(b))
         self.levels[0] = clone_params(self.params)
         for k in range(self.K):

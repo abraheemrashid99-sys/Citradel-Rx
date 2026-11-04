@@ -93,5 +93,6 @@ class MetaDeepSIC(DeepSICReceiver):
             self.params = clone_params(self.saved)
         self.params = self.core.sequential_adapt(
             self.params, yf, idx,
-            lambda p, q, X, t: adam_train_stage(self.core, p, q, X, t, self.lr, self.epochs))
+            lambda p, q, X, t: adam_train_stage(self.core, p, q, X, t, self.lr, self.epochs,
+                                                weight_decay=self.cfg.receiver.weight_decay))
         return stats

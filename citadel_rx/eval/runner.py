@@ -80,9 +80,10 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         blk = frames.make(b)
         y_p = channel.transmit(blk.s_pilot, st)
         y_d = channel.transmit(blk.s_data, st)
-        attacker.observe_clean(b, y_p, blk.idx_pilot)
+        attacker.observe_clean(b, y_p, blk.idx_pilot, y_d, frames)
         tb = time.time()
-        y_p_adv, y_d_adv, astats = attacker.craft(b, y_p, blk.idx_pilot, y_d, receiver, noise_var)
+        y_p_adv, y_d_adv, astats = attacker.craft(b, y_p, blk.idx_pilot, y_d, receiver, noise_var,
+                                                  idx_d=blk.idx_data, H_true=st.H, framer=frames)
         t_attack = time.time() - tb
         tb = time.time()
         out = receiver.process_block(b, y_p_adv, blk.idx_pilot, y_d_adv, aux={"framer": frames, "state": st})
@@ -90,6 +91,8 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         crc_pass = None
         if frames.framer.enabled:
             crc_pass = frames.framer.check(frames.decided_bits_to_subblocks(out.idx_hat))
+        if hasattr(attacker, "feedback"):   # HARQ query attacker (audit B6)
+            attacker.feedback(b, crc_pass, astats.get("attacked", False))
         m = block_metrics(out.idx_hat, blk.idx_data, frames.mod, crc_pass)
         m.update({"block": b, "t_rx": t_rx, "t_attack": t_attack, "snr_db": cfg.channel.snr_db,
                   "h_norm": float(np.linalg.norm(st.H))})

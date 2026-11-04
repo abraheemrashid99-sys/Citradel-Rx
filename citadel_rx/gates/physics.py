@@ -95,6 +95,7 @@ class GateController:
         self.g3_tau = max(g3_tau, chi2.ppf(g3_quantile, self.dof) / self.dof)
         self.clean_g1_ema: Optional[float] = None
         self.clean_g2_ema: Optional[float] = None
+        self.clean_g2_var: Optional[float] = None   # running variance of the normalised G2 statistic (derived slack)
         self.n_accepted = 0
 
     def thresholds(self, surprise_ratio: float) -> Dict[str, float]:
@@ -119,7 +120,10 @@ class GateController:
             s = g2_crc(pass_nn, pass_mm) / max(self.clean_g2_ema or 1.0, 1e-9)
             stats["g2"] = s
             tau2 = th["g2"]
-            if self.g2_relative is not None:
+            if self.g2_relative is not None and self.g2_relative.get("mode") == "derived":
+                tau2 = self.g2_tau_derived(pass_mm, surprise_ratio)
+                stats["g2_tau"] = tau2
+            elif self.g2_relative is not None:
                 # Prop. 2.3 inverted: the reference pass rate gives the reference SER p_ref; tolerate
                 # p_ref + delta with delta = max(abs_min, rel * p_ref), i.e. a slack that scales with
                 # the operating point instead of a fixed percentage point.
@@ -148,6 +152,40 @@ class GateController:
             raise ValueError(self.mode)
         return GateVerdict(gamma=gamma, stats=stats, verdicts=verdicts)
 
+    def g2_tau_derived(self, pass_ref: float, surprise_ratio: float = 1.0, n: Optional[int] = None) -> float:
+        """Audit A7: no hand-set floor. The tolerated excess per-symbol error is
+        delta = max(z * sigma, rho * p_ref), where sigma is the standard deviation of the normalised
+        pass-ratio statistic on accepted (clean) blocks, floored by its binomial value
+        sqrt(F(1-F)/n)/F for n CRC checks; in the ratio domain the threshold is the lower of the
+        relative-slack threshold and 1 - z * sigma. It therefore adapts to the block length."""
+        cfg = self.g2_relative
+        L, z, rel = cfg["L"], cfg.get("z", 5.0), cfg["rel"]
+        n = n or cfg.get("n", 1000)
+        F = float(np.clip(pass_ref, 1e-6, 1.0 - 1e-9))
+        p_ref = 1.0 - F ** (1.0 / L)
+        var_bin = F * (1.0 - F) / max(n, 1) / F ** 2
+        sigma = float(np.sqrt(max(var_bin, self.clean_g2_var if self.clean_g2_var is not None else var_bin)))
+        tau_sig = 1.0 - z * sigma
+        tau_rel = float(((1.0 - min(p_ref + rel * p_ref, 0.999)) / max(1.0 - p_ref, 1e-9)) ** L)
+        tau2 = min(tau_sig, tau_rel)
+        if self.adaptive and surprise_ratio > 1:
+            tau2 = 1 - (1 - tau2) * float(np.clip(1.0 / surprise_ratio, self.tighten_floor, 1.0))
+        return tau2
+
+    def g2_user_verdicts(self, pass_nn_u: np.ndarray, pass_ref_u: np.ndarray, n_sub: int,
+                         surprise_ratio: float = 1.0) -> np.ndarray:
+        """Per-user G2 verdicts (audit H7) with the same threshold rule evaluated on n_sub checks."""
+        ema = max(self.clean_g2_ema or 1.0, 1e-9)
+        out = []
+        for a, r in zip(pass_nn_u, pass_ref_u):
+            s = g2_crc(float(a), float(r)) / ema
+            if self.g2_relative is not None and self.g2_relative.get("mode") == "derived":
+                tau = self.g2_tau_derived(float(r), surprise_ratio, n=n_sub)
+            else:
+                tau = self.thresholds(surprise_ratio)["g2"]
+            out.append(_soft_step(s, tau, self.kappa, accept_below=False))
+        return np.array(out)
+
     def update_clean(self, verdict: GateVerdict, g1_stat: Optional[float], pass_nn: Optional[float],
                      pass_mm: Optional[float]) -> bool:
         """Track the clean baselines of the *relative* statistics from accepted blocks (gamma > 0.5);
@@ -161,5 +199,8 @@ class GateController:
                 self.ema * self.clean_g1_ema + (1 - self.ema) * g1_stat
         if pass_nn is not None and pass_mm is not None:
             r = g2_crc(pass_nn, pass_mm)
+            if self.clean_g2_ema is not None and self.n_accepted > 3:
+                dev2 = (r / max(self.clean_g2_ema, 1e-9) - 1.0) ** 2
+                self.clean_g2_var = dev2 if self.clean_g2_var is None else self.ema * self.clean_g2_var + (1 - self.ema) * dev2
             self.clean_g2_ema = r if self.clean_g2_ema is None else self.ema * self.clean_g2_ema + (1 - self.ema) * r
         return True

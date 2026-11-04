@@ -25,11 +25,15 @@ class ChannelConfig:
     jakes_fd_tb: float = 0.05         # normalised Doppler f_D * T_b for 'jakes'
     snr_db: float = 10.0
     seed: int = 0
+    # abrupt change (audit D6/B3): from `abrupt_block` on, the channel is redrawn or the SNR drops
+    abrupt_block: int = -1            # -1 disables
+    abrupt_type: str = "redraw"       # redraw | snr_drop
+    abrupt_snr_drop_db: float = 6.0
 
 
 @dataclass
 class FrameConfig:
-    modulation: str = "QPSK"          # BPSK | QPSK
+    modulation: str = "QPSK"          # BPSK | QPSK | QAM16
     pilot_bits: int = 200             # pilot bits per user per block (reference: 200)
     data_bits: int = 50000            # data bits per user per block (reference: 50 000)
     n_blocks: int = 100
@@ -58,8 +62,18 @@ class ReceiverConfig:
     meta_epochs: int = 300
     # drift detection
     drift_threshold: float = 2.0
-    # medbn-style robust gradient
+    # median-of-means robust gradient (was labelled "MedBN-style")
     robust_groups: int = 4
+    # baselines requested in the audit (C2-C5, C7)
+    weight_decay: float = 0.0         # Adam weight decay (C5 tuning)
+    reg: str = "none"                 # none | l2sp | ewc : pull toward the pre-trained weights (C2)
+    reg_weight: float = 0.0
+    ema_beta: float = 0.0             # >0: detect with an EMA (mean-teacher) copy of the weights (C2, CoTTA)
+    restore_p: float = 0.0            # CoTTA-style stochastic restore of this fraction of weights per block (C4)
+    entropy_filter: float = 0.0       # EATA-style: revert the block's update if mean data entropy > this x ln(order) (C4)
+    dd_weight: float = 0.0            # >0: also adapt on CRC-verified data symbols with this loss weight (C3/H2)
+    dd_max_symbols: int = 400         # cap on verified data symbols used per block
+    robust_ls: str = "none"           # LMMSE channel estimate: none | huber | trim (C7)
 
 
 @dataclass
@@ -96,6 +110,18 @@ class CitadelConfig:
     reject_action: str = "revert"     # what happens to the fast level on a rejected block: keep | revert | anchor
     fallback_on_reject: bool = True   # detect the data of a rejected block with the slow projection instead
     dgd_delta: float = 0.1            # scale of the delta-rule decay term
+    gate_kappa: float = 0.1           # soft-step width as a fraction of each threshold (E5 sensitivity)
+    g2_derived_z: float = 5.0         # g2_slack_mode=derived: delta = max(z * sigma_F(p_ref), rho * p_ref) (A7)
+    # method upgrades (audit H1-H7)
+    fast_init: str = "carry"          # carry | anchor : start every block's fast level from the anchor (H1)
+    fast_radius: float = 0.0          # >0: project the block's total fast update onto a ball of this radius (H1)
+    consol_clip: List[float] = field(default_factory=list)  # per slow level: clip each consolidation increment (H1)
+    abstain: bool = False             # reference-degradation abstain state (H3)
+    abstain_z: float = 4.0
+    streak_k: int = 0                 # >0: recovery after this many consecutive rejections (H4)
+    drift_guard: float = 0.0          # pull of the slowest level toward the pre-trained weights per consolidation (H5)
+    crc_select: bool = False          # per sub-block CRC selection among fast, anchor and LMMSE decisions (H6)
+    per_user_gate: bool = False       # gate, revert and fall back per user with per-user CRC statistics (H7)
 
 
 @dataclass
@@ -118,6 +144,26 @@ class AttackConfig:
     surrogate_blocks: int = 10        # transfer: blocks of pilots observed by the attacker
     attacker_channel: str = "direct"  # direct | rank1
     gate_aware_weight: float = 1.0    # adaptive attacker: penalty on gate statistics
+    # audit B1/B8: physical attacker and budget reference
+    attacker_antennas: int = 0        # >0: E = G X_a with G (N x M) from the channel family (rank-M physical attacker)
+    attacker_csi_err: float = 0.0     # variance of the attacker's error on G (imperfect CSI)
+    budget_ref: str = "received"      # received (noise included) | signal (noise-free users' energy)
+    # audit B2: reference degradation (joint pilot + data)
+    a4_alpha: float = 0.5             # fraction of per-symbol power spent on the pilots
+    data_subblocks: int = 64          # data sub-blocks the attacker optimises over (soft CRC objective)
+    # audit B4: adaptive strength
+    restarts: int = 1                 # random restarts of PGD
+    eot: int = 1                      # noise draws averaged in the objective (expectation over transformation)
+    soft_gate: bool = False           # BPDA/soft-gate output objective: maximise P(accept) x loss of emitted decisions
+    # audit B5: optimised slow drift (a3star) uses a3_eps_small and the soft-gate penalty
+    # audit B6: transfer surrogate and query attacker
+    surrogate: str = "online_deepsic" # surrogate receiver type for knowledge=transfer (online_deepsic | citadel)
+    query_sigma: float = 0.3          # query attacker: exploration noise of the NES search
+    query_lr: float = 0.5
+    # audit E3: randomised attack window
+    start_mode: str = "fixed"         # fixed | random
+    random_lo: int = 10
+    random_hi: int = 50
 
 
 @dataclass
