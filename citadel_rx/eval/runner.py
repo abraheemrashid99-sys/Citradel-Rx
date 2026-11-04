@@ -111,8 +111,12 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         if progress_cb:
             progress_cb(b, m)
 
-    window = (cfg.attack.start_block, cfg.attack.end_block) if cfg.attack.type != "none" else None
+    # the attacker owns the window (it is randomised per seed when attack.start_mode=random, audit E3)
+    window = tuple(getattr(attacker, "window", (cfg.attack.start_block, cfg.attack.end_block))) \
+        if cfg.attack.type != "none" else None
     summary = summarise(blocks, window)
+    if window is not None:
+        summary["attack_window"] = [int(window[0]), int(window[1])]
     summary["pretrain_time_s"] = pretrain_time
     summary["mean_t_rx_s"] = float(np.mean([b["t_rx"] for b in blocks]))
     summary["total_time_s"] = time.time() - t0
