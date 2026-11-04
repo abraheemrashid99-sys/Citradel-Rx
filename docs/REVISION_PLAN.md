@@ -1,0 +1,125 @@
+# Revision plan: every item of the reviewer audit
+
+Status key: **done** = implemented and tested in the code; **run** = in `scripts/revision_campaign.py`
+(results arrive after the GPU campaign); **text** = manuscript edit, done in the final pass with the
+campaign's numbers; **deferred** = stated as a limitation, with the reason.
+
+## Decisive early result (C1)
+
+The simplest receiver that uses the CRC, online DeepSIC + CRC gate + rollback to the last accepted
+weights, **fails** under white-box A1 at SIR 0 dB (pilot runs, seeds 0-1): window SER 0.26-0.47,
+post-attack SER 0.29-0.55, never recovers, and 55-58% of clean blocks are falsely rejected. Block
+traces show the mechanism: one poisoned update leaks through (at SIR 0 dB the pilot poison also
+degrades the LMMSE reference, so the ratio test looks normal), the leaked state becomes the state
+rollback returns to, and every later clean update starting from it is rejected. Rollback has an
+absorbing state; the slow memory makes a leak transient (a gamma-weighted 1/C_k share, a clean
+anchor to fall back on, and a proximal pull back). This is the argument for the hierarchy the
+audit asked for (C1, G2). The previous K=1 ablation (0.788) never reverted or fell back at all
+(both were guarded by K > 1); this is fixed and the ablation is re-run.
+
+## A. Theory
+
+| Item | Action | Status |
+|---|---|---|
+| A1 neither branch applies | "non-expansive" removed; Theorem 1 restated: (i) structural bound with measured fast displacement, (ii) contraction branch stated as conditional and not claimed, (iii) **new design bound** D_K(W) <= 2 kappa_K n(W) from the consolidation clip, holding for any attacker and any verdicts, with no measured quantity | done (code: `citadel.consol_clip`); text |
+| A2 equal verdicts | extended structural bound for unequal verdicts, computable from logged consolidation weights (w, s, r, distance to mean); drawn for A1 as well as A3 | done (`paired_disp.py`); run P4 |
+| A3 mis-stated contraction bound | replaced by Delta_f(W) <= G eps (1 - L^n_W)/(1 - L); n_W defined | text |
+| A4 near-tautology | renamed "retention bound"; "certificate" removed; the design bound makes it attacker-independent by construction | text |
+| A5 Theorem 2 vacuous | Theorem 2 dropped from the main text (kept as a remark for the convex last-layer variant) | text |
+| A6 weak Lipschitz estimates | hill-climbing estimator over channel families, max and 95% quantile; the anchor-start variant has L_theta = 0 by construction | done (`lipschitz_strong.py`); run |
+| A7 delta_min hand-set | derived slack: delta = max(z sigma, rho p_ref) with sigma the running std of the clean statistic floored by its binomial value, so it adapts to block length; candidate in calibration | done (`g2_slack_mode=derived`); run A |
+| A8 G1 mismatch argument | assumption E[m_n e_n] = 0 stated; clean G1 distribution on the tanh channel reported | text + existing records |
+| A9 notation | notation table; CRC slack renamed kappa, attacked fraction pi | text |
+
+## B. Threat model and adaptive attacks
+
+| Item | Action | Status |
+|---|---|---|
+| B1 unconstrained perturbation | rank-M physical attacker E = G X_a, M = 1, 2, 4, CSI error 0.01 / 0.1; full-rank kept as worst case; SIR mapped to power/distance in text | done; run P3 |
+| B2 joint pilot + data | attacker A4: per-symbol power split alpha in {0.25, 0.5, 0.75}, joint PGD on pilots and data aimed at the emitted decisions behind soft gates; with and without the abstain state (H3); jamming-only controls at the same data power | done; run P3 |
+| B3 denial of adaptation | fixed channel-estimate spoof on blocks 40-90 + abrupt redraw / 6 dB drop at block 50; with and without streak recovery (H4); online and LMMSE references | done; run P3 |
+| B4 adaptive strength | unroll depth 2 / 10 / 50, PGD 100 with 5 restarts, BPDA soft-gate output-level objective with exact thresholds and EMA states, EOT over noise draws; strongest attack also against online DeepSIC; attack code released | done; run P3 |
+| B5 optimal slow drift | A3*: drift toward a spoofed basin with a soft-gate term that keeps blocks accepted, energy 5 / 20 / 50%, 1000 blocks, with and without drift guard (H5) | done; run P8 |
+| B6 transfer too narrow | grey-box: Citadel-Rx surrogate from another seed; query attacker on HARQ NACK feedback | done; run P3 |
+| B7 knowledge vague | knowledge table (white-box, grey-box, transfer, query), synchronisation assumption | text |
+| B8 budget includes noise | signal-referenced budget option; both definitions reported | done; run P3 |
+
+## C. Missing baselines
+
+| Item | Action | Status |
+|---|---|---|
+| C1 CRC + rollback | `crc_rollback`, `rollback_allgates`; K=1 fixed. Result above | done; run P1 (10 seeds) |
+| C2 regularised online | L2-SP (4 weights), EMA teacher, EWC (Fisher from pre-training) | done; run P2 |
+| C3 CRC-verified decision-directed | `dd_deepsic`; also H2 inside Citadel-Rx | done; run P2 |
+| C4 TTA defences | CoTTA-style (teacher + stochastic restore), EATA-style (entropy filter + Fisher anchor) | done; run P2 |
+| C5 under-tuned baselines | epochs {30, 100, 300} x lr {1e-3, 5e-3} x weight decay {0, 1e-4} on calibration seeds, best setting used at test | done; run A |
+| C6 MedBN mislabelled | renamed "median-of-means gradient" | text |
+| C7 robust LMMSE | Huber IRLS (and trimmed) channel estimate | done; run P2 |
+
+## D. Experimental realism
+
+| Item | Action | Status |
+|---|---|---|
+| D1 block length | N_d in {1000, 5000, 25000} x N_p in {32, 100, 200}; derived slack adapts to n | run P6 |
+| D2 NR link-level + LDPC | **deferred**: Sionna NR slot + LDPC + 16-QAM is several days of engineering and validation; stated as the main limitation | deferred |
+| D3 attacker in the scene | SIR translated to transmit power and distance under 3GPP UMi path loss (analytic); full scene **deferred** with D2 | text / deferred |
+| D4 N > U | 4 x 16 and 8 x 32 | run P6 |
+| D5 higher order | 16-QAM at 20 dB (same hidden width as QPSK) | done; run P6 |
+| D6 abrupt change, no attack | redraw and 6 dB drop at block 50 | done; run P3 |
+| D7 long horizon | 2000 clean blocks, cosine and Jakes | run P8 |
+| D8 second backbone | **deferred**; the claim "applies unchanged" is deleted (F13) | deferred |
+| D9 compute | 30-step and last-layer variants; per-block time reported; GPU latency/FLOPs in text | run P6; text |
+
+## E. Statistics and protocol
+
+| Item | Action | Status |
+|---|---|---|
+| E1 correlated blocks | moving-block bootstrap with measured decorrelation length (1-4 blocks measured, blocks of 5-8); seed-level exact tests; "every p < 0.001" rewritten with test, unit and n | done (`revision_stats.py`) |
+| E2 too few seeds | 10 test seeds on headline cells, 5 elsewhere | run P1-P5 |
+| E3 easy part of the fade | attack window randomised per seed; excess SER (attacked minus matched clean run) is the primary metric | done; run |
+| E4 thresholds after test | calibration seeds 0-2 with a pre-registered automatic selection; all reported tables on fresh seeds 10-19 | done; run |
+| E5 sensitivity | one-at-a-time x0.5 / 0.75 / 1.5 / 2 for 8 parameters, plus G1 x CRC-slack heat map | run P7 |
+| E6 intervals and counts | Wilson intervals with k/n for every rate | done |
+| E7 Fig. 3c | paired displacement of every level and the anchor under A1, mean over seeds with bands | done; run P4 |
+| E8 Holm family | families listed with hypotheses and size | done |
+
+## F. Claim consistency
+
+All fourteen sentences (F1-F14) are rewritten in the final pass so that every abstract and
+conclusion number points to one table cell of the revised tables (test seeds). "halves the SER"
+is re-checked against the tuned online DeepSIC (C5). **Status: text.**
+
+## G. Novelty, positioning, references
+
+| Item | Action | Status |
+|---|---|---|
+| G1 missing prior work | pilot contamination / active attacks, CRC-aided online training (ViterbiNet / DeepSIC line), EATA, CoTTA, SAR, RoTTA, persistent TTA, L2-SP, EWC, mean teacher, adaptive-attack methodology, adversarial PHY learning, complementary learning systems; every reference verified at its source before it is cited | text |
+| G2 reframing | lead with the principle; C1 result supports the hierarchy | text |
+| G3 Proposition 1 | presented as a design rule | text |
+| G4 Table I rows | pilot-spoofing detection, CRC-aided online training, EATA/CoTTA | text |
+
+## H. Method upgrades
+
+| Item | Implementation | Status |
+|---|---|---|
+| H1 contraction by design | fast start from the anchor (L_theta = 0), update radius R, consolidation clip kappa (clean p99: 8.5, 4.5) | done; calibration candidate |
+| H2 CRC-verified labels | `receiver.dd_weight` inside Citadel-Rx | done |
+| H3 abstain | reference pass rate or residual far from its running level -> no consolidation | done; run with B2 |
+| H4 streak recovery | after k rejections, refit from the anchor on CRC-verified data, accept if it verifies better | done; run with B3 |
+| H5 drift guard | pull of the slowest level toward pre-trained weights | done; run with B5 |
+| H6 CRC selection | per (sub-block, user) first passing among fast, anchor, LMMSE | done; in all candidates |
+| H7 per-user gating | per-user CRC verdicts, revert and fall back per user | done |
+
+## I. Writing and reproducibility
+
+| Item | Action | Status |
+|---|---|---|
+| I1 repo URL | rename the GitHub repository to `Citadel-Rx` (GitHub redirects the old URL); owner action | user |
+| I2 algorithm box | Algorithm 1 | text |
+| I3 notation | table | text |
+| I4 C_K configurations | full period vectors (1,2,8), (1,8,32), (1,32,128) | text |
+| I5 hyperparameter provenance | table: value, derived / tuned / fixed, on which data | text |
+| I6-I8 SED, SER definitions, informal wording | defined; wording replaced by measured statements | text |
+| I9-I12 table density, figure, abstract numbers, pages | as advised; proofs and full tables to a supplementary file | text |
+| I13 packaging | one-command campaign and report; lock file; Zenodo DOI is an owner action | partly done / user |
+| I14 acknowledgements | added | text |
