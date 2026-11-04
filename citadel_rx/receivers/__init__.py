@@ -9,6 +9,7 @@ _BASELINE_DEFAULTS = {
     "dd_deepsic": {"dd_weight": 1.0},                          # CRC-verified decision-directed (C3)
     "cotta_deepsic": {"ema_beta": 0.9, "restore_p": 0.05},     # CoTTA-style teacher + stochastic restore (C4)
     "eata_deepsic": {"entropy_filter": 0.4, "reg": "ewc", "reg_weight": 1e-2},  # EATA-style filter + Fisher anchor (C4)
+    "online_select": {"crc_select": True},                     # online DeepSIC + CRC selection with LMMSE (H6 comparator)
 }
 
 

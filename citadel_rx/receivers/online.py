@@ -204,8 +204,27 @@ class DeepSICReceiver(Receiver):
         with torch.no_grad():
             stats["pilot_loss_post"] = float(self.core.detect_loss(self.params, yf_p, it_p).item())
         probs = self.detect(yf_d)
+        idx_hat = self.hard(probs)
+        framer = aux.get("framer")
+        if rc.crc_select and framer is not None and framer.framer.enabled:
+            # comparator for Citadel-Rx's H6: per (sub-block, user), keep this receiver's decisions if
+            # their CRC passes, otherwise take LMMSE's if those pass
+            from .lmmse import estimate_noise_var, hard_from_probs, lmmse_soft_symbols, ls_channel_estimate
+            s_p = self.mod.modulate_indices(idx_p)
+            nv0 = 10 ** (-0.1 * self.cfg.channel.snr_db)
+            H = ls_channel_estimate(y_p, s_p, nv0)
+            idx_mm = hard_from_probs(lmmse_soft_symbols(y_d, H, estimate_noise_var(y_p, s_p, H), self.mod))
+            L = framer.framer.L
+            ok_nn = framer.framer.check(framer.decided_bits_to_subblocks(idx_hat))
+            ok_mm = framer.framer.check(framer.decided_bits_to_subblocks(idx_mm))
+            take = ok_mm & ~ok_nn
+            if take.any():
+                idx_hat = idx_hat.copy()
+                for j, u in zip(*np.nonzero(take)):
+                    idx_hat[j * L:(j + 1) * L, u] = idx_mm[j * L:(j + 1) * L, u]
+            stats["crc_select_frac"] = float((ok_nn | ok_mm).mean())
         self.block_count += 1
-        return BlockOutput(probs_data=probs, idx_hat=self.hard(probs), stats=stats)
+        return BlockOutput(probs_data=probs, idx_hat=idx_hat, stats=stats)
 
     # ---- attacker view ---------------------------------------------------
     def attack_surface(self) -> Dict[str, Any]:

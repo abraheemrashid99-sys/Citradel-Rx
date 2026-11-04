@@ -147,11 +147,12 @@ def phase_b(fz: Dict) -> List[Job]:
     CIT = ["receiver.type=citadel"] + fz["citadel_overrides"]
     tuned = {rx: v["overrides"] for rx, v in fz.get("baselines", {}).items()}
     RND = ["attack.start_mode=random"]
-    rx_ov = lambda rx: (CIT if rx == "citadel" else [f"receiver.type={rx}"] + tuned.get(rx, []))
+    rx_ov = lambda rx: (CIT if rx == "citadel" else
+                        [f"receiver.type={rx}"] + tuned.get("online_deepsic" if rx == "online_select" else rx, []))
     jobs: List[Job] = []
 
     # P1 headline: 10 seeds, randomised window, matched clean runs (E2, E3)
-    for rx in ["citadel", "online_deepsic", "meta_deepsic", "crc_rollback"]:
+    for rx in ["citadel", "online_deepsic", "meta_deepsic", "crc_rollback", "online_select"]:
         cells = {f"wb_sir{s}": ["attack.type=a1", "attack.knowledge=whitebox", f"attack.sir_db={s}"] for s in (-10, 0, 10)}
         cells["tr_sir0"] = ["attack.type=a1", "attack.knowledge=transfer", "attack.sir_db=0"]
         cells["jam"] = ["attack.type=data_jam", "attack.sir_db=0"]

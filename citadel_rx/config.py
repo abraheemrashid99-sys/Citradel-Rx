@@ -74,6 +74,8 @@ class ReceiverConfig:
     dd_weight: float = 0.0            # >0: also adapt on CRC-verified data symbols with this loss weight (C3/H2)
     dd_max_symbols: int = 400         # cap on verified data symbols used per block
     robust_ls: str = "none"           # LMMSE channel estimate: none | huber | trim (C7)
+    crc_select: bool = False          # per (sub-block, user) CRC selection between this receiver and LMMSE
+                                      # (the comparator for Citadel-Rx's H6 selection gain)
 
 
 @dataclass
