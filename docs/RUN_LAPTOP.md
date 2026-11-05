@@ -48,7 +48,9 @@ Every finished run prints one line, for example
 [37 done, ~299 left | 1.2 h, ~4.6 h to go at this pace] t1 P1 p1_citadel__wb_sir0 s13 OK 11 min  == ...
 ```
 
-Results are committed and pushed to GitHub every 45 minutes and at the end, so the cloud session
+The time estimate is too high during the first ten or so runs (it divides by the finished runs
+while 8 run in parallel) and settles after that. Results are committed and pushed to GitHub every
+45 minutes and at the end, so the cloud session
 can analyse them while the rest runs. A log is written to `logs/laptop_<date>.log`.
 
 ## 4. Interruptions

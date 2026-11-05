@@ -58,8 +58,19 @@ def consolidation_events(rec, level):
     return ev
 
 
+def _s_eff(e, clip):
+    """Step actually taken: the logged step s, scaled down when the consolidation clip was active."""
+    s = float(e.get("s", 0.0))
+    if e.get("clipped") and clip > 0 and float(e.get("inc_norm", 0.0)) > 0:
+        s *= clip / float(e["inc_norm"])
+    return s
+
+
 def extended_bound(adv, cln, D_prev, eta_K, K, w0, w1):
-    """Extended structural bound (A2) evaluated at every block of the window."""
+    """Extended structural bound (A2) evaluated at every block of the window. With the clip the
+    effective step s_eff = s * min(1, kappa / ||increment||) <= s <= eta_K replaces s."""
+    cl = adv["config"]["citadel"].get("consol_clip") or []
+    clip = float(cl[K - 2]) if len(cl) >= K - 1 else 0.0
     ea, ec = consolidation_events(adv, K), consolidation_events(cln, K)
     pairs = [(a, c) for a, c in zip(ea, ec) if w0 <= a["block"] < w1 and a["block"] == c["block"]]
     out = np.zeros(w1 - w0)
@@ -75,7 +86,7 @@ def extended_bound(adv, cln, D_prev, eta_K, K, w0, w1):
             wa, wc = np.asarray(a.get("w", [])), np.asarray(c.get("w", []))
             if wa.size and wa.size == wc.size:
                 omega = max(omega, float(np.abs(wa - wc).sum()) * float(c.get("r", 0.0)))
-            extra += abs(float(a.get("s", 0.0)) - float(c.get("s", 0.0))) * float(c.get("d_to_mean", 0.0))
+            extra += abs(_s_eff(a, clip) - _s_eff(c, clip)) * float(c.get("d_to_mean", 0.0))
             n_cons += 1
             j += 1
         out[t] = (delta[t] + omega) * (1 - (1 - eta_K) ** n_cons) + extra
