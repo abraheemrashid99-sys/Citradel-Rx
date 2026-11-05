@@ -34,3 +34,11 @@
 {"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_online_deepsic_ep300_lr0.005_wd0.0001", "seed": 0, "ok": true, "seconds": 373.9, "finished": "2026-11-05T20:38:40.647742+00:00"}
 {"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_online_deepsic_ep300_lr0.005_wd0.0001", "seed": 1, "ok": true, "seconds": 377.1, "finished": "2026-11-05T20:38:44.746636+00:00"}
 {"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_online_deepsic_ep300_lr0.005_wd0.0001", "seed": 2, "ok": true, "seconds": 378.8, "finished": "2026-11-05T20:38:48.797931+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0", "seed": 0, "ok": true, "seconds": 1780.6, "finished": "2026-11-05T21:02:11.150246+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0.0001", "seed": 0, "ok": true, "seconds": 1786.1, "finished": "2026-11-05T21:02:19.453154+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0", "seed": 1, "ok": true, "seconds": 1790.4, "finished": "2026-11-05T21:02:21.837385+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0", "seed": 2, "ok": true, "seconds": 1791.2, "finished": "2026-11-05T21:02:22.676132+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0.0001", "seed": 1, "ok": true, "seconds": 1910.4, "finished": "2026-11-05T21:10:23.308389+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.005_wd0", "seed": 0, "ok": true, "seconds": 1902.8, "finished": "2026-11-05T21:10:27.582327+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.005_wd0", "seed": 1, "ok": true, "seconds": 1908.3, "finished": "2026-11-05T21:10:37.054976+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep30_lr0.001_wd0.0001", "seed": 2, "ok": true, "seconds": 1918.6, "finished": "2026-11-05T21:10:39.242291+00:00"}
