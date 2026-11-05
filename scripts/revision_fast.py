@@ -60,9 +60,9 @@ CAL = [0, 1, 2]
 T10, T3, T2, T1 = list(range(10, 20)), [10, 11, 12], [10, 11], [10]
 KAPPA = "[8.5,4.5]"      # clean p99 of the consolidation increments (levels 2, 3), calibration runs
 CANDIDATES = {           # pre-registered (scripts/revision_campaign.py)
-    "rel_select_clip": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
-    "derived_select_clip": ["citadel.g2_slack_mode=derived", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
-    "rel_select_clip_anchorstart": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}",
+    "rel_select_clip": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized"],
+    "derived_select_clip": ["citadel.g2_slack_mode=derived", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized"],
+    "rel_select_clip_anchorstart": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized",
                                     "citadel.fast_init=anchor", "citadel.fast_radius=13"],
 }
 CAL_CELLS = {"clean": ["attack.type=none"], "a1": ["attack.type=a1", "attack.sir_db=0"],
@@ -426,7 +426,13 @@ class Campaign:
                     i += 1
                     continue
                 self.queue.pop(i)
-                key, ov = resolve(job, s, self.fz_cit, self.fz_base)
+                try:
+                    key, ov = resolve(job, s, self.fz_cit, self.fz_base)
+                except Exception as e:   # a setting this code does not know: skip the run, never guess
+                    print(f"!! skipped {job.group} {job.name or 'clean twin'} s{s}: {e!r} (update the code: git pull)", flush=True)
+                    if job.kind == self.cal_kind:
+                        self.cal_left -= 1
+                    continue
                 skip = key in self.seen or (job.kind == "cal" and _done_elsewhere(ov[:-3], s))
                 self.seen.add(key)
                 if skip:

@@ -16,6 +16,8 @@ survives without the large .npz files, and draws them (mean over seeds, min-max 
     attacker and any gate verdicts;
   * the extended structural bound of Theorem 1(i'), valid for unequal verdicts (audit A2):
       D_K(W) <= (Delta(W) + Omega(W)) (1 - (1 - eta_K)^n(W)) + sum_n |s_n - s'_n| ||theta'_K,n - m'_n||,
+    (valid for citadel.consol_mean=normalized, where the gated weights of every consolidation sum to one;
+    the first-version rule sub-normalised them when the verdict mass was below one),
     with Delta(W) the largest paired displacement of the level-(K-1) states buffered in the window,
     Omega(W) = max_n ||w_n - w'_n||_1 r_n, and (w, s, r, ||theta - m||) logged at every consolidation.
 

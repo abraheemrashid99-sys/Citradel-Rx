@@ -118,6 +118,9 @@ class CitadelConfig:
     fast_init: str = "carry"          # carry | anchor : start every block's fast level from the anchor (H1)
     fast_radius: float = 0.0          # >0: project the block's total fast update onto a ball of this radius (H1)
     consol_clip: List[float] = field(default_factory=list)  # per slow level: clip each consolidation increment (H1)
+    consol_mean: str = "legacy"       # legacy: gated mean divided by max(1, sum gamma), as in the first version, which
+    #                                   pulls a level toward the origin when sum gamma < 1 | normalized: divided by
+    #                                   sum gamma, so every consolidation is a convex combination (Lemma 1)
     abstain: bool = False             # reference-degradation abstain state (H3)
     abstain_z: float = 4.0
     streak_k: int = 0                 # >0: recovery after this many consecutive rejections (H4)

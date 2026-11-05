@@ -50,9 +50,9 @@ TEST3 = list(range(10, 13))
 KAPPA = "[8.5,4.5]"      # clean p99 of the consolidation increments (levels 2, 3), measured on calibration runs
 
 CITADEL_CANDIDATES = {
-    "rel_select_clip": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
-    "derived_select_clip": ["citadel.g2_slack_mode=derived", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
-    "rel_select_clip_anchorstart": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}",
+    "rel_select_clip": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized"],
+    "derived_select_clip": ["citadel.g2_slack_mode=derived", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized"],
+    "rel_select_clip_anchorstart": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}", "citadel.consol_mean=normalized",
                                     "citadel.fast_init=anchor", "citadel.fast_radius=13"],
 }
 REFERENCE_CITADEL = ["citadel.g2_slack_mode=relative"]     # the submitted configuration, for comparison

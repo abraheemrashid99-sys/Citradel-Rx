@@ -200,7 +200,10 @@ class CitadelRx(DeepSICReceiver):
             if (b + 1) % self.C[k + 1] != 0 or not self.buf[k]:
                 continue
             gs = np.array([g for g, _ in self.buf[k]], dtype=float)
-            denom = max(1.0, float(gs.sum()))
+            if self.cc.consol_mean == "normalized" and gs.sum() > 0:
+                denom = float(gs.sum())          # convex combination of the buffered states
+            else:
+                denom = max(1.0, float(gs.sum()))  # first version: sub-normalised when sum gamma < 1
             mean_state = {key: sum(g * s[key] for g, s in self.buf[k]) / denom for key in self.A}
             eta_k = self.level_lr[k + 1]
             # with Σγ < 1 (everything rejected) the update is scaled down accordingly
