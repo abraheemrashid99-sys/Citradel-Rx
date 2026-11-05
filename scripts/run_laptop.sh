@@ -35,44 +35,72 @@ git pull --no-rebase --no-edit origin "$BRANCH" || echo "   (git pull failed: co
 echo "   code version: $(git rev-parse --short HEAD)"
 
 # ---- 2. disk and Python environment ---------------------------------------------------------
+# ignore personal pip settings (a pip.conf with "user = true" breaks virtual environments)
+export PIP_CONFIG_FILE=/dev/null PIP_DISABLE_PIP_VERSION_CHECK=1
+unset PIP_USER PIP_TARGET PIP_PREFIX PIP_REQUIRE_VIRTUALENV PYTHONPATH PYTHONHOME
 free_mb=$(df -m . | awk 'NR==2 {print $4}')
 echo "   free disk: ${free_mb} MB"
-if [ ! -x .venv/bin/python ]; then
-  PY=""
-  for c in python3.12 python3.11 python3.13 python3 python; do
-    if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys, platform; sys.exit(0 if sys.version_info >= (3, 10) and platform.machine() in ("arm64", "aarch64", "x86_64") else 1)' 2>/dev/null; then
-      PY="$c"; break
-    fi
+if [ -d .venv ] && ! .venv/bin/python -c "import torch, numpy, scipy, yaml" 2>/dev/null; then
+  echo "   removing an incomplete .venv"; rm -rf .venv
+fi
+if [ ! -d .venv ]; then
+  # the active conda Python first; prefer one that already has numpy/scipy/matplotlib (then only
+  # PyTorch is installed)
+  cands=""
+  if [ -n "${CONDA_PREFIX:-}" ] && [ -x "${CONDA_PREFIX}/bin/python" ]; then cands="${CONDA_PREFIX}/bin/python"; fi
+  cands="$cands python3 python3.12 python3.11 python3.13 python"
+  PY=""; PY_SITE=""
+  for c in $cands; do
+    command -v "$c" >/dev/null 2>&1 || continue
+    "$c" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null || continue
+    if [ "$(uname -s)" = "Darwin" ] && [ "$("$c" -c 'import platform; print(platform.machine())')" != "arm64" ]; then continue; fi
+    [ -z "$PY" ] && PY="$c"
+    if [ -z "$PY_SITE" ] && "$c" -c 'import numpy, scipy, matplotlib, yaml' 2>/dev/null; then PY_SITE="$c"; fi
   done
   if [ -z "$PY" ]; then
-    echo "!! no Python >= 3.10 found. With conda:  conda create -y -n py311 python=3.11 && conda activate py311  then re-run."
+    echo "!! no native Python >= 3.10 found. With conda:  conda create -y -n py311 python=3.11 && conda activate py311  then re-run."
     exit 1
   fi
-  if [ "$(uname -s)" = "Darwin" ] && [ "$("$PY" -c 'import platform; print(platform.machine())')" != "arm64" ]; then
-    echo "!! $PY is an Intel (x86_64) Python running under Rosetta; PyTorch needs a native arm64 Python."
-    echo "   Install Miniforge (arm64) or use /usr/bin/python3 if it is 3.10+, then re-run."
-    exit 1
-  fi
-  # Reuse numpy / scipy / matplotlib / yaml / pytest of this Python when it has them (conda base
-  # usually does): then only PyTorch is installed, about 0.4 GB instead of about 0.8 GB.
   SITE=""; need_mb=1400
-  if "$PY" -c 'import numpy, scipy, matplotlib, yaml, pytest, tqdm' 2>/dev/null; then
-    SITE="--system-site-packages"; need_mb=1000
-  fi
+  if [ -n "$PY_SITE" ]; then PY="$PY_SITE"; SITE="--system-site-packages"; need_mb=1000; fi
   if [ "$free_mb" -lt "$need_mb" ]; then
     echo "!! about $need_mb MB of free disk is needed (now $free_mb MB). Free space, for example:"
     echo "     conda clean -a -y ; pip cache purge ; rm -rf ~/Library/Caches/pip ; empty the Bin"
     exit 1
   fi
-  echo "   creating .venv with $("$PY" --version 2>&1) ${SITE:+(reusing its numpy/scipy/matplotlib)}"
-  "$PY" -m venv $SITE .venv || exit 1
-  .venv/bin/python -m pip install -q --no-cache-dir --upgrade pip
-  .venv/bin/python -m pip install --no-cache-dir -r requirements.txt || { echo "!! pip install failed"; rm -rf .venv; exit 1; }
+  echo "   creating .venv with $PY ($("$PY" --version 2>&1))${SITE:+, reusing its numpy/scipy/matplotlib}"
+  mode=""
+  if "$PY" -m venv $SITE .venv && .venv/bin/python -m pip --version >/dev/null 2>&1; then
+    mode=venv
+  else
+    echo "   the standard venv failed; its pip bootstrap reports:"
+    [ -x .venv/bin/python ] && .venv/bin/python -m ensurepip --default-pip 2>&1 | tail -6
+    rm -rf .venv
+    # fallback 1: a venv without pip, filled by the pip of the base Python (pip >= 22.3)
+    if "$PY" -m pip --version >/dev/null 2>&1 && "$PY" -m venv $SITE --without-pip .venv \
+       && "$PY" -m pip --python .venv/bin/python --version >/dev/null 2>&1; then
+      mode=basepip
+      echo "   using a venv without its own pip, filled by $PY -m pip"
+    else
+      rm -rf .venv
+      # fallback 2: a conda environment in .venv
+      if command -v conda >/dev/null 2>&1 && conda create -y -q -p "$PWD/.venv" python=3.12 pip; then
+        mode=venv
+        echo "   using a conda environment in .venv"
+      fi
+    fi
+  fi
+  case "$mode" in
+    venv)    .venv/bin/python -m pip install -q --no-cache-dir --upgrade pip || true
+             .venv/bin/python -m pip install --no-cache-dir -r requirements.txt || { echo "!! pip install failed"; rm -rf .venv; exit 1; } ;;
+    basepip) "$PY" -m pip --python .venv/bin/python install --no-cache-dir -r requirements.txt || { echo "!! pip install failed"; rm -rf .venv; exit 1; } ;;
+    *)       echo "!! could not create a Python environment; send the lines above"; exit 1 ;;
+  esac
 fi
 PYV=.venv/bin/python
 "$PYV" -c "import torch, numpy, scipy, yaml; print('   torch', torch.__version__, '| numpy', numpy.__version__, '| scipy', scipy.__version__)" \
   || { echo "!! the environment is broken: delete the .venv folder and re-run"; exit 1; }
-"$PYV" -m pip freeze > logs/laptop_env.txt 2>/dev/null   # package versions, pushed with the results
+{ "$PYV" -m pip freeze 2>/dev/null || "$PYV" -c "import importlib.metadata as m; print('\\n'.join(sorted(f'{d.metadata[\"Name\"]}=={d.version}' for d in m.distributions())))"; } > logs/laptop_env.txt 2>/dev/null   # package versions, pushed with the results
 # pre-training cache: as large as the disk allows (0.1-0.6 GB), keeping 0.8 GB free for the runs
 free_mb=$(df -m . | awk 'NR==2 {print $4}')
 CACHE_GB=$(awk -v f="$free_mb" 'BEGIN { c = (f - 800) / 1024; if (c > 0.6) c = 0.6; if (c < 0.1) c = 0.1; printf "%.2f", c }')
@@ -80,6 +108,7 @@ echo "   free disk after setup: ${free_mb} MB; pre-training cache up to ${CACHE_
 if [ "$free_mb" -lt 600 ]; then
   echo "!! less than 600 MB free: free some space first (runs pause below 400 MB)"; exit 1
 fi
+if [ "${SETUP_ONLY:-0}" = "1" ]; then echo "== environment ready (SETUP_ONLY=1)"; exit 0; fi
 
 # ---- 3. tests --------------------------------------------------------------------------------
 echo "== tests (a few minutes)"
