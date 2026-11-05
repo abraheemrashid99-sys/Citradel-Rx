@@ -28,7 +28,11 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
     import json
     exact = os.path.join(out_dir, f"{name}_s{seed}_{probe.hash()}.json")
     if os.path.exists(exact):
-        return exact
+        try:
+            json.load(open(exact))
+            return exact
+        except Exception:   # truncated record from an interrupted run: run it again
+            pass
     for fn in glob.glob(os.path.join(out_dir, f"{name}_s{seed}_*.json")):
         try:
             rec = json.load(open(fn))

@@ -17,6 +17,30 @@ anchor to fall back on, and a proximal pull back). This is the argument for the 
 audit asked for (C1, G2). The previous K=1 ablation (0.788) never reverted or fell back at all
 (both were guarded by K > 1); this is fixed and the ablation is re-run.
 
+## Reduced campaign (GPU workstation unavailable)
+
+The experiments run on a MacBook (M4, 10 cores) and a 4-core cloud machine with
+`scripts/revision_fast.py` (instructions: `docs/RUN_LAPTOP.md`). Every item above keeps an
+experiment; the reductions against the full plan (`scripts/revision_campaign.py`) are listed here
+and are stated in the paper wherever the numbers are used.
+
+| Group | Full plan | Reduced campaign |
+|---|---|---|
+| P1 headline | 10 test seeds in every cell | 10 seeds at white-box SIR 0 dB; 3 seeds (10-12) at SIR -10 / +10 dB, transfer and jamming |
+| P2 baselines | 3 cells x 5 seeds, L2-SP 4 weights | white-box SIR 0 dB only, 2 seeds; L2-SP weights 1e-3, 1e-2, 1e-1, 1 |
+| P3 adaptive (B4) | 6 variants x 2 SIR x 5 seeds; strongest = PGD 100, 5 restarts, EOT 4 | unroll 10, soft gate, PGD 100 x 5 restarts at SIR 0 and 10 dB; unroll 50 and the combined attack (soft gate, unroll 10, PGD 50, 2 restarts, EOT 2) at SIR 0 dB; 2 seeds |
+| P3 reference degradation (B2) | alpha 0.25 / 0.5 / 0.75 x SIR 0 / 10 x abstain on/off, 5 seeds | alpha 0.25 / 0.75 at SIR 0 dB x abstain on/off, 2 seeds, 6 PGD steps (the joint attack optimises over all 781 data sub-blocks: 4 min per attacked block at 20 steps) |
+| P3 denial (B3, D6) | redraw / 6 dB drop, 5 seeds | same cells, 2 seeds |
+| P3 physical (B1) | M = 1, 2, 4; CSI error 0.01, 0.1 | M = 1, 2; CSI error 0.1 at M = 2; 2 seeds |
+| P3 knowledge (B6, B8) | SIR 0 and 10 dB, 5 seeds | SIR 0 dB, 2 seeds |
+| P4 paired displacement | 5 seeds | 3 seeds |
+| P5 ablations | 18 variants, 5 seeds | 10 variants (K = 1, K = 2, no gate, each gate alone, no anchor, no fallback, no selection, no clip), 2 seeds |
+| P6 | N_d x N_p 3 x 3; 4x16 and 8x32; 16-QAM; 2 deployable variants; 3 seeds | N_d 1000 / 5000 x N_p 32 / 100 (the default 25000 / 100 is P1); 4x16; 16-QAM; both deployable variants; 2 seeds |
+| P7 sensitivity | x0.5 / 0.75 / 1.5 / 2, heat map, 2 seeds | x0.5 and x2 for 8 parameters, 1 seed; heat map dropped |
+| P8 | drift attack over 1000 blocks; 2000-block clean horizon (D7) | drift attack over 400 blocks (the horizon of the paper's A3 experiment), 4 variants, 2 seeds; D7 dropped |
+| Baseline tuning (C5) | grid on seeds 0-2 | unchanged |
+| Citadel-Rx calibration | 3 candidates + submitted configuration on seeds 0-2 | 3 candidates (the submitted configuration is the existing record) |
+
 ## A. Theory
 
 | Item | Action | Status |

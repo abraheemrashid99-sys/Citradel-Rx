@@ -1,0 +1,594 @@
+#!/usr/bin/env python
+"""Revision campaign sized for a MacBook (M4, 10 cores) plus one 4-core cloud machine.
+
+The GPU workstation is unavailable, so the full plan (scripts/revision_campaign.py, ~1,600 runs)
+is reduced: every reviewer item keeps an experiment, with fewer seeds and cells. The two machines
+never run the same job (disjoint result folders), so their pushes merge without conflicts.
+
+  shard "cloud"  : Citadel-Rx calibration (seeds 0-2, pre-registered rule), and the jobs that save
+                   parameter snapshots or are expensive per block: paired displacement (P4), joint
+                   pilot + data reference degradation (B2), optimised slow drift over 400 blocks (B5).
+  shard "laptop" : baseline tuning (seeds 0-2, pre-registered rule), headline grid (P1), adaptive,
+                   physical, grey-box, query and budget attacks (B1, B4, B6, B8), ablations (P5),
+                   denial of adaptation (B3, D6), remaining baselines (P2), block length, arrays,
+                   16-QAM, deployable variants (P6), sensitivity (P7).
+
+Tiers run in order (1 = needed for the revised claims, 2 = remaining items, 3 = sensitivity);
+the run can be stopped at any time: results are pushed every 45 minutes and every table states
+its number of seeds. Test seeds: 10-19 for the headline cell (white-box A1 at SIR 0 dB), 10-12
+for the other headline cells, 10-11 elsewhere, 10 for sensitivity.
+
+Frozen settings (written by pre-registered rules, never by hand):
+  configs/revision_frozen_citadel.json    cloud, after its calibration
+  configs/revision_frozen_baselines.json  laptop, after its tuning
+The laptop fetches only the Citadel-Rx file from GitHub before its first Citadel-Rx job.
+
+    python scripts/revision_fast.py --shard laptop --workers 8     # resumable
+    python scripts/revision_fast.py --shard laptop --push-only     # commit + push results now
+    python scripts/revision_fast.py --shard cloud --workers 4
+    python scripts/revision_fast.py --dry                          # list, count, validate settings
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as _dt
+import glob
+import hashlib
+import itertools
+import json
+import math
+import os
+import shutil
+import subprocess
+import sys
+import threading
+import time
+from typing import Dict, List, Optional, Tuple
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, ROOT)
+from citadel_rx.config import Config  # noqa: E402
+
+RUN = os.path.join(ROOT, "scripts", "run_experiment.py")
+CFG = os.path.join(ROOT, "configs", "e3_a1_defence.yaml")
+BRANCH = "claude/fervent-cray-ah5drn"
+FZ_CIT = os.path.join(ROOT, "configs", "revision_frozen_citadel.json")
+FZ_BASE = os.path.join(ROOT, "configs", "revision_frozen_baselines.json")
+CACHE = os.path.join(ROOT, "cache", "pretrain")
+LOGS = os.path.join(ROOT, "logs")
+CAL = [0, 1, 2]
+T10, T3, T2, T1 = list(range(10, 20)), [10, 11, 12], [10, 11], [10]
+KAPPA = "[8.5,4.5]"      # clean p99 of the consolidation increments (levels 2, 3), calibration runs
+CANDIDATES = {           # pre-registered (scripts/revision_campaign.py)
+    "rel_select_clip": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
+    "derived_select_clip": ["citadel.g2_slack_mode=derived", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}"],
+    "rel_select_clip_anchorstart": ["citadel.g2_slack_mode=relative", "citadel.crc_select=true", f"citadel.consol_clip={KAPPA}",
+                                    "citadel.fast_init=anchor", "citadel.fast_radius=13"],
+}
+CAL_CELLS = {"clean": ["attack.type=none"], "a1": ["attack.type=a1", "attack.sir_db=0"],
+             "cost": ["channel.model=cost2100", "attack.type=a1", "attack.sir_db=0"]}
+CAL_DIRS = ("rev_cal_citadel", "cal")    # results/cal: earlier records of the same configurations (seeds 0-1)
+MATCH_IGNORE = ("run.out_dir", "run.device", "run.seeds", "run.name")
+RND = ["attack.start_mode=random"]
+ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
+                "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
+CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud"}
+
+
+# ------------------------------------------------------------------------------------ jobs
+class Job:
+    def __init__(self, shard, tier, group, out, name, seeds, ov, clean_twin=False, kind="test"):
+        self.shard, self.tier, self.group, self.out, self.name = shard, tier, group, out, name
+        self.seeds, self.ov, self.clean_twin, self.kind = seeds, ov, clean_twin, kind
+
+    @property
+    def needs(self) -> set:
+        n = set()
+        for o in self.ov:
+            if o == "@CIT":
+                n.add("cit")
+            elif o.startswith("@BASE:"):
+                n.add("base")
+        return n
+
+
+def rx_ov(rx: str) -> List[str]:
+    if rx == "citadel":
+        return ["receiver.type=citadel", "@CIT"]
+    if rx == "meta_deepsic":
+        return ["receiver.type=meta_deepsic", "@BASE:meta_deepsic"]
+    if rx in ONLINE_BASED:   # built on online DeepSIC: use online DeepSIC's tuned optimiser settings
+        return [f"receiver.type={rx}", "@BASE:online_deepsic"]
+    return [f"receiver.type={rx}"]
+
+
+def J(shard, tier, group, out, name, seeds, ov, kind="test") -> List[Job]:
+    return [Job(shard, tier, group, out, name, seeds, ov, kind=kind)]
+
+
+def JT(shard, tier, group, out, name, seeds, ov) -> List[Job]:
+    """Attacked job + its matched clean job (same settings, attack.* removed, same machine).
+    The clean job is named by a hash of its resolved settings, so it is run once and shared."""
+    return J(shard, tier, group, out, name, seeds, ov) + [Job(shard, tier, group, CLEAN_DIR[shard], None, seeds, ov, clean_twin=True)]
+
+
+def calibration_jobs() -> List[Job]:
+    jobs: List[Job] = []
+    for rx, ep, lr, wd in itertools.product(["online_deepsic", "meta_deepsic"], [30, 100, 300], [1e-3, 5e-3], [0.0, 1e-4]):
+        jobs += J("laptop", 0, "tune", "rev_cal_tune", f"tune_{rx}_ep{ep}_lr{lr:g}_wd{wd:g}", CAL,
+                  [f"receiver.type={rx}", f"receiver.epochs={ep}", f"receiver.lr={lr}", f"receiver.weight_decay={wd}",
+                   "attack.type=none"], kind="tune")
+    for tag, ov in CANDIDATES.items():
+        for cell, cov in CAL_CELLS.items():
+            jobs += J("cloud", 0, "calibrate", "rev_cal_citadel", f"cand_{tag}__{cell}", CAL, ["receiver.type=citadel"] + ov + cov,
+                      kind="cal")
+    return jobs
+
+
+def test_jobs() -> List[Job]:
+    L, C = "laptop", "cloud"
+    a1 = lambda s: ["attack.type=a1", f"attack.sir_db={s}"]
+    jobs: List[Job] = []
+    # ===== laptop, tier 1 ===================================================================
+    P1RX = ["citadel", "online_deepsic", "meta_deepsic", "crc_rollback", "online_select"]
+    for rx in P1RX:   # P1 headline cell, 10 test seeds (E2, E3, C1, C5, H6)
+        jobs += JT(L, 1, "P1", "rev_p1", f"p1_{rx}__wb_sir0", T10, rx_ov(rx) + RND + a1(0))
+    lite = ["attack.soft_gate=true", "attack.unroll_steps=10", "attack.pgd_steps=50", "attack.restarts=2", "attack.eot=2"]
+    adaptive = {"unroll10": ["attack.unroll_steps=10"], "softgate": ["attack.soft_gate=true", "attack.unroll_steps=10"],
+                "pgd100_r5": ["attack.pgd_steps=100", "attack.restarts=5"]}
+    for tag, aov in adaptive.items():   # B4 attacks built against the defence
+        for s in (0, 10):
+            jobs += JT(L, 1, "P3adapt", "rev_p3_adaptive", f"p3_citadel_{tag}__sir{s}", T2, rx_ov("citadel") + RND + a1(s) + aov)
+    jobs += JT(L, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_strongest__sir0", T2, rx_ov("citadel") + RND + a1(0) + lite)
+    jobs += JT(L, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_unroll50__sir0", T2, rx_ov("citadel") + RND + a1(0) + ["attack.unroll_steps=50"])
+    jobs += JT(L, 1, "P3adapt", "rev_p3_adaptive", "p3_online_strongest__sir0", T2, rx_ov("online_deepsic") + RND + a1(0) + lite[1:])
+    cells = {"wb_sir-10": a1(-10), "wb_sir10": a1(10), "tr_sir0": a1(0) + ["attack.knowledge=transfer"],
+             "jam": ["attack.type=data_jam", "attack.sir_db=0"]}
+    for rx in P1RX:   # P1 other cells, 3 test seeds
+        for cell, cov in cells.items():
+            jobs += JT(L, 1, "P1", "rev_p1", f"p1_{rx}__{cell}", T3, rx_ov(rx) + RND + cov)
+    ab = {"K1": ["citadel.levels=1", "citadel.periods=[1]", "citadel.consol_clip=[]"],
+          "K2": ["citadel.levels=2", "citadel.periods=[1,8]", "citadel.consol_clip=[8.5]"],
+          "nogate": ["citadel.gates=[]"], "g1": ["citadel.gates=[g1]"], "g2": ["citadel.gates=[g2]"], "g3": ["citadel.gates=[g3]"],
+          "no_anchor": ["citadel.prox_lambda=0.0", "citadel.reanchor_beta=0.0"], "no_fallback": ["citadel.fallback_on_reject=false"],
+          "no_select": ["citadel.crc_select=false"], "no_clip": ["citadel.consol_clip=[]"]}
+    for tag, aov in ab.items():   # P5 ablations on test seeds (C1: K=1 now reverts and falls back)
+        jobs += JT(L, 1, "P5", "rev_p5_ablate", f"p5_{tag}__wb_sir0", T2, rx_ov("citadel") + aov + RND + a1(0))
+    for tag, pov in {"M1": ["attack.attacker_antennas=1"], "M2": ["attack.attacker_antennas=2"],
+                     "M2_csi0.1": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.1"]}.items():   # B1
+        for rx in ("citadel", "online_deepsic"):
+            jobs += JT(L, 1, "P3phys", "rev_p3_phys", f"p3_{rx}_{tag}__sir0", T2, rx_ov(rx) + RND + a1(0) + pov)
+    jobs += JT(L, 1, "P3know", "rev_p3_know", "p3_citadel_greybox__sir0", T2,   # B6 grey-box: Citadel-Rx surrogate
+               rx_ov("citadel") + RND + a1(0) + ["attack.knowledge=transfer", "attack.surrogate=citadel"])
+    for rx in ("citadel", "online_deepsic"):   # B6 query attacker on NACK feedback, B8 signal-referenced budget
+        jobs += JT(L, 1, "P3know", "rev_p3_know", f"p3_{rx}_query__sir0", T2, rx_ov(rx) + RND + a1(0) + ["attack.knowledge=query"])
+        jobs += JT(L, 1, "P3know", "rev_p3_know", f"p3_{rx}_sigbudget__sir0", T2, rx_ov(rx) + RND + a1(0) + ["attack.budget_ref=signal"])
+    abrupt = {"redraw": ["channel.abrupt_block=50", "channel.abrupt_type=redraw"],
+              "snrdrop": ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"]}
+    deny = ["attack.type=deny", "attack.sir_db=10", "attack.start_block=40", "attack.end_block=90"]
+    for rx, base in (("citadel", rx_ov("citadel")), ("citadel_streak", rx_ov("citadel") + ["citadel.streak_k=5"]),
+                     ("online_deepsic", rx_ov("online_deepsic")), ("lmmse", ["receiver.type=lmmse"])):   # B3, D6
+        jobs += J(L, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_redraw__none", T2, base + abrupt["redraw"] + ["attack.type=none"])
+        jobs += J(L, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_redraw__deny", T2, base + abrupt["redraw"] + deny)
+        jobs += J(L, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_snrdrop__none", T2, base + abrupt["snrdrop"] + ["attack.type=none"])
+    # ===== laptop, tier 2 ===================================================================
+    for rx in ["lmmse", "lmmse_robust", "rollback_allgates", "l2sp_deepsic", "ema_deepsic", "ewc_deepsic", "dd_deepsic",
+               "cotta_deepsic", "eata_deepsic", "drift_deepsic", "titans_single", "medbn_deepsic"]:   # C1-C4, C6, C7
+        jobs += JT(L, 2, "P2", "rev_p2", f"p2_{rx}__wb_sir0", T2, rx_ov(rx) + RND + a1(0))
+    for w in (1e-3, 1e-1, 1.0):   # L2-SP weight (C2); 1e-2 is the default above
+        jobs += JT(L, 2, "P2", "rev_p2", f"p2_l2sp_w{w:g}__wb_sir0", T2, rx_ov("l2sp_deepsic") + [f"receiver.reg_weight={w}"] + RND + a1(0))
+    for nd, npil in itertools.product((1000, 5000), (32, 100)):   # D1 block length
+        for rx in ("citadel", "online_deepsic"):
+            jobs += JT(L, 2, "P6", "rev_p6_blocklen", f"p6_{rx}_nd{nd}_np{npil}__sir0", T2,
+                       rx_ov(rx) + [f"frame.data_bits={2 * nd}", f"frame.pilot_bits={2 * npil}"] + RND + a1(0))
+    for rx in ("citadel", "online_deepsic", "lmmse"):   # D4 N > U, D5 16-QAM
+        jobs += JT(L, 2, "P6", "rev_p6_arrays", f"p6_{rx}_4x16__sir0", T2, rx_ov(rx) + ["channel.n_user=4", "channel.n_ant=16"] + RND + a1(0))
+        jobs += JT(L, 2, "P6", "rev_p6_qam16", f"p6_{rx}_qam16__sir0", T2,
+                   rx_ov(rx) + ["frame.modulation=QAM16", "receiver.hidden_base=16", "channel.snr_db=20", "frame.data_bits=100000",
+                                "frame.pilot_bits=400"] + RND + a1(0))
+    for tag, vov in {"steps30": ["citadel.fast_steps=30"], "last_layer": ["citadel.adaptable=last"]}.items():   # D9
+        jobs += JT(L, 2, "P6", "rev_p6_deploy", f"p6_citadel_{tag}__sir0", T2, rx_ov("citadel") + vov + RND + a1(0))
+    # ===== laptop, tier 3: one-at-a-time sensitivity at x0.5 and x2 (E5) =====================
+    sens = {"g1_slack": ("citadel.g1_tau", lambda m: 1 + 0.25 * m), "g3_slack": ("citadel.g3_tau", lambda m: 1 + 3 * m),
+            "tighten": ("citadel.tighten_floor", lambda m: 1 - 0.3 * m), "soft_width": ("citadel.gate_kappa", lambda m: 0.1 * m),
+            "prox_lambda": ("citadel.prox_lambda", lambda m: 0.5 * m), "delta": ("citadel.dgd_delta", lambda m: 0.1 * m),
+            "crc_rel": ("citadel.g2_rel_slack", lambda m: 1.0 * m)}
+    for par, (key, f) in sens.items():
+        for m in (0.5, 2.0):
+            jobs += JT(L, 3, "P7", "rev_p7_sens", f"p7_{par}_x{m:g}__wb_sir0", T1, rx_ov("citadel") + [f"{key}={f(m):g}"] + RND + a1(0))
+    for m in (0.5, 2.0):
+        jobs += JT(L, 3, "P7", "rev_p7_sens", f"p7_eta3_x{m:g}__wb_sir0", T1,
+                   rx_ov("citadel") + [f"citadel.level_lr=[1.0,{0.5 * m:g}]"] + RND + a1(0))
+    # ===== cloud, tier 1 ====================================================================
+    for s in (0, 10):   # P4 paired displacement with level snapshots (E7, A2); fixed window as in the paper
+        jobs += JT(C, 1, "P4", "rev_p4_paired", f"p4_citadel__sir{s}", T3, rx_ov("citadel") + a1(s) + ["run.save_params=true"])
+    for a in (0.25, 0.75):   # B2: joint pilot + data attack on the references, +/- the abstain state (H3)
+        for abst in (False, True):
+            jobs += JT(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_a4_a{a:g}{'_abstain' if abst else ''}__sir0", T2,
+                       rx_ov("citadel") + (["citadel.abstain=true"] if abst else []) + RND +
+                       ["attack.type=a4", f"attack.a4_alpha={a}", "attack.sir_db=0", "attack.pgd_steps=6"])
+        jobs += J(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_jamctl_a{a:g}__sir0", T2,   # jamming only, same data power
+                  rx_ov("citadel") + RND + ["attack.type=data_jam", f"attack.sir_db={-10 * math.log10(1 - a):.3f}"])
+    for e, g in ((0.05, False), (0.2, False), (0.5, False), (0.5, True)):   # B5 optimised slow drift, 400 blocks (H5)
+        jobs += JT(C, 1, "P8", "rev_p8_drift", f"p8_a3star_e{e:g}{'_guard' if g else ''}__long", T2,
+                   rx_ov("citadel") + (["citadel.drift_guard=0.05"] if g else []) +
+                   ["frame.n_blocks=400", "attack.type=a3star", f"attack.a3_eps_small={e}", "attack.start_block=30",
+                    "attack.end_block=330", "run.save_params=true"])
+    return jobs
+
+
+# ------------------------------------------------------------------------------------ settings
+def resolve(job: Job, seed: int, fz_cit: Optional[dict], fz_base: Optional[dict]) -> Tuple[Tuple[str, str, int], List[str]]:
+    ov: List[str] = []
+    for o in job.ov:
+        if o == "@CIT":
+            ov += fz_cit["citadel_overrides"]
+        elif o.startswith("@BASE:"):
+            ov += (fz_base or {}).get(o[6:], {}).get("overrides", [])
+        else:
+            ov.append(o)
+    name = job.name
+    if job.clean_twin:
+        ov = [o for o in ov if not o.startswith("attack.")] + ["attack.type=none"]
+        cfg = Config.from_yaml(CFG, ov)   # raises on an unknown setting
+        nd = {k: v for k, v in cfg.nondefault().items() if not k.startswith("run.") or k == "run.save_params"}
+        name = "clean_" + hashlib.sha1(json.dumps(nd, sort_keys=True, default=str).encode()).hexdigest()[:10]
+    else:
+        Config.from_yaml(CFG, ov)
+    return (job.out, name, seed), ov + [f"run.name={name}", f"run.out_dir=results/{job.out}", "run.device=cpu"]
+
+
+def _matches(r: dict, ov: List[str], seed: int) -> bool:
+    probe = Config.from_yaml(CFG, ov)
+    probe.channel.seed = seed
+    return r.get("seed") == seed and probe.matches_record(r.get("config", {}), ignore=MATCH_IGNORE)
+
+
+def _done_elsewhere(ov: List[str], seed: int) -> bool:
+    """Calibration only: the same configuration and seed is already recorded in results/cal."""
+    for fn in glob.glob(os.path.join(ROOT, "results", "cal", "*.json")):
+        try:
+            if _matches(json.load(open(fn)), ov, seed):
+                return True
+        except Exception:
+            continue
+    return False
+
+
+# ------------------------------------------------------------------------------------ freezing
+def _cal_records() -> List[dict]:
+    recs = []
+    for d in CAL_DIRS:
+        for fn in sorted(glob.glob(os.path.join(ROOT, "results", d, "*.json"))):
+            try:
+                r = json.load(open(fn))
+                r["_file"] = os.path.relpath(fn, ROOT)
+                recs.append(r)
+            except Exception:
+                pass
+    return recs
+
+
+def freeze_citadel() -> Optional[dict]:
+    """Pre-registered rule: lowest mean of (clean SER, A1 SIR 0 attack-window SER, COST2100 A1 SIR 0
+    attack-window SER) over seeds 0-2, among candidates with clean false-rejection rate <= 2%."""
+    import numpy as np
+    recs = _cal_records()
+    table = {}
+    for tag, ov in CANDIDATES.items():
+        cells = {}
+        for cell, cov in CAL_CELLS.items():
+            got = {}
+            for s in CAL:
+                hit = [r for r in recs if _matches(r, ["receiver.type=citadel"] + ov + cov, s)]
+                if hit:
+                    got[s] = hit[0]
+            cells[cell] = got
+        if all(len(cells[c]) == len(CAL) for c in CAL_CELLS):
+            clean = [cells["clean"][s]["summary"]["ser_mean"] for s in CAL]
+            a1 = [cells["a1"][s]["summary"]["ser_attack"] for s in CAL]
+            cost = [cells["cost"][s]["summary"]["ser_attack"] for s in CAL]
+            frej = [float(np.mean([b["gamma"] < 0.5 for b in cells["clean"][s]["blocks"] if b["block"] >= 5])) for s in CAL]
+            table[tag] = {"score": float(np.mean([np.mean(clean), np.mean(a1), np.mean(cost)])), "clean_ser": float(np.mean(clean)),
+                          "a1_sir0_window_ser": float(np.mean(a1)), "cost2100_sir0_window_ser": float(np.mean(cost)),
+                          "clean_false_rejection": float(np.mean(frej)),
+                          "records": {c: [cells[c][s]["_file"] for s in CAL] for c in CAL_CELLS}}
+    if len(table) < len(CANDIDATES):
+        print("calibration incomplete:", sorted(set(CANDIDATES) - set(table)), flush=True)
+        return None
+    admissible = {k: v for k, v in table.items() if v["clean_false_rejection"] <= 0.02}
+    pool = admissible or table
+    chosen = min(pool, key=lambda k: pool[k]["score"])
+    fz = {"rule": "lowest mean of (clean SER, A1 SIR 0 window SER, COST2100 A1 SIR 0 window SER) on calibration seeds 0-2, "
+                  "among candidates with clean false-rejection rate <= 2% (all candidates if none qualifies)",
+          "seeds": CAL, "admissible": sorted(admissible), "candidates": table, "chosen": chosen,
+          "citadel_overrides": CANDIDATES[chosen], "frozen_at": _dt.datetime.now(_dt.timezone.utc).isoformat()}
+    json.dump(fz, open(FZ_CIT, "w"), indent=1)
+    print("Citadel-Rx frozen:", chosen, {k: round(v["score"], 5) for k, v in table.items()}, flush=True)
+    return fz
+
+
+def freeze_baselines() -> dict:
+    """Pre-registered rule: lowest mean clean SER over seeds 0-2 (configurations with all seeds)."""
+    import numpy as np
+    best = {}
+    for rx in ("online_deepsic", "meta_deepsic"):
+        scores: Dict[tuple, Dict[int, float]] = {}
+        for fn in glob.glob(os.path.join(ROOT, "results", "rev_cal_tune", f"tune_{rx}_*.json")):
+            try:
+                r = json.load(open(fn))
+            except Exception:
+                continue
+            c = r["config"]["receiver"]
+            if c["type"] == rx:
+                scores.setdefault((c["epochs"], c["lr"], c["weight_decay"]), {})[r["seed"]] = r["summary"]["ser_mean"]
+        full = {k: float(np.mean([v[s] for s in CAL])) for k, v in scores.items() if set(CAL) <= set(v)}
+        if full:
+            k = min(full, key=full.get)
+            best[rx] = {"overrides": [f"receiver.epochs={k[0]}", f"receiver.lr={k[1]}", f"receiver.weight_decay={k[2]}"],
+                        "cal_clean_ser": full[k],
+                        "grid": {f"epochs={kk[0]} lr={kk[1]:g} wd={kk[2]:g}": v for kk, v in sorted(full.items())}}
+        else:
+            best[rx] = {"overrides": [], "note": "no complete tuning configuration; defaults used"}
+    fz = {"rule": "lowest mean clean SER on calibration seeds 0-2", "seeds": CAL, **best,
+          "frozen_at": _dt.datetime.now(_dt.timezone.utc).isoformat()}
+    json.dump(fz, open(FZ_BASE, "w"), indent=1)
+    print("baselines frozen:", {k: v["overrides"] for k, v in best.items()}, flush=True)
+    return fz
+
+
+# ------------------------------------------------------------------------------------ git
+GIT_LOCK = threading.Lock()
+
+
+def _git(*args, retries: int = 1) -> int:
+    rc = 1
+    for i in range(retries):
+        rc = subprocess.run(["git", *args], cwd=ROOT).returncode
+        if rc == 0:
+            return 0
+        time.sleep(2 ** (i + 1))
+    return rc
+
+
+def fetch_frozen_citadel() -> bool:
+    """Laptop: take only configs/revision_frozen_citadel.json from GitHub (never the code)."""
+    with GIT_LOCK:
+        subprocess.run(["git", "fetch", "-q", "origin", BRANCH], cwd=ROOT, capture_output=True)
+        rel = os.path.relpath(FZ_CIT, ROOT)
+        r = subprocess.run(["git", "checkout", f"origin/{BRANCH}", "--", rel], cwd=ROOT, capture_output=True)
+    return r.returncode == 0 and os.path.exists(FZ_CIT)
+
+
+def push_results(shard: str) -> None:
+    with GIT_LOCK:
+        files = []
+        for fn in glob.glob(os.path.join(ROOT, "results", "rev_*", "*.json")):
+            try:
+                json.load(open(fn))   # only complete records
+                files.append(os.path.relpath(fn, ROOT))
+            except Exception:
+                pass
+        files += [os.path.relpath(f, ROOT) for f in (FZ_BASE, FZ_CIT) if os.path.exists(f)]
+        files += [os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(LOGS, f"{shard}*"))]
+        for i in range(0, len(files), 200):
+            subprocess.run(["git", "add", "--", *files[i:i + 200]], cwd=ROOT)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode != 0:
+            n = len([f for f in files if f.startswith("results")])
+            subprocess.run(["git", "commit", "-q", "-m", f"Revision results ({shard} machine, {n} records)"], cwd=ROOT)
+        if _git("pull", "-q", "--no-rebase", "--no-edit", "origin", BRANCH, retries=4) != 0:
+            subprocess.run(["git", "merge", "--abort"], cwd=ROOT, capture_output=True)
+            print("!! git pull failed; results are committed locally and will be pushed next time", flush=True)
+            return
+        ok = _git("push", "-q", "origin", f"HEAD:{BRANCH}", retries=4) == 0
+        print(("pushed results to GitHub" if ok else "!! push failed; will retry at the next push") + f" ({time.strftime('%H:%M')})",
+              flush=True)
+
+
+# ------------------------------------------------------------------------------------ scheduler
+class Campaign:
+    def __init__(self, shard: str, workers: int, tier: int, wait_hours: float, push_every: float, min_free_mb: int,
+                 cache_gb: float = 0.6):
+        self.shard, self.workers, self.wait_hours, self.push_every, self.min_free_mb = shard, workers, wait_hours, push_every, min_free_mb
+        self.cache_gb = cache_gb
+        jobs = [j for j in calibration_jobs() + test_jobs() if j.shard == shard and j.tier <= tier]
+        jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
+        self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
+        self.cal_kind = "cal" if shard == "cloud" else "tune"
+        self.cal_left = sum(1 for j, _ in self.queue if j.kind == self.cal_kind)
+        self.fz_cit = json.load(open(FZ_CIT)) if os.path.exists(FZ_CIT) else None
+        self.fz_base = {} if shard == "cloud" else None   # the cloud runs no tuned baseline
+        self.seen: set = set()
+        self.lock = threading.Lock()
+        self.done = self.failed = self.running = 0
+        self.t0 = time.time()
+        self.t_wait0: Optional[float] = None
+        self.last_fetch = 0.0
+        self.calibrated = False
+        self._freezing = False
+        os.makedirs(LOGS, exist_ok=True)
+        self.tasklog = open(os.path.join(LOGS, f"{shard}_tasks.jsonl"), "a")
+
+    def _ready(self, job: Job) -> bool:
+        if "cit" in job.needs and self.fz_cit is None:
+            return False
+        if "base" in job.needs and self.fz_base is None:
+            return False
+        return True
+
+    def _next(self):
+        """Highest-priority runnable task; ('wait', None) when only blocked tasks remain; None when finished."""
+        with self.lock:
+            i = 0
+            while i < len(self.queue):
+                job, s = self.queue[i]
+                if not self._ready(job):
+                    i += 1
+                    continue
+                self.queue.pop(i)
+                key, ov = resolve(job, s, self.fz_cit, self.fz_base)
+                skip = key in self.seen or (job.kind == "cal" and _done_elsewhere(ov[:-3], s))
+                self.seen.add(key)
+                if skip:
+                    if job.kind == self.cal_kind:
+                        self.cal_left -= 1
+                    continue
+                self.running += 1
+                return job, s, key, ov
+            busy_cal = self.cal_left > 0 or not self.calibrated
+            return ("wait", None) if (self.queue or busy_cal and self.running) else None
+
+    def _after_calibration(self) -> None:
+        if self.shard == "laptop":
+            fz = freeze_baselines()
+            with self.lock:
+                self.fz_base = fz
+        else:
+            fz = freeze_citadel()
+            with self.lock:
+                if fz is not None:
+                    self.fz_cit = fz
+                else:   # a calibration run failed: never guess the configuration
+                    n = len(self.queue)
+                    self.queue = [(j, s) for j, s in self.queue if "cit" not in j.needs]
+                    print(f"!! calibration incomplete: {n - len(self.queue)} Citadel-Rx runs dropped; fix the failed run and restart",
+                          flush=True)
+        self.calibrated = True
+        push_results(self.shard)   # the laptop picks the frozen Citadel-Rx file up from GitHub
+
+    def _worker(self) -> None:
+        while True:
+            free_mb = shutil.disk_usage(ROOT).free // 2 ** 20
+            if free_mb < self.min_free_mb:
+                print(f"!! only {free_mb} MB of disk left: paused (free some space; it resumes by itself)", flush=True)
+                time.sleep(120)
+                continue
+            with self.lock:
+                trigger = self.cal_left == 0 and not self.calibrated and not self._freezing
+                if trigger:
+                    self._freezing = True
+            if trigger:
+                self._after_calibration()
+            nxt = self._next()
+            if nxt is None:
+                return
+            if nxt[0] == "wait":
+                self._maybe_fetch()
+                time.sleep(20)
+                continue
+            job, s, key, ov = nxt
+            cmd = [sys.executable, RUN, CFG, "--quiet", "--seeds", str(s), "--set", *ov]
+            env = dict(os.environ, OMP_NUM_THREADS="1", MKL_NUM_THREADS="1", VECLIB_MAXIMUM_THREADS="1",
+                       CITADEL_THREADS="1", CITADEL_PRETRAIN_CACHE=CACHE, CITADEL_PRETRAIN_CACHE_GB=str(self.cache_gb))
+            t = time.time()
+            r = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT)
+            dt = time.time() - t
+            with self.lock:
+                self.running -= 1
+                self.done += 1
+                self.failed += r.returncode != 0
+                if job.kind == self.cal_kind:
+                    self.cal_left -= 1
+                left = len(self.queue) + self.running
+                el = time.time() - self.t0
+                tail = (r.stdout.strip().splitlines() or [""])[-1][:140]
+                print(f"[{self.done} done, ~{left} left | {el / 3600:.1f} h, ~{el / self.done * left / 3600:.1f} h to go at this pace] "
+                      f"t{job.tier} {job.group} {key[1]} s{s} {'OK' if r.returncode == 0 else 'FAIL'} {dt / 60:.0f} min  {tail}"
+                      + ("" if r.returncode == 0 else "\n" + r.stderr[-1500:]), flush=True)
+                self.tasklog.write(json.dumps({"shard": self.shard, "tier": job.tier, "group": job.group, "out": key[0], "name": key[1],
+                                               "seed": s, "ok": r.returncode == 0, "seconds": round(dt, 1),
+                                               "finished": _dt.datetime.now(_dt.timezone.utc).isoformat()}) + "\n")
+                self.tasklog.flush()
+
+    def _maybe_fetch(self) -> None:
+        if self.shard != "laptop" or self.fz_cit is not None:
+            return
+        if self.t_wait0 is None:
+            self.t_wait0 = time.time()
+            print("waiting for configs/revision_frozen_citadel.json from the cloud machine (checked every 5 min)", flush=True)
+        if time.time() - self.last_fetch < 300:
+            return
+        self.last_fetch = time.time()
+        if fetch_frozen_citadel():
+            fz = json.load(open(FZ_CIT))
+            with self.lock:
+                self.fz_cit = fz
+            print("fetched the frozen Citadel-Rx settings:", fz["chosen"], fz["citadel_overrides"], flush=True)
+        elif time.time() - self.t_wait0 > self.wait_hours * 3600:
+            with self.lock:
+                n = len(self.queue)
+                self.queue = [(j, s) for j, s in self.queue if "cit" not in j.needs]
+            print(f"!! no frozen Citadel-Rx settings after {self.wait_hours} h: dropped {n - len(self.queue)} Citadel-Rx runs", flush=True)
+
+    def run(self) -> None:
+        print(f"== {self.shard}: {len(self.queue)} runs queued (before de-duplication), {self.workers} workers, "
+              f"pre-training cache {os.path.relpath(CACHE, ROOT)}", flush=True)
+        stop = threading.Event()
+
+        def pusher():
+            while not stop.wait(self.push_every * 60):
+                push_results(self.shard)
+
+        threading.Thread(target=pusher, daemon=True).start()
+        ths = [threading.Thread(target=self._worker) for _ in range(self.workers)]
+        for t in ths:
+            t.start()
+        for t in ths:
+            t.join()
+        stop.set()
+        print(f"== {self.shard} finished: {self.done} runs, {self.failed} failed, {(time.time() - self.t0) / 3600:.1f} h", flush=True)
+        push_results(self.shard)
+
+
+def dry(shard_filter: Optional[str]) -> None:
+    fzc = {"citadel_overrides": CANDIDATES["rel_select_clip"]}
+    fzb = {"online_deepsic": {"overrides": ["receiver.epochs=100"]}, "meta_deepsic": {"overrides": ["receiver.epochs=100"]}}
+    keys_by_shard: Dict[str, set] = {}
+    for shard in ("laptop", "cloud"):
+        jobs = sorted([j for j in calibration_jobs() + test_jobs() if j.shard == shard], key=lambda j: j.tier)
+        seen, per = set(), {}
+        for j in jobs:
+            for s in j.seeds:
+                key, ov = resolve(j, s, fzc, fzb)   # validates every setting
+                if key in seen:
+                    continue
+                seen.add(key)
+                per[(j.tier, j.group)] = per.get((j.tier, j.group), 0) + 1
+        keys_by_shard[shard] = seen
+        if shard_filter in (None, shard):
+            print(f"{shard}: {len(seen)} runs")
+            for (t, g), n in sorted(per.items()):
+                print(f"   tier {t}  {g:10s} {n}")
+    both = keys_by_shard["laptop"] & keys_by_shard["cloud"]
+    outs = {k[0] for k in keys_by_shard["laptop"]} & {k[0] for k in keys_by_shard["cloud"]}
+    print("shared runs:", len(both), "| shared folders:", sorted(outs) or "none")
+    assert not both and not outs, "the two machines must not write the same files"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--shard", choices=["laptop", "cloud"])
+    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
+    ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--push-only", action="store_true")
+    ap.add_argument("--push-every", type=float, default=45.0, help="minutes between automatic pushes")
+    ap.add_argument("--wait-hours", type=float, default=8.0, help="laptop: how long to wait for the Citadel-Rx freeze")
+    ap.add_argument("--min-free-mb", type=int, default=400)
+    ap.add_argument("--cache-gb", type=float, default=None, help="pre-training cache cap (default 0.6 laptop, 3 cloud)")
+    args = ap.parse_args()
+    os.chdir(ROOT)
+    if args.dry:
+        dry(args.shard)
+        return
+    if not args.shard:
+        ap.error("--shard is required")
+    if args.push_only:
+        push_results(args.shard)
+        return
+    cache_gb = args.cache_gb if args.cache_gb is not None else (0.6 if args.shard == "laptop" else 3.0)
+    Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb).run()
+
+
+if __name__ == "__main__":
+    main()

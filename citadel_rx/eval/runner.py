@@ -32,6 +32,75 @@ def set_seed(seed: int) -> None:
         torch.cuda.manual_seed_all(seed)
 
 
+def _code_digest() -> str:
+    """Hash of the package source, so cached pre-training never outlives a code change."""
+    import hashlib
+    import os
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    h = hashlib.sha256()
+    for d, _, fs in sorted(os.walk(root)):
+        for f in sorted(fs):
+            if f.endswith(".py"):
+                h.update(f.encode())
+                h.update(open(os.path.join(d, f), "rb").read())
+    return h.hexdigest()
+
+
+def _rng_state():
+    return {"torch": torch.get_rng_state(), "numpy": np.random.get_state(), "python": random.getstate()}
+
+
+def _pretrain(cfg: Config, receiver, frames: FrameGenerator):
+    """Pre-train, or load an earlier identical pre-training when CITADEL_PRETRAIN_CACHE is set.
+
+    The cache key holds every setting except attack.* and run.* (the attacker and the logging do
+    not enter pre-training), the source code and the exact random-number state before
+    pre-training. A hit restores the pre-trained receiver and the random-number state after
+    pre-training, so the run continues exactly as an uncached run (checked in tests)."""
+    import hashlib
+    import json
+    import os
+    cache = os.environ.get("CITADEL_PRETRAIN_CACHE", "")
+    if not cache:
+        receiver.pretrain(pretraining_blocks(cfg, frames))
+        return receiver, False
+    d = cfg.to_dict()
+    d.pop("attack", None)
+    d.pop("run", None)
+    st = _rng_state()
+    h = hashlib.sha256(json.dumps(d, sort_keys=True, default=str).encode())
+    h.update(_code_digest().encode())
+    h.update(st["torch"].numpy().tobytes())
+    h.update(repr(st["numpy"][0]).encode() + np.asarray(st["numpy"][1]).tobytes() + repr(st["numpy"][2:]).encode())
+    h.update(repr(st["python"]).encode())
+    path = os.path.join(cache, f"{cfg.receiver.type}_{h.hexdigest()[:24]}.pt")
+    if os.path.exists(path):
+        try:
+            blob = torch.load(path, weights_only=False)
+            rx = blob["receiver"]
+            if hasattr(rx, "cfg"):   # keep the receiver's own (possibly specialised) settings; refresh the
+                rx.cfg.attack = copy.deepcopy(cfg.attack)   # sections outside the key, which receivers do not read
+                rx.cfg.run = copy.deepcopy(cfg.run)
+            torch.set_rng_state(blob["rng"]["torch"])
+            np.random.set_state(blob["rng"]["numpy"])
+            random.setstate(blob["rng"]["python"])
+            return rx, True
+        except Exception:
+            pass
+    receiver.pretrain(pretraining_blocks(cfg, frames))
+    try:
+        os.makedirs(cache, exist_ok=True)
+        cap = float(os.environ.get("CITADEL_PRETRAIN_CACHE_GB", "1.0")) * 1e9
+        used = sum(os.path.getsize(os.path.join(cache, f)) for f in os.listdir(cache))
+        if used < cap:
+            tmp = f"{path}.{os.getpid()}.part"
+            torch.save({"receiver": receiver, "rng": _rng_state()}, tmp)
+            os.replace(tmp, path)
+    except Exception:
+        pass
+    return receiver, False
+
+
 def pretraining_blocks(cfg: Config, frames: FrameGenerator) -> List[Tuple[np.ndarray, np.ndarray]]:
     """Reference joint pre-training data: one static-channel block of `pretrain_bits` pilot
     bits per SNR in `pretrain_snrs` (fading disabled)."""
@@ -68,8 +137,9 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         receiver.set_channel_rho(channel.rho if cfg.channel.fading == "jakes" else 1.0)
 
     t0 = time.time()
+    pretrain_cached = False
     if cfg.receiver.pretrain and cfg.receiver.type != "lmmse":
-        receiver.pretrain(pretraining_blocks(cfg, frames))
+        receiver, pretrain_cached = _pretrain(cfg, receiver, frames)
     pretrain_time = time.time() - t0
 
     blocks: List[Dict[str, Any]] = []
@@ -118,6 +188,7 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
     if window is not None:
         summary["attack_window"] = [int(window[0]), int(window[1])]
     summary["pretrain_time_s"] = pretrain_time
+    summary["pretrain_cached"] = pretrain_cached
     summary["mean_t_rx_s"] = float(np.mean([b["t_rx"] for b in blocks]))
     summary["total_time_s"] = time.time() - t0
     record = {"name": cfg.run.name, "seed": seed, "config": cfg.to_dict(), "config_hash": cfg.hash(),

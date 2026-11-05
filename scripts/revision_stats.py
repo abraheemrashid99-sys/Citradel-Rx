@@ -114,11 +114,19 @@ def moving_block_bootstrap(series: List[np.ndarray], block: int, n_boot: int = 5
     return float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
 
 
+def _wilcoxon_exact(x: np.ndarray) -> float:
+    """Exact two-sided Wilcoxon signed-rank p-value (scipy renamed `mode` to `method`)."""
+    try:
+        return float(wilcoxon(x, alternative="two-sided", method="exact").pvalue)
+    except TypeError:
+        return float(wilcoxon(x, alternative="two-sided", mode="exact").pvalue)
+
+
 def seed_tests(seed_means: np.ndarray) -> Dict[str, float]:
     d = np.asarray(seed_means, dtype=float)
     out = {"n_seeds": int(d.size)}
     nz = d[d != 0]
-    out["wilcoxon_p"] = float(wilcoxon(nz, alternative="two-sided", mode="exact").pvalue) if nz.size >= 1 else 1.0
+    out["wilcoxon_p"] = _wilcoxon_exact(nz) if nz.size >= 1 else 1.0
     out["min_attainable_p"] = float(2.0 ** (1 - nz.size)) if nz.size else 1.0
     k = int((nz > 0).sum())
     out["sign_p"] = float(binomtest(k, nz.size, 0.5).pvalue) if nz.size else 1.0
