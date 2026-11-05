@@ -12,6 +12,9 @@
 #           TIER=3     (1 = only what the revised claims need, 2 = + remaining items, 3 = + sensitivity)
 set -uo pipefail
 cd "$(dirname "$0")/.."
+# The whole script is one function, so bash has read all of it before step 1 runs `git pull`
+# (which may replace this very file).
+main() {
 BRANCH="claude/fervent-cray-ah5drn"
 WORKERS="${WORKERS:-8}"
 TIER="${TIER:-3}"
@@ -35,11 +38,6 @@ echo "   code version: $(git rev-parse --short HEAD)"
 free_mb=$(df -m . | awk 'NR==2 {print $4}')
 echo "   free disk: ${free_mb} MB"
 if [ ! -x .venv/bin/python ]; then
-  if [ "$free_mb" -lt 1500 ]; then
-    echo "!! about 1.5 GB of free disk is needed for the Python environment. Free space with:"
-    echo "     conda clean -a -y ; pip cache purge ; rm -rf ~/Library/Caches/pip   (and empty the Bin)"
-    exit 1
-  fi
   PY=""
   for c in python3.12 python3.11 python3.13 python3 python; do
     if command -v "$c" >/dev/null 2>&1 && "$c" -c 'import sys, platform; sys.exit(0 if sys.version_info >= (3, 10) and platform.machine() in ("arm64", "aarch64", "x86_64") else 1)' 2>/dev/null; then
@@ -55,14 +53,33 @@ if [ ! -x .venv/bin/python ]; then
     echo "   Install Miniforge (arm64) or use /usr/bin/python3 if it is 3.10+, then re-run."
     exit 1
   fi
-  echo "   creating .venv with $("$PY" --version 2>&1)"
-  "$PY" -m venv .venv || exit 1
+  # Reuse numpy / scipy / matplotlib / yaml / pytest of this Python when it has them (conda base
+  # usually does): then only PyTorch is installed, about 0.4 GB instead of about 0.8 GB.
+  SITE=""; need_mb=1400
+  if "$PY" -c 'import numpy, scipy, matplotlib, yaml, pytest, tqdm' 2>/dev/null; then
+    SITE="--system-site-packages"; need_mb=1000
+  fi
+  if [ "$free_mb" -lt "$need_mb" ]; then
+    echo "!! about $need_mb MB of free disk is needed (now $free_mb MB). Free space, for example:"
+    echo "     conda clean -a -y ; pip cache purge ; rm -rf ~/Library/Caches/pip ; empty the Bin"
+    exit 1
+  fi
+  echo "   creating .venv with $("$PY" --version 2>&1) ${SITE:+(reusing its numpy/scipy/matplotlib)}"
+  "$PY" -m venv $SITE .venv || exit 1
   .venv/bin/python -m pip install -q --no-cache-dir --upgrade pip
-  .venv/bin/python -m pip install --no-cache-dir -r requirements.txt || { echo "!! pip install failed"; exit 1; }
+  .venv/bin/python -m pip install --no-cache-dir -r requirements.txt || { echo "!! pip install failed"; rm -rf .venv; exit 1; }
 fi
 PYV=.venv/bin/python
 "$PYV" -c "import torch, numpy, scipy, yaml; print('   torch', torch.__version__, '| numpy', numpy.__version__, '| scipy', scipy.__version__)" \
   || { echo "!! the environment is broken: delete the .venv folder and re-run"; exit 1; }
+"$PYV" -m pip freeze > logs/laptop_env.txt 2>/dev/null   # package versions, pushed with the results
+# pre-training cache: as large as the disk allows (0.1-0.6 GB), keeping 0.8 GB free for the runs
+free_mb=$(df -m . | awk 'NR==2 {print $4}')
+CACHE_GB=$(awk -v f="$free_mb" 'BEGIN { c = (f - 800) / 1024; if (c > 0.6) c = 0.6; if (c < 0.1) c = 0.1; printf "%.2f", c }')
+echo "   free disk after setup: ${free_mb} MB; pre-training cache up to ${CACHE_GB} GB"
+if [ "$free_mb" -lt 600 ]; then
+  echo "!! less than 600 MB free: free some space first (runs pause below 400 MB)"; exit 1
+fi
 
 # ---- 3. tests --------------------------------------------------------------------------------
 echo "== tests (a few minutes)"
@@ -72,8 +89,11 @@ echo "== tests (a few minutes)"
 echo "== campaign: $WORKERS parallel runs, tiers up to $TIER (keep the Mac on power, lid open)"
 AWAKE=""
 command -v caffeinate >/dev/null 2>&1 && AWAKE="caffeinate -ims"
-$AWAKE "$PYV" scripts/revision_fast.py --shard laptop --workers "$WORKERS" --tier "$TIER"
+$AWAKE "$PYV" scripts/revision_fast.py --shard laptop --workers "$WORKERS" --tier "$TIER" --cache-gb "$CACHE_GB"
 
 # ---- 5. final push ---------------------------------------------------------------------------
 "$PYV" scripts/revision_fast.py --shard laptop --push-only
 echo "== finished $(date). Results are on GitHub (branch $BRANCH)."
+}
+main "$@"
+exit $?
