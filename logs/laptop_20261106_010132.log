@@ -1,0 +1,79 @@
+== Citadel-Rx revision, laptop part   Fri Nov  6 01:01:32 PKT 2026
+   machine: Darwin arm64, 10 cores
+From https://github.com/abraheemrashid99-sys/Citradel-Rx
+ * branch            claude/fervent-cray-ah5drn -> FETCH_HEAD
+Already up to date.
+   code version: ca169c3
+   free disk: 1997 MB
+   creating .venv with /Users/abraheemrashid/miniconda3/bin/python (Python 3.13.5), reusing its numpy/scipy/matplotlib
+Requirement already satisfied: numpy>=1.26 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 1)) (2.4.4)
+Requirement already satisfied: scipy>=1.11 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 2)) (1.16.3)
+Requirement already satisfied: torch>=2.1 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 3)) (2.11.0)
+Requirement already satisfied: pyyaml>=6.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 4)) (6.0.2)
+Requirement already satisfied: matplotlib>=3.8 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 5)) (3.10.8)
+Requirement already satisfied: pytest>=7.4 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 6)) (8.4.0)
+Requirement already satisfied: tqdm>=4.66 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from -r requirements.txt (line 7)) (4.67.1)
+Requirement already satisfied: filelock in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (3.32.2)
+Requirement already satisfied: typing-extensions>=4.10.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (4.15.0)
+Requirement already satisfied: setuptools<82 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (78.1.1)
+Requirement already satisfied: sympy>=1.13.3 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (3.6.1)
+Requirement already satisfied: jinja2 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (3.1.6)
+Requirement already satisfied: fsspec>=0.8.5 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from torch>=2.1->-r requirements.txt (line 3)) (2026.9.0)
+Requirement already satisfied: contourpy>=1.0.1 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (1.3.3)
+Requirement already satisfied: cycler>=0.10 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (0.12.1)
+Requirement already satisfied: fonttools>=4.22.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (4.61.1)
+Requirement already satisfied: kiwisolver>=1.3.1 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (1.4.9)
+Requirement already satisfied: packaging>=20.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (25.0)
+Requirement already satisfied: pillow>=8 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (12.3.0)
+Requirement already satisfied: pyparsing>=3 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (3.3.1)
+Requirement already satisfied: python-dateutil>=2.7 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from matplotlib>=3.8->-r requirements.txt (line 5)) (2.9.0.post0)
+Requirement already satisfied: iniconfig>=1 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from pytest>=7.4->-r requirements.txt (line 6)) (2.3.0)
+Requirement already satisfied: pluggy<2,>=1.5 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from pytest>=7.4->-r requirements.txt (line 6)) (1.5.0)
+Requirement already satisfied: pygments>=2.7.2 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from pytest>=7.4->-r requirements.txt (line 6)) (2.19.1)
+Requirement already satisfied: six>=1.5 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from python-dateutil>=2.7->matplotlib>=3.8->-r requirements.txt (line 5)) (1.17.0)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from sympy>=1.13.3->torch>=2.1->-r requirements.txt (line 3)) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /Users/abraheemrashid/miniconda3/lib/python3.13/site-packages (from jinja2->torch>=2.1->-r requirements.txt (line 3)) (3.0.2)
+   torch 2.11.0 | numpy 2.4.4 | scipy 1.16.3
+   free disk after setup: 1983 MB; pre-training cache up to 0.60 GB
+== tests (a few minutes)
+..................................                                       [100%]
+34 passed in 46.80s
+== campaign: 8 parallel runs, tiers up to 3 (keep the Mac on power, lid open)
+== laptop: 592 runs queued (before de-duplication), 8 workers, pre-training cache cache/pretrain
+[1 done, ~591 left | 0.1 h, ~66.9 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0 s0 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0 seed 0: ser_mean=0.0315 ser_median=0.0287
+[2 done, ~590 left | 0.1 h, ~33.6 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0.0001 s0 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0.0001 seed 0: ser_mean=0.0326 ser_median=0.0334
+[3 done, ~589 left | 0.1 h, ~22.4 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0 s0 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0 seed 0: ser_mean=0.0586 ser_median=0.0557
+[4 done, ~588 left | 0.1 h, ~16.8 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0 s1 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0 seed 1: ser_mean=0.0316 ser_median=0.0313
+[5 done, ~587 left | 0.1 h, ~13.4 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0.0001 s2 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0.0001 seed 2: ser_mean=0.0329 ser_median=0.0353
+[6 done, ~586 left | 0.1 h, ~11.1 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0.0001 s1 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0.0001 seed 1: ser_mean=0.0324 ser_median=0.0356
+[7 done, ~585 left | 0.1 h, ~9.5 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.001_wd0 s2 OK 7 min  == tune_online_deepsic_ep30_lr0.001_wd0 seed 2: ser_mean=0.0328 ser_median=0.0303
+[8 done, ~584 left | 0.1 h, ~8.3 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0 s1 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0 seed 1: ser_mean=0.0576 ser_median=0.0548
+[9 done, ~583 left | 0.2 h, ~14.5 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0 s2 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0 seed 2: ser_mean=0.0586 ser_median=0.0534
+[10 done, ~582 left | 0.2 h, ~13.0 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0.0001 s0 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0.0001 seed 0: ser_mean=0.0518 ser_median=0.0520
+[11 done, ~581 left | 0.2 h, ~11.8 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0.0001 s1 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0.0001 seed 1: ser_mean=0.0502 ser_median=0.0541
+[12 done, ~580 left | 0.2 h, ~10.9 h to go at this pace] t0 tune tune_online_deepsic_ep30_lr0.005_wd0.0001 s2 OK 7 min  == tune_online_deepsic_ep30_lr0.005_wd0.0001 seed 2: ser_mean=0.0521 ser_median=0.0563
+[13 done, ~579 left | 0.2 h, ~10.5 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0 s1 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0 seed 1: ser_mean=0.0324 ser_median=0.0320
+[14 done, ~578 left | 0.2 h, ~9.7 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0 s0 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0 seed 0: ser_mean=0.0325 ser_median=0.0309
+[15 done, ~577 left | 0.2 h, ~9.1 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0.0001 s0 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0.0001 seed 0: ser_mean=0.0384 ser_median=0.0394
+[16 done, ~576 left | 0.2 h, ~8.5 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0 s2 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0 seed 2: ser_mean=0.0342 ser_median=0.0327
+[17 done, ~575 left | 0.3 h, ~11.8 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0.0001 s1 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0.0001 seed 1: ser_mean=0.0382 ser_median=0.0406
+[18 done, ~574 left | 0.3 h, ~11.1 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0 s0 OK 7 min  == tune_online_deepsic_ep100_lr0.005_wd0 seed 0: ser_mean=0.0588 ser_median=0.0563
+[19 done, ~573 left | 0.3 h, ~10.5 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.001_wd0.0001 s2 OK 7 min  == tune_online_deepsic_ep100_lr0.001_wd0.0001 seed 2: ser_mean=0.0388 ser_median=0.0394
+[20 done, ~572 left | 0.3 h, ~10.0 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0 s1 OK 7 min  == tune_online_deepsic_ep100_lr0.005_wd0 seed 1: ser_mean=0.0572 ser_median=0.0540
+[21 done, ~571 left | 0.4 h, ~9.8 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0 s2 OK 8 min  == tune_online_deepsic_ep100_lr0.005_wd0 seed 2: ser_mean=0.0585 ser_median=0.0548
+[22 done, ~570 left | 0.4 h, ~9.4 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0.0001 s0 OK 8 min  == tune_online_deepsic_ep100_lr0.005_wd0.0001 seed 0: ser_mean=0.0492 ser_median=0.0497
+[23 done, ~569 left | 0.4 h, ~9.0 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0.0001 s2 OK 8 min  == tune_online_deepsic_ep100_lr0.005_wd0.0001 seed 2: ser_mean=0.0495 ser_median=0.0509
+[24 done, ~568 left | 0.4 h, ~8.6 h to go at this pace] t0 tune tune_online_deepsic_ep100_lr0.005_wd0.0001 s1 OK 8 min  == tune_online_deepsic_ep100_lr0.005_wd0.0001 seed 1: ser_mean=0.0477 ser_median=0.0500
+[25 done, ~567 left | 0.5 h, ~11.2 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0 s2 OK 9 min  == tune_online_deepsic_ep300_lr0.001_wd0 seed 2: ser_mean=0.0371 ser_median=0.0362
+[26 done, ~566 left | 0.5 h, ~10.8 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0 s1 OK 9 min  == tune_online_deepsic_ep300_lr0.001_wd0 seed 1: ser_mean=0.0343 ser_median=0.0341
+[27 done, ~565 left | 0.5 h, ~10.4 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0.0001 s1 OK 8 min  == tune_online_deepsic_ep300_lr0.001_wd0.0001 seed 1: ser_mean=0.0455 ser_median=0.0480
+[28 done, ~564 left | 0.5 h, ~10.0 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0.0001 s2 OK 8 min  == tune_online_deepsic_ep300_lr0.001_wd0.0001 seed 2: ser_mean=0.0468 ser_median=0.0475
+[29 done, ~563 left | 0.5 h, ~9.7 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0 s0 OK 8 min  == tune_online_deepsic_ep300_lr0.005_wd0 seed 0: ser_mean=0.0603 ser_median=0.0592
+[30 done, ~562 left | 0.5 h, ~9.3 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0 s1 OK 8 min  == tune_online_deepsic_ep300_lr0.005_wd0 seed 1: ser_mean=0.0583 ser_median=0.0566
+[31 done, ~561 left | 0.5 h, ~9.0 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0.0001 s0 OK 9 min  == tune_online_deepsic_ep300_lr0.001_wd0.0001 seed 0: ser_mean=0.0464 ser_median=0.0474
+[32 done, ~560 left | 0.5 h, ~8.7 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.001_wd0 s0 OK 9 min  == tune_online_deepsic_ep300_lr0.001_wd0 seed 0: ser_mean=0.0341 ser_median=0.0325
+[33 done, ~559 left | 0.6 h, ~10.2 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0 s2 OK 6 min  == tune_online_deepsic_ep300_lr0.005_wd0 seed 2: ser_mean=0.0588 ser_median=0.0593
+[34 done, ~558 left | 0.6 h, ~9.9 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0.0001 s0 OK 6 min  == tune_online_deepsic_ep300_lr0.005_wd0.0001 seed 0: ser_mean=0.0546 ser_median=0.0553
+[35 done, ~557 left | 0.6 h, ~9.6 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0.0001 s1 OK 6 min  == tune_online_deepsic_ep300_lr0.005_wd0.0001 seed 1: ser_mean=0.0537 ser_median=0.0549
+[36 done, ~556 left | 0.6 h, ~9.3 h to go at this pace] t0 tune tune_online_deepsic_ep300_lr0.005_wd0.0001 s2 OK 6 min  == tune_online_deepsic_ep300_lr0.005_wd0.0001 seed 2: ser_mean=0.0552 ser_median=0.0575
