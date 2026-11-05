@@ -133,21 +133,29 @@ def cell(folder: str, name: str, clean: List[str]) -> Optional[dict]:
 
 # ------------------------------------------------------------------------------------ formatting
 def f_ser(x: float) -> str:
+    """Plain decimals for non-negative values; math mode (true minus sign) for negative ones."""
     if x is None or not np.isfinite(x):
         return "--"
     ax = abs(x)
-    if ax >= 0.1:
-        return f"{x:.3f}"
-    if ax >= 0.001:
-        return f"{x:.4f}"
     if ax == 0:
         return "0"
-    return f"{x:.1e}".replace("e-0", "e-")
+    if ax >= 0.1:
+        t = f"{ax:.3f}"
+    elif ax >= 0.001:
+        t = f"{ax:.4f}"
+    else:
+        m, e = f"{ax:.1e}".split("e")
+        t = f"{m}\\cdot10^{{{int(e)}}}"
+    if x < 0:
+        return f"$-{t}$"
+    return f"${t}$" if "cdot" in t else t
 
 
 def f_sig(x: float) -> str:
     s = f_ser(x)
-    return s if s.startswith("-") or s == "--" else "+" + s
+    if s == "--" or x is None or not np.isfinite(x) or x <= 0:
+        return s
+    return "$+" + s[1:] if s.startswith("$") else f"$+{s}$"
 
 
 def f_ci(ci) -> str:
@@ -454,7 +462,9 @@ def tuning() -> None:
                 k = "cal." + tag.replace("_", "")
                 put(k + ".score", f_ser(v["score"])); put(k + ".clean", f_ser(v["clean_ser"]))
                 put(k + ".frej", f"{v['clean_false_rejection']:.3f}")
-                rows.append(f"{tag.replace('_', ' ')} & {f_ser(v['clean_ser'])} & {f_ser(v['a1_sir0_window_ser'])} & "
+                nice = {"rel_select_clip": "Relative slack", "derived_select_clip": "Derived slack",
+                        "rel_select_clip_anchorstart": "Relative slack, anchor start"}.get(tag, tag.replace("_", " "))
+                rows.append(f"{nice} & {f_ser(v['clean_ser'])} & {f_ser(v['a1_sir0_window_ser'])} & "
                             f"{f_ser(v['cost2100_sir0_window_ser'])} & {v['clean_false_rejection']:.3f} & {f_ser(v['score'])}"
                             + (" & chosen" if tag == fz["chosen"] else " & ") + "\\\\")
             write_table("calibration", rows)
