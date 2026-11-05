@@ -172,3 +172,39 @@ fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git
 [93 done, ~499 left | 3.3 h, ~17.6 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0.0001 s2 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0.0001 seed 2: ser_mean=0.0718 ser_median=0.0738
 [94 done, ~498 left | 3.3 h, ~17.4 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0.0001 s1 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0.0001 seed 1: ser_mean=0.0682 ser_median=0.0728
 baselines frozen: {'online_deepsic': ['receiver.epochs=30', 'receiver.lr=0.001', 'receiver.weight_decay=0.0'], 'meta_deepsic': ['receiver.epochs=300', 'receiver.lr=0.001', 'receiver.weight_decay=0.0']}
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+!! push failed; will retry at the next push (04:20)
+[95 done, ~497 left | 3.3 h, ~17.2 h to go at this pace] t2 P6 clean_2ce8d97305 s10 OK 1 min  == clean_2ce8d97305 seed 10: ser_mean=0.0544 ser_median=0.0566
+[96 done, ~496 left | 3.3 h, ~17.0 h to go at this pace] t2 P6 p6_lmmse_4x16__sir0 s10 OK 2 min  == p6_lmmse_4x16__sir0 seed 10: ser_mean=0.1205 ser_median=0.0776 ser_pre=0.0577 ser_attack=0.2134 ser_post=0.0593
+[97 done, ~495 left | 3.3 h, ~16.8 h to go at this pace] t2 P6 p6_lmmse_4x16__sir0 s11 OK 2 min  == p6_lmmse_4x16__sir0 seed 11: ser_mean=0.1199 ser_median=0.0802 ser_pre=0.0573 ser_attack=0.2086 ser_post=0.0648
+[98 done, ~494 left | 3.4 h, ~17.0 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s10 OK 5 min  == p1_online_deepsic__wb_sir0 seed 10: ser_mean=0.3425 ser_median=0.0629 ser_pre=0.0369 ser_attack=0.7906 ser_post=0.0497
+[99 done, ~493 left | 3.4 h, ~16.8 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s11 OK 5 min  == p1_online_deepsic__wb_sir0 seed 11: ser_mean=0.3286 ser_median=0.0598 ser_pre=0.0376 ser_attack=0.7545 ser_post=0.0533
+[100 done, ~492 left | 3.4 h, ~16.6 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s12 OK 5 min  == p1_online_deepsic__wb_sir0 seed 12: ser_mean=0.3401 ser_median=0.0567 ser_pre=0.0332 ser_attack=0.7912 ser_post=0.0535
+[101 done, ~491 left | 3.4 h, ~16.4 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s13 OK 5 min  == p1_online_deepsic__wb_sir0 seed 13: ser_mean=0.3501 ser_median=0.0426 ser_pre=0.0156 ser_attack=0.8232 ser_post=0.0399
+[102 done, ~490 left | 3.4 h, ~16.5 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s14 OK 5 min  == p1_online_deepsic__wb_sir0 seed 14: ser_mean=0.3423 ser_median=0.0391 ser_pre=0.0173 ser_attack=0.8056 ser_post=0.0379
+[103 done, ~489 left | 3.4 h, ~16.4 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s15 OK 5 min  == p1_online_deepsic__wb_sir0 seed 15: ser_mean=0.3516 ser_median=0.0579 ser_pre=0.0395 ser_attack=0.8139 ser_post=0.0465
+[104 done, ~488 left | 3.5 h, ~16.2 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s17 OK 5 min  == p1_online_deepsic__wb_sir0 seed 17: ser_mean=0.3553 ser_median=0.0558 ser_pre=0.0377 ser_attack=0.8250 ser_post=0.0447
+[105 done, ~487 left | 3.5 h, ~16.0 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s16 OK 5 min  == p1_online_deepsic__wb_sir0 seed 16: ser_mean=0.3313 ser_median=0.0619 ser_pre=0.0366 ser_attack=0.7639 ser_post=0.0522
+[106 done, ~486 left | 3.5 h, ~15.8 h to go at this pace] t2 P2 clean_f10dadcb3c s11 OK 15 min  == clean_f10dadcb3c seed 11: ser_mean=0.0633 ser_median=0.0658
+[107 done, ~485 left | 3.5 h, ~15.7 h to go at this pace] t2 P2 p2_medbn_deepsic__wb_sir0 s10 OK 15 min  == p2_medbn_deepsic__wb_sir0 seed 10: ser_mean=0.3778 ser_median=0.2054 ser_pre=0.0654 ser_attack=0.7466 ser_post=0.1901
+[108 done, ~484 left | 3.5 h, ~15.5 h to go at this pace] t2 P2 clean_f10dadcb3c s10 OK 15 min  == clean_f10dadcb3c seed 10: ser_mean=0.0654 ser_median=0.0657
+[109 done, ~483 left | 3.5 h, ~15.3 h to go at this pace] t2 P2 p2_medbn_deepsic__wb_sir0 s11 OK 15 min  == p2_medbn_deepsic__wb_sir0 seed 11: ser_mean=0.3707 ser_median=0.2099 ser_pre=0.0598 ser_attack=0.7357 ser_post=0.2101
+[110 done, ~482 left | 3.5 h, ~15.3 h to go at this pace] t1 P1 clean_1a7479201b s11 OK 2 min  == clean_1a7479201b seed 11: ser_mean=0.0318 ser_median=0.0310
+[111 done, ~481 left | 3.5 h, ~15.1 h to go at this pace] t1 P1 clean_1a7479201b s10 OK 2 min  == clean_1a7479201b seed 10: ser_mean=0.0313 ser_median=0.0304
+[112 done, ~480 left | 3.5 h, ~14.9 h to go at this pace] t1 P1 clean_1a7479201b s12 OK 2 min  == clean_1a7479201b seed 12: ser_mean=0.0318 ser_median=0.0288
+[113 done, ~479 left | 3.5 h, ~14.8 h to go at this pace] t1 P1 clean_1a7479201b s13 OK 2 min  == clean_1a7479201b seed 13: ser_mean=0.0315 ser_median=0.0298
+[114 done, ~478 left | 3.5 h, ~14.6 h to go at this pace] t1 P1 clean_1a7479201b s14 OK 2 min  == clean_1a7479201b seed 14: ser_mean=0.0304 ser_median=0.0274
+[115 done, ~477 left | 3.5 h, ~14.5 h to go at this pace] t1 P1 clean_1a7479201b s15 OK 2 min  == clean_1a7479201b seed 15: ser_mean=0.0319 ser_median=0.0296
+[116 done, ~476 left | 3.5 h, ~14.4 h to go at this pace] t1 P1 clean_1a7479201b s16 OK 2 min  == clean_1a7479201b seed 16: ser_mean=0.0307 ser_median=0.0302
+[117 done, ~475 left | 3.5 h, ~14.3 h to go at this pace] t1 P1 clean_1a7479201b s17 OK 2 min  == clean_1a7479201b seed 17: ser_mean=0.0328 ser_median=0.0306
+[118 done, ~474 left | 3.5 h, ~14.2 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s18 OK 5 min  == p1_online_deepsic__wb_sir0 seed 18: ser_mean=0.3453 ser_median=0.0587 ser_pre=0.0380 ser_attack=0.8013 ser_post=0.0433
+[119 done, ~473 left | 3.5 h, ~14.0 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s19 OK 5 min  == p1_online_deepsic__wb_sir0 seed 19: ser_mean=0.3476 ser_median=0.0411 ser_pre=0.0224 ser_attack=0.8205 ser_post=0.0357
+[120 done, ~472 left | 3.6 h, ~14.0 h to go at this pace] t1 P1 clean_1a7479201b s18 OK 5 min  == clean_1a7479201b seed 18: ser_mean=0.0307 ser_median=0.0290
+[121 done, ~471 left | 3.6 h, ~13.9 h to go at this pace] t1 P1 clean_1a7479201b s19 OK 5 min  == clean_1a7479201b seed 19: ser_mean=0.0315 ser_median=0.0316
