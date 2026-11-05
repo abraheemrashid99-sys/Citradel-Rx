@@ -150,3 +150,25 @@ fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git
 [80 done, ~512 left | 2.9 h, ~18.8 h to go at this pace] t2 P2 clean_93e652296c s11 OK 1 min  == clean_93e652296c seed 11: ser_mean=0.0534 ser_median=0.0566
 [81 done, ~511 left | 2.9 h, ~18.6 h to go at this pace] t2 P2 p2_lmmse_robust__wb_sir0 s10 OK 2 min  == p2_lmmse_robust__wb_sir0 seed 10: ser_mean=0.1617 ser_median=0.0749 ser_pre=0.0568 ser_attack=0.3170 ser_post=0.0593
 [82 done, ~510 left | 3.0 h, ~18.4 h to go at this pace] t2 P2 p2_lmmse_robust__wb_sir0 s11 OK 2 min  == p2_lmmse_robust__wb_sir0 seed 11: ser_mean=0.1521 ser_median=0.0739 ser_pre=0.0554 ser_attack=0.2921 ser_post=0.0630
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+!! push failed; will retry at the next push (04:05)
+[83 done, ~509 left | 3.1 h, ~18.8 h to go at this pace] t2 P2 clean_b8ff337c0d s10 OK 7 min  == clean_b8ff337c0d seed 10: ser_mean=0.0698 ser_median=0.0694
+[84 done, ~508 left | 3.1 h, ~18.5 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s10 OK 8 min  == p2_drift_deepsic__wb_sir0 seed 10: ser_mean=0.3586 ser_median=0.1157 ser_pre=0.0760 ser_attack=0.7687 ser_post=0.0934
+[85 done, ~507 left | 3.1 h, ~18.3 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s11 OK 8 min  == p2_drift_deepsic__wb_sir0 seed 11: ser_mean=0.3612 ser_median=0.1188 ser_pre=0.0861 ser_attack=0.7659 ser_post=0.0980
+[86 done, ~506 left | 3.1 h, ~18.1 h to go at this pace] t2 P2 clean_b8ff337c0d s11 OK 7 min  == clean_b8ff337c0d seed 11: ser_mean=0.0731 ser_median=0.0717
+[87 done, ~505 left | 3.2 h, ~18.6 h to go at this pace] t2 P2 clean_00fb50fde3 s10 OK 8 min  == clean_00fb50fde3 seed 10: ser_mean=0.0552 ser_median=0.0521
+[88 done, ~504 left | 3.2 h, ~18.4 h to go at this pace] t2 P2 p2_titans_single__wb_sir0 s10 OK 9 min  == p2_titans_single__wb_sir0 seed 10: ser_mean=0.3569 ser_median=0.1002 ser_pre=0.0721 ser_attack=0.7882 ser_post=0.0669
+[89 done, ~503 left | 3.2 h, ~18.1 h to go at this pace] t2 P2 p2_titans_single__wb_sir0 s11 OK 9 min  == p2_titans_single__wb_sir0 seed 11: ser_mean=0.3553 ser_median=0.0930 ser_pre=0.0625 ser_attack=0.7835 ser_post=0.0788
+[90 done, ~502 left | 3.2 h, ~17.9 h to go at this pace] t2 P2 clean_00fb50fde3 s11 OK 8 min  == clean_00fb50fde3 seed 11: ser_mean=0.0512 ser_median=0.0472
+[91 done, ~501 left | 3.3 h, ~18.0 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0 s2 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0 seed 2: ser_mean=0.0561 ser_median=0.0568
+[92 done, ~500 left | 3.3 h, ~17.8 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0.0001 s0 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0.0001 seed 0: ser_mean=0.0693 ser_median=0.0719
+[93 done, ~499 left | 3.3 h, ~17.6 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0.0001 s2 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0.0001 seed 2: ser_mean=0.0718 ser_median=0.0738
+[94 done, ~498 left | 3.3 h, ~17.4 h to go at this pace] t0 tune tune_meta_deepsic_ep300_lr0.005_wd0.0001 s1 OK 34 min  == tune_meta_deepsic_ep300_lr0.005_wd0.0001 seed 1: ser_mean=0.0682 ser_median=0.0728
+baselines frozen: {'online_deepsic': ['receiver.epochs=30', 'receiver.lr=0.001', 'receiver.weight_decay=0.0'], 'meta_deepsic': ['receiver.epochs=300', 'receiver.lr=0.001', 'receiver.weight_decay=0.0']}

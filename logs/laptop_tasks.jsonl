@@ -80,3 +80,15 @@
 {"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_clean", "name": "clean_93e652296c", "seed": 11, "ok": true, "seconds": 49.0, "finished": "2026-11-05T22:58:58.372405+00:00"}
 {"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_lmmse_robust__wb_sir0", "seed": 10, "ok": true, "seconds": 131.8, "finished": "2026-11-05T22:59:24.940778+00:00"}
 {"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_lmmse_robust__wb_sir0", "seed": 11, "ok": true, "seconds": 131.3, "finished": "2026-11-05T22:59:44.812388+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_clean", "name": "clean_b8ff337c0d", "seed": 10, "ok": true, "seconds": 412.3, "finished": "2026-11-05T23:06:17.212985+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_drift_deepsic__wb_sir0", "seed": 10, "ok": true, "seconds": 450.0, "finished": "2026-11-05T23:06:26.509074+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_drift_deepsic__wb_sir0", "seed": 11, "ok": true, "seconds": 466.1, "finished": "2026-11-05T23:06:44.493508+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_clean", "name": "clean_b8ff337c0d", "seed": 11, "ok": true, "seconds": 426.4, "finished": "2026-11-05T23:06:51.223555+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_clean", "name": "clean_00fb50fde3", "seed": 10, "ok": true, "seconds": 485.9, "finished": "2026-11-05T23:14:50.400647+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_titans_single__wb_sir0", "seed": 10, "ok": true, "seconds": 516.8, "finished": "2026-11-05T23:14:54.016230+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_titans_single__wb_sir0", "seed": 11, "ok": true, "seconds": 517.1, "finished": "2026-11-05T23:15:03.602127+00:00"}
+{"shard": "laptop", "tier": 2, "group": "P2", "out": "rev_clean", "name": "clean_00fb50fde3", "seed": 11, "ok": true, "seconds": 498.2, "finished": "2026-11-05T23:15:09.404006+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep300_lr0.005_wd0", "seed": 2, "ok": true, "seconds": 2043.8, "finished": "2026-11-05T23:18:36.114012+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep300_lr0.005_wd0.0001", "seed": 0, "ok": true, "seconds": 2035.7, "finished": "2026-11-05T23:18:37.890569+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep300_lr0.005_wd0.0001", "seed": 2, "ok": true, "seconds": 2036.2, "finished": "2026-11-05T23:19:24.154848+00:00"}
+{"shard": "laptop", "tier": 0, "group": "tune", "out": "rev_cal_tune", "name": "tune_meta_deepsic_ep300_lr0.005_wd0.0001", "seed": 1, "ok": true, "seconds": 2047.2, "finished": "2026-11-05T23:19:25.154052+00:00"}
