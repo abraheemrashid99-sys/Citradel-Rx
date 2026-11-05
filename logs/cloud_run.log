@@ -28,3 +28,4 @@ pushed results to GitHub (19:55)
 [26 done, ~49 left | 1.4 h, ~2.6 h to go at this pace] t0 calibrate cand_rel_select_clip_anchorstart__cost s1 OK 15 min  == cand_rel_select_clip_anchorstart__cost seed 1: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
 [27 done, ~48 left | 1.4 h, ~2.5 h to go at this pace] t0 calibrate cand_rel_select_clip_anchorstart__cost s2 OK 16 min  == cand_rel_select_clip_anchorstart__cost seed 2: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000
 Citadel-Rx frozen: rel_select_clip {'rel_select_clip': 0.01329, 'derived_select_clip': 0.01414, 'rel_select_clip_anchorstart': 0.01627}
+pushed results to GitHub (20:33)
