@@ -1,0 +1,14 @@
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__clean", "seed": 0, "ok": true, "seconds": 700.3, "finished": "2026-11-05T19:22:02.648316+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__clean", "seed": 2, "ok": true, "seconds": 713.8, "finished": "2026-11-05T19:22:16.401523+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__clean", "seed": 1, "ok": true, "seconds": 715.7, "finished": "2026-11-05T19:22:18.138407+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__a1", "seed": 0, "ok": true, "seconds": 731.2, "finished": "2026-11-05T19:22:33.937642+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__a1", "seed": 1, "ok": true, "seconds": 499.2, "finished": "2026-11-05T19:30:21.946890+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__a1", "seed": 2, "ok": true, "seconds": 496.6, "finished": "2026-11-05T19:30:33.122706+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__cost", "seed": 0, "ok": true, "seconds": 886.6, "finished": "2026-11-05T19:37:04.892820+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__cost", "seed": 1, "ok": true, "seconds": 906.3, "finished": "2026-11-05T19:37:40.395490+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_derived_select_clip__clean", "seed": 0, "ok": true, "seconds": 687.8, "finished": "2026-11-05T19:42:01.043369+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_rel_select_clip__cost", "seed": 2, "ok": true, "seconds": 929.4, "finished": "2026-11-05T19:45:51.509656+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_derived_select_clip__clean", "seed": 1, "ok": true, "seconds": 711.3, "finished": "2026-11-05T19:48:56.320912+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_derived_select_clip__clean", "seed": 2, "ok": true, "seconds": 685.7, "finished": "2026-11-05T19:49:06.206395+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_derived_select_clip__a1", "seed": 0, "ok": true, "seconds": 476.2, "finished": "2026-11-05T19:49:57.406744+00:00"}
+{"shard": "cloud", "tier": 0, "group": "calibrate", "out": "rev_cal_citadel", "name": "cand_derived_select_clip__a1", "seed": 1, "ok": true, "seconds": 474.9, "finished": "2026-11-05T19:53:46.582732+00:00"}
