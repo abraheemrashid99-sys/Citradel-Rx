@@ -94,3 +94,24 @@ fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git
 [42 done, ~550 left | 1.1 h, ~14.8 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0 s0 OK 32 min  == tune_meta_deepsic_ep30_lr0.005_wd0 seed 0: ser_mean=0.0564 ser_median=0.0569
 [43 done, ~549 left | 1.1 h, ~14.5 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0 s1 OK 32 min  == tune_meta_deepsic_ep30_lr0.005_wd0 seed 1: ser_mean=0.0547 ser_median=0.0527
 [44 done, ~548 left | 1.1 h, ~14.1 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.001_wd0.0001 s2 OK 32 min  == tune_meta_deepsic_ep30_lr0.001_wd0.0001 seed 2: ser_mean=0.0415 ser_median=0.0432
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+[45 done, ~547 left | 1.5 h, ~18.4 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0 s2 OK 31 min  == tune_meta_deepsic_ep30_lr0.005_wd0 seed 2: ser_mean=0.0596 ser_median=0.0605
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+[46 done, ~546 left | 1.5 h, ~18.0 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0.0001 s0 OK 31 min  == tune_meta_deepsic_ep30_lr0.005_wd0.0001 seed 0: ser_mean=0.0588 ser_median=0.0552
+[47 done, ~545 left | 1.5 h, ~17.6 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0.0001 s1 OK 31 min  == tune_meta_deepsic_ep30_lr0.005_wd0.0001 seed 1: ser_mean=0.0577 ser_median=0.0549
+[48 done, ~544 left | 1.5 h, ~17.2 h to go at this pace] t0 tune tune_meta_deepsic_ep30_lr0.005_wd0.0001 s2 OK 31 min  == tune_meta_deepsic_ep30_lr0.005_wd0.0001 seed 2: ser_mean=0.0622 ser_median=0.0594
+!! push failed; will retry at the next push (02:33)
+[49 done, ~543 left | 1.7 h, ~18.7 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0 s0 OK 33 min  == tune_meta_deepsic_ep100_lr0.001_wd0 seed 0: ser_mean=0.0370 ser_median=0.0368
+[50 done, ~542 left | 1.7 h, ~18.3 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0 s2 OK 34 min  == tune_meta_deepsic_ep100_lr0.001_wd0 seed 2: ser_mean=0.0401 ser_median=0.0412
+[51 done, ~541 left | 1.7 h, ~18.0 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0 s1 OK 34 min  == tune_meta_deepsic_ep100_lr0.001_wd0 seed 1: ser_mean=0.0370 ser_median=0.0404
+[52 done, ~540 left | 1.7 h, ~17.6 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0.0001 s0 OK 34 min  == tune_meta_deepsic_ep100_lr0.001_wd0.0001 seed 0: ser_mean=0.0390 ser_median=0.0379
+[53 done, ~539 left | 2.1 h, ~21.5 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0.0001 s1 OK 36 min  == tune_meta_deepsic_ep100_lr0.001_wd0.0001 seed 1: ser_mean=0.0388 ser_median=0.0409
+[54 done, ~538 left | 2.1 h, ~21.2 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.001_wd0.0001 s2 OK 36 min  == tune_meta_deepsic_ep100_lr0.001_wd0.0001 seed 2: ser_mean=0.0430 ser_median=0.0456
+[55 done, ~537 left | 2.1 h, ~20.7 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.005_wd0 s0 OK 36 min  == tune_meta_deepsic_ep100_lr0.005_wd0 seed 0: ser_mean=0.0548 ser_median=0.0549
+[56 done, ~536 left | 2.1 h, ~20.4 h to go at this pace] t0 tune tune_meta_deepsic_ep100_lr0.005_wd0 s1 OK 37 min  == tune_meta_deepsic_ep100_lr0.005_wd0 seed 1: ser_mean=0.0530 ser_median=0.0511
