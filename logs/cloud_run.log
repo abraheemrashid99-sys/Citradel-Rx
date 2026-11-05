@@ -1,0 +1,15 @@
+== cloud: 75 runs queued (before de-duplication), 4 workers, pre-training cache cache/pretrain
+[1 done, ~74 left | 0.2 h, ~14.4 h to go at this pace] t0 calibrate cand_rel_select_clip__clean s0 OK 12 min  == cand_rel_select_clip__clean seed 0: ser_mean=0.0154 ser_median=0.0119
+[2 done, ~73 left | 0.2 h, ~7.2 h to go at this pace] t0 calibrate cand_rel_select_clip__clean s2 OK 12 min  == cand_rel_select_clip__clean seed 2: ser_mean=0.0149 ser_median=0.0110
+[3 done, ~72 left | 0.2 h, ~4.8 h to go at this pace] t0 calibrate cand_rel_select_clip__clean s1 OK 12 min  == cand_rel_select_clip__clean seed 1: ser_mean=0.0149 ser_median=0.0117
+[4 done, ~71 left | 0.2 h, ~3.6 h to go at this pace] t0 calibrate cand_rel_select_clip__a1 s0 OK 12 min  == cand_rel_select_clip__a1 seed 0: ser_mean=0.0209 ser_median=0.0136 ser_pre=0.0238 ser_attack=0.0252 ser_post=0.0124
+[5 done, ~70 left | 0.3 h, ~4.7 h to go at this pace] t0 calibrate cand_rel_select_clip__a1 s1 OK 8 min  == cand_rel_select_clip__a1 seed 1: ser_mean=0.0201 ser_median=0.0137 ser_pre=0.0228 ser_attack=0.0242 ser_post=0.0119
+[6 done, ~69 left | 0.3 h, ~3.9 h to go at this pace] t0 calibrate cand_rel_select_clip__a1 s2 OK 8 min  == cand_rel_select_clip__a1 seed 2: ser_mean=0.0201 ser_median=0.0137 ser_pre=0.0230 ser_attack=0.0242 ser_post=0.0119
+[7 done, ~68 left | 0.4 h, ~4.3 h to go at this pace] t0 calibrate cand_rel_select_clip__cost s0 OK 15 min  == cand_rel_select_clip__cost seed 0: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+[8 done, ~67 left | 0.5 h, ~3.8 h to go at this pace] t0 calibrate cand_rel_select_clip__cost s1 OK 15 min  == cand_rel_select_clip__cost seed 1: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000
+[9 done, ~66 left | 0.5 h, ~3.9 h to go at this pace] t0 calibrate cand_derived_select_clip__clean s0 OK 11 min  == cand_derived_select_clip__clean seed 0: ser_mean=0.0153 ser_median=0.0124
+[10 done, ~65 left | 0.6 h, ~3.8 h to go at this pace] t0 calibrate cand_rel_select_clip__cost s2 OK 15 min  == cand_rel_select_clip__cost seed 2: ser_mean=0.0002 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000
+[11 done, ~64 left | 0.6 h, ~3.7 h to go at this pace] t0 calibrate cand_derived_select_clip__clean s1 OK 12 min  == cand_derived_select_clip__clean seed 1: ser_mean=0.0148 ser_median=0.0116
+[12 done, ~63 left | 0.6 h, ~3.4 h to go at this pace] t0 calibrate cand_derived_select_clip__clean s2 OK 11 min  == cand_derived_select_clip__clean seed 2: ser_mean=0.0150 ser_median=0.0113
+[13 done, ~62 left | 0.7 h, ~3.1 h to go at this pace] t0 calibrate cand_derived_select_clip__a1 s0 OK 8 min  == cand_derived_select_clip__a1 seed 0: ser_mean=0.0209 ser_median=0.0138 ser_pre=0.0234 ser_attack=0.0255 ser_post=0.0123
+[14 done, ~61 left | 0.7 h, ~3.2 h to go at this pace] t0 calibrate cand_derived_select_clip__a1 s1 OK 8 min  == cand_derived_select_clip__a1 seed 1: ser_mean=0.0218 ser_median=0.0146 ser_pre=0.0228 ser_attack=0.0282 ser_post=0.0124
