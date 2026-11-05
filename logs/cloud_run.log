@@ -29,3 +29,17 @@ pushed results to GitHub (19:55)
 [27 done, ~48 left | 1.4 h, ~2.5 h to go at this pace] t0 calibrate cand_rel_select_clip_anchorstart__cost s2 OK 16 min  == cand_rel_select_clip_anchorstart__cost seed 2: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000
 Citadel-Rx frozen: rel_select_clip {'rel_select_clip': 0.01329, 'derived_select_clip': 0.01414, 'rel_select_clip_anchorstart': 0.01627}
 pushed results to GitHub (20:33)
+pushed results to GitHub (20:40)
+[28 done, ~47 left | 1.6 h, ~2.6 h to go at this pace] t1 P4 clean_3b3e8e4941 s10 OK 11 min  == clean_3b3e8e4941 seed 10: ser_mean=0.0150 ser_median=0.0110
+[29 done, ~46 left | 1.6 h, ~2.5 h to go at this pace] t1 P4 p4_citadel__sir0 s11 OK 12 min  == p4_citadel__sir0 seed 11: ser_mean=0.0215 ser_median=0.0148 ser_pre=0.0234 ser_attack=0.0272 ser_post=0.0121
+[30 done, ~45 left | 1.6 h, ~2.4 h to go at this pace] t1 P4 p4_citadel__sir0 s10 OK 12 min  == p4_citadel__sir0 seed 10: ser_mean=0.0203 ser_median=0.0135 ser_pre=0.0232 ser_attack=0.0243 ser_post=0.0122
+[31 done, ~44 left | 1.6 h, ~2.2 h to go at this pace] t1 P4 p4_citadel__sir0 s12 OK 12 min  == p4_citadel__sir0 seed 12: ser_mean=0.0196 ser_median=0.0138 ser_pre=0.0224 ser_attack=0.0228 ser_post=0.0125
+[32 done, ~43 left | 1.7 h, ~2.3 h to go at this pace] t1 P4 clean_3b3e8e4941 s11 OK 7 min  == clean_3b3e8e4941 seed 11: ser_mean=0.0152 ser_median=0.0115
+[33 done, ~42 left | 1.7 h, ~2.2 h to go at this pace] t1 P4 clean_3b3e8e4941 s12 OK 8 min  == clean_3b3e8e4941 seed 12: ser_mean=0.0149 ser_median=0.0117
+[34 done, ~38 left | 1.7 h, ~1.9 h to go at this pace] t1 P4 p4_citadel__sir10 s11 OK 8 min  == p4_citadel__sir10 seed 11: ser_mean=0.0188 ser_median=0.0134 ser_pre=0.0234 ser_attack=0.0199 ser_post=0.0126
+[35 done, ~37 left | 1.7 h, ~1.8 h to go at this pace] t1 P4 p4_citadel__sir10 s10 OK 8 min  == p4_citadel__sir10 seed 10: ser_mean=0.0179 ser_median=0.0126 ser_pre=0.0232 ser_attack=0.0180 ser_post=0.0125
+[36 done, ~36 left | 1.8 h, ~1.8 h to go at this pace] t1 P4 p4_citadel__sir10 s12 OK 8 min  == p4_citadel__sir10 seed 12: ser_mean=0.0174 ser_median=0.0131 ser_pre=0.0224 ser_attack=0.0173 ser_post=0.0126
+[37 done, ~35 left | 1.8 h, ~1.7 h to go at this pace] t1 P3refdeg clean_0b811be896 s10 OK 8 min  == clean_0b811be896 seed 10: ser_mean=0.0150 ser_median=0.0110
+[38 done, ~34 left | 2.0 h, ~1.8 h to go at this pace] t1 P3refdeg clean_0b811be896 s11 OK 8 min  == clean_0b811be896 seed 11: ser_mean=0.0152 ser_median=0.0115
+[39 done, ~33 left | 2.2 h, ~1.9 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s10 OK 31 min  == p3_a4_a0.25__sir0 seed 10: ser_mean=0.0316 ser_median=0.0163 ser_pre=0.0238 ser_attack=0.0526 ser_post=0.0122
+[40 done, ~32 left | 2.2 h, ~1.8 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s11 OK 31 min  == p3_a4_a0.25__sir0 seed 11: ser_mean=0.0324 ser_median=0.0174 ser_pre=0.0226 ser_attack=0.0540 ser_post=0.0125
