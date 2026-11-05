@@ -229,24 +229,26 @@ attacked block, with $\norm{\bm E_b}_F\le\epsilon_b$ set by a signal-to-interfer
 \end{equation}
 where $\bm R_b=\bm Y_b$ (received energy, noise included, as in \cite{wu2024}) or $\bm R_b=\bm
 S_b\bm H_b^{\!\top}$ (users' signal energy only); both are reported. At SIR $0$\,dB the attacker's
-received power equals that of all $U$ users together: with a common path-loss exponent $\alpha$ and
-equal transmit power it must be $U^{1/\alpha}$ times closer to the base station than the users
-(about $1.9$ times for $U=4$ and the line-of-sight urban-micro exponent $\alpha=2.1$ of
-\cite{tr38901}). The attacker is synchronised to the frame and knows the pilot sequence, which is
+received pilot energy equals that of all $U$ users together (plus the noise, with the first budget).
+As an order of magnitude, with a common path-loss exponent $\alpha$, users at a common distance and
+equal transmit powers, the attacker must be $U^{1/\alpha}$ times closer to the base station than the
+users: about $1.9$ times for $U=4$ and the line-of-sight urban-micro exponent $\alpha=2.1$ of
+\cite{tr38901}. The attacker is synchronised to the frame and knows the pilot sequence, which is
 standardised. The attackers are:
 \begin{itemize}
 \item \emph{A1, availability} \cite{wu2024}: projected gradient ascent \cite{madry2018} on the
 post-adaptation data loss through an unrolled copy of the adaptation map.
 \item \emph{A1 built against the defence}: deeper unrolling (10, 50 steps), more steps and random
-restarts, the soft-gate objective (the error rate of the decisions the receiver would emit, times a
-differentiable surrogate of the probability that its gates accept, with the defence's exact
-thresholds and running statistics; BPDA \cite{athalye2018obfuscated}), and an expectation over
+restarts, the soft-gate objective (the data loss of the fast level, which the receiver emits if it
+accepts the block, times a differentiable surrogate of the probability that its gates accept, plus a
+reward for acceptance; the surrogate uses the defence's exact thresholds and running statistics with
+the hard steps replaced by soft ones, as in BPDA \cite{athalye2018obfuscated}), and an expectation over
 noise draws (EOT \cite{athalye2018eot}).
 \item \emph{A4, reference degradation}: a fraction $\alpha$ of the energy on the pilots and
 $1-\alpha$ on the data, optimised jointly so that the model-based references the gates compare
 against degrade with the fast level.
-\item \emph{Denial of adaptation}: a fixed channel-estimate spoof $\bm E_b=\bm S_b\bm\Delta^{\!\top}$
-that makes the gates reject every block, combined with a real abrupt channel change.
+\item \emph{Denial of adaptation}: a fixed channel-estimate spoof $\bm E_b=\bm S_b\bm\Delta^{\!\top}$,
+meant to make the gates reject every block, combined with a real abrupt channel change.
 \item \emph{A3$^\ast$, optimised slow drift}: small perturbations over hundreds of blocks that pull
 the receiver toward a spoofed channel while keeping its blocks accepted.
 \item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2\}$ attacker antennas, a
@@ -464,10 +466,11 @@ form in which the gate enters: rejected blocks are reverted and enter with weigh
 \begin{remark}[contraction]\label{rem:contraction}
 If the block map satisfied $\norm{\Phi(\theta;\bm Y+\bm E,a)-\Phi(\theta;\bm Y,a)}\le G_\Phi\norm{\bm E}$ and were
 jointly $L$-Lipschitz in $(\theta,a)$ with $L<1$, the largest fast displacement after $n_W$ accepted
-attacked blocks would satisfy $\Delta_f\le G_\Phi\epsilon(1-L^{n_W})/(1-L)$. Finite-difference probes
-of the default receiver give $L_\theta+L_a$ between $1.08$ and $1.39$ for proximal weights $\lambda$
-from $0.5$ to $4$; probes can only underestimate a Lipschitz constant, so the map is not a
-contraction and this branch does not apply. The regret bound of the first version, which relied on
+attacked blocks would satisfy $\Delta_f\le G_\Phi\epsilon(1-L^{n_W})/(1-L)$. The sufficient condition
+is $L=L_\theta+L_a<1$. Finite-difference probes of the fast learner, which the revision does not change,
+give $L_\theta+L_a$ between $1.08$ and $1.39$ for proximal weights $\lambda$ from $0.5$ to $4$; probes can
+only underestimate a Lipschitz constant, so the condition fails and this branch cannot be used for the
+default receiver. The regret bound of the first version, which relied on
 it, is withdrawn; a last-layer-adaptable variant, for which the loss is convex, is evaluated in
 Section~\ref{sec:scen} without a regret claim.
 \end{remark}
