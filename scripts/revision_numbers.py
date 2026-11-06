@@ -354,12 +354,17 @@ def adaptive() -> None:
 def refdeg() -> None:
     rows = []
     for a in ("0.25", "0.75"):
-        for ab in ("", "_abstain"):
-            name = f"p3_a4_a{a}{ab}__sir0"
-            c = cell("rev_p3_refdeg", name, CLEAN_ALL)
-            put_cell("a4." + a.replace(".", "") + ab.replace("_", ""), c)
+        variants = [("rev_p3_refdeg", f"p3_a4_a{a}__sir0", "--", "a4." + a.replace(".", "")),
+                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain v1", "a4." + a.replace(".", "") + "abstain"),
+                    ("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", "abstain v2", None)]
+        if a == "0.25":
+            variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
+        for folder, name, state, key in variants:
+            c = cell(folder, name, CLEAN_ALL)
+            if key:
+                put_cell(key, c)
             if c is not None:
-                rows.append(f"$\\alpha={a}$ & {'abstain' if ab else '--'} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
+                rows.append(f"$\\alpha={a}$ & {state} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
                             f"{f_ser(c['raw'])} & {f_rate(c['rej'])}\\\\")
         jam = [r for r in load("rev_p3_refdeg") if r["name"] == f"p3_jamctl_a{a}__sir0"]
         tw = twins(CLEAN_ALL)

@@ -256,8 +256,12 @@ meant to make the gates reject every block, combined with a real abrupt channel 
 \item \emph{A3$^\ast$, optimised slow drift}: small perturbations over hundreds of blocks, of norm
 5, 20 or 50\% of that of the received pilots, that pull the receiver toward a spoofed channel while
 keeping its blocks accepted.
-\item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2\}$ attacker antennas, a
-channel $\bm G$ from the same family, and an error on the attacker's estimate of $\bm G$.
+\item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2,4\}$ attacker antennas and a
+channel $\bm G$ from the same family; with an error on its estimate $\hat{\bm G}$ the attacker designs
+$\bm X_b$ for $\hat{\bm G}$ and the receiver sees $\bm G\hat{\bm G}^{+}\bm E_b$.
+\item \emph{Attacker in a 3GPP scene}: the physical attacker placed in a TR 38.901 UMi drop at 35, 75
+or 150\,m from the base station at the maximum power of a user, so that its SIR follows from the
+geometry, path loss and shadowing (Section~\ref{sec:umi}).
 \item \emph{Data jamming}: Gaussian noise at the same SIR on the data part, a control that separates
 persistent poisoning from plain interference.
 \end{itemize}
@@ -362,9 +366,13 @@ detections that passes its CRC: the gate's choice (fast level or anchor), the an
 the least-squares channel estimate. All three are computed for the gates anyway; when none
 passes, the gate's choice is kept. Three optional states answer specific attacks and are evaluated
 with them, with mixed results (Sections~\ref{sec:refdeg} and~\ref{sec:retention}): \emph{abstain}, the
-block is rejected and not buffered when the reference itself has degraded (its pass fraction or
-residual is $z=4$ standard deviations from its running level on accepted blocks, with a binomial
-floor on the variance); \emph{streak recovery}, after five consecutive rejections a re-fit from the
+block is rejected and not buffered when the reference itself has degraded. The first version tested
+the reference's pass fraction and residual against their running levels on accepted blocks
+($z=4$, binomial floor on the variance); the second tests $t_b=\log(r_b/\hat\sigma^2_b)$, the data
+residual of the LMMSE decisions over the noise power estimated on the pilots, which both follow the
+noise and the fading while an attacker's energy on the data or on the pilots moves one of them,
+against its running level on every non-abstained block ($|t_b-\bar t_b|>z\max(s_b,0.1)$, re-based
+after 20 consecutive abstentions); \emph{streak recovery}, after five consecutive rejections a re-fit from the
 anchor on CRC-verified data, kept if it verifies better than the reference; and a \emph{drift
 guard}, a pull of level $K$ toward the pre-trained weights by $5\%$ per consolidation.
 
@@ -518,7 +526,8 @@ Block & $N_p=100$ pilot and $N_d=25\,000$ data symbols per user; $N_d\in\{1000,5
 CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
 Channel & SED with per-user cosine fading (periods 51, 39, 33, 21 blocks; depth 0.8) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
 Run & 100 blocks (400 for A3$^\ast$); 40-block attack window starting at a block drawn uniformly from 10--50 per seed\\
-Seeds & calibration 0--2; test 10--19 (headline cell), 10--12 (other headline cells), 10--11 (other experiments), 10 (sensitivity)\\
+Seeds & calibration 0--2; test 10--19 (headline cell), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
+Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h, 5\,ms blocks; NR CRC-24A and LDPC code blocks ($k=520$, $n=1000$) \cite{ts38212}\\
 Attacker & PGD 20 steps of $0.25\epsilon$ through 2 unrolled steps \cite{wu2024,madry2018}, unless stated\\
 \bottomrule
 \end{tabular}
@@ -535,7 +544,10 @@ an EATA-style receiver, entropy filter and Fisher anchor \cite{eata2022}, and a 
 teacher and stochastic restore \cite{cotta2022}; a drift-detection receiver; a median-of-means
 gradient receiver after \cite{medbn}; and a single-memory receiver with the fast learner of
 Citadel-Rx and no slow levels \cite{behrouz2025titans}. All DeepSIC receivers share the
-architecture and the pre-training.
+architecture and the pre-training. A second backbone replaces DeepSIC in Citadel-Rx, online
+training and CRC-Rollback: a fully connected network with one hidden layer of 512 units that
+classifies the joint symbol of all users ($M^U=256$ classes) from the received vector, without
+interference cancellation \cite{samuel2019,oshea2017}; detection uses its per-user marginals.
 
 \textit{Calibration and tuning, fixed in advance.} Online DeepSIC and Meta-DeepSIC are tuned over
 300, 100 and 30 adaptation epochs, learning rates $10^{-3}$ and $5\cdot10^{-3}$ and weight decay 0
@@ -547,7 +559,11 @@ has three candidates, relative or derived CRC slack and, with the relative slack
 restarted from the anchor every block; the rule, fixed before the runs, is the lowest mean of the
 clean SER, the A1 window SER at SIR 0\,dB, and the A1 window SER on COST2100, among candidates with
 at most $2\%$ clean false rejections (Table~\ref{tab:cal}). The chosen settings are written to a file
-by the rule and read by every test run.
+by the rule and read by every test run. The second campaign added two choices, again on seeds 0--2
+by rules fixed before any test run of the features: the abstain threshold $z$ is the smallest of
+3, 4, 5, 6 and 8 with at most $2\%$ abstentions on clean blocks, and online training on the second
+backbone is tuned like online DeepSIC; Citadel-Rx keeps all its frozen settings on the second
+backbone and in the coded scene.
 
 \textit{Statistics.} Within a run, consecutive blocks are correlated (decorrelation lengths of
 \val{p1.citadel.wb0.decor} blocks for the excess SER at the headline cell), so intervals are 95\%
@@ -557,9 +573,11 @@ signed-rank test on the per-seed means \cite{wilcoxon1945}, whose smallest attai
 seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1979}. Rates carry
 their counts and Wilson intervals.
 
-\textit{Reproducibility.} The campaign ran on an Apple M4 laptop (ten cores, eight runs at a time)
-and a 4-core cloud machine (four at a time), every run single-threaded, with disjoint sets of runs;
-times per block are wall-clock times of such runs and compare receivers only roughly. Every record stores its configuration,
+\textit{Reproducibility.} The first campaign ran on an Apple M4 laptop (ten cores, eight runs at a
+time) and a 4-core cloud machine, the second on the cloud machine and a 4-core AMD laptop, every
+run single-threaded, with disjoint sets of runs; every attacked run is paired with the clean twin
+from its own machine. Times per block come from the M4 runs and compare receivers only roughly;
+machine-independent costs are counted in multiply-accumulates. Every record stores its configuration,
 seed, code version and timings; an attacked run and its clean twin always ran on the same machine.
 Pre-training is cached by configuration, seed, code and random-number state, which is exact (the
 repository's tests compare cached and uncached runs). One command re-runs the campaign and one
@@ -1043,6 +1061,7 @@ The COST2100 traces are those released with \cite{raviv2023}.
 \bibitem{finn2017} C.~Finn, P.~Abbeel, and S.~Levine, ``Model-agnostic meta-learning for fast adaptation of deep networks,'' in \emph{Proc. 34th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~70, 2017, pp. 1126--1135.
 \bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu, ``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2018.
 \bibitem{tr38901} 3GPP, ``Study on channel model for frequencies from 0.5 to 100 GHz,'' TR 38.901, V19.5.0, 2026, Table 7.4.1-1.
+\bibitem{ts38212} 3GPP, ``NR; Multiplexing and channel coding,'' TS 38.212, V19.2.0, 2025, Secs. 5.1 and 5.3.2.
 \bibitem{ts36212} 3GPP, ``Evolved Universal Terrestrial Radio Access (E-UTRA); Multiplexing and channel coding,'' TS 36.212, V19.1.0, 2025, Sec. 5.1.1.
 \bibitem{liu2012cost} L.~Liu, C.~Oestges, J.~Poutanen, K.~Haneda, P.~Vainikainen, F.~Quitin, F.~Tufvesson, and P.~De~Doncker, ``The COST 2100 MIMO channel model,'' \emph{IEEE Wireless Commun.}, vol.~19, no.~6, pp. 92--99, Dec. 2012.
 \bibitem{huber1964} P.~J. Huber, ``Robust estimation of a location parameter,'' \emph{Ann. Math. Statist.}, vol.~35, no.~1, pp. 73--101, Mar. 1964.
