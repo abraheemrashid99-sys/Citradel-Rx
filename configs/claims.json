@@ -658,6 +658,118 @@
    12,
    13,
    14
+  ],
+  "d23_citadel_d35__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_7188cad35c": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_online_deepsic_d35__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_fa0f3fbeb2": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_crc_rollback_d35__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_c1b8e62df3": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_lmmse_d35__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_59f668f264": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_citadel_d75__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_online_deepsic_d75__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_crc_rollback_d75__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_lmmse_d75__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_citadel_d150__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_online_deepsic_d150__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_crc_rollback_d150__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d23_lmmse_d150__phys": [
+   10,
+   11,
+   12,
+   13,
+   14
   ]
  },
  "owners": {
@@ -1838,7 +1950,161 @@
      14
     ]
    }
+  },
+  "pool7": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "d23s_citadel_d35__phys": [
+     10,
+     12,
+     14
+    ],
+    "d23s_citadel_d75__phys": [
+     10,
+     12,
+     14
+    ],
+    "d23s_citadel_d150__phys": [
+     10,
+     12,
+     14
+    ],
+    "clean_d631069611": [
+     10,
+     12,
+     14
+    ],
+    "d23s_online_deepsic_d35__phys": [
+     13
+    ],
+    "d23s_online_deepsic_d75__phys": [
+     13
+    ],
+    "d23s_online_deepsic_d150__phys": [
+     13
+    ],
+    "d23s_crc_rollback_d35__phys": [
+     10,
+     12,
+     14
+    ],
+    "d23s_crc_rollback_d75__phys": [
+     10,
+     12,
+     14
+    ],
+    "d23s_crc_rollback_d150__phys": [
+     10,
+     12,
+     14
+    ],
+    "clean_c0e4707cb7": [
+     13
+    ],
+    "clean_d103bdad55": [
+     10,
+     12,
+     14
+    ],
+    "d23s_lmmse_d35__phys": [
+     12,
+     14
+    ],
+    "d23s_lmmse_d75__phys": [
+     12,
+     14
+    ],
+    "d23s_lmmse_d150__phys": [
+     12,
+     14
+    ],
+    "clean_0e0253d36b": [
+     12,
+     14
+    ]
+   }
+  },
+  "pool8": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "d23s_citadel_d35__phys": [
+     11,
+     13
+    ],
+    "d23s_citadel_d75__phys": [
+     11,
+     13
+    ],
+    "d23s_citadel_d150__phys": [
+     11,
+     13
+    ],
+    "clean_d631069611": [
+     11,
+     13
+    ],
+    "d23s_online_deepsic_d35__phys": [
+     10,
+     11,
+     12,
+     14
+    ],
+    "d23s_online_deepsic_d75__phys": [
+     10,
+     11,
+     12,
+     14
+    ],
+    "d23s_online_deepsic_d150__phys": [
+     10,
+     11,
+     12,
+     14
+    ],
+    "d23s_crc_rollback_d35__phys": [
+     11,
+     13
+    ],
+    "d23s_crc_rollback_d75__phys": [
+     11,
+     13
+    ],
+    "d23s_crc_rollback_d150__phys": [
+     11,
+     13
+    ],
+    "clean_c0e4707cb7": [
+     10,
+     11,
+     12,
+     14
+    ],
+    "clean_d103bdad55": [
+     11,
+     13
+    ],
+    "d23s_lmmse_d35__phys": [
+     10,
+     11,
+     13
+    ],
+    "d23s_lmmse_d75__phys": [
+     10,
+     11,
+     13
+    ],
+    "d23s_lmmse_d150__phys": [
+     10,
+     11,
+     13
+    ],
+    "clean_0e0253d36b": [
+     10,
+     11,
+     13
+    ]
+   }
   }
  },
- "dropped_note": "tune_joint_ep300_*: dropped before any test run of the second backbone (compute). d4_*_8x32, p6_*_4x16 and their clean twins: the unstretched SED profile illuminates only about U+3 antennas; replaced by the stretched profile (d4s_*, p6s_*, channel.sed_stretch=true) before their analysis"
+ "dropped_note": "tune_joint_ep300_*: dropped before any test run of the second backbone (compute). d4_*_8x32, p6_*_4x16 and their clean twins: the unstretched SED profile illuminates only about U+3 antennas; replaced by the stretched profile (d4s_*, p6s_*, channel.sed_stretch=true) before their analysis; d23_* and their clean twins: coded scene without NR scrambling, in which the all-zero codeword passes the CRC-24A check; replaced by d23s_* (frame.ldpc_scramble=true)"
 }

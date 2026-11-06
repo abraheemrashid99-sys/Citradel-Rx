@@ -376,12 +376,20 @@ def rev2x_jobs() -> List[Job]:
                   ["receiver.type=online_deepsic", "receiver.backbone=joint", f"receiver.epochs={ep}", f"receiver.lr={lr}",
                    "attack.type=none"], kind="tune")
     # ===== cloudx, tier 1: NR LDPC coding over 38.901 UMi channels, attacker in the scene (D2, D3) =
+    # d23_*: the first version, without NR scrambling (a constant detector output passed the check);
+    # superseded by d23s_* below and dropped from the plan (configs/claims.json), kept for the record
     scene = ["channel.model=umi", "frame.coding=ldpc"]
     for d in (35, 75, 150):
         for rx in ("citadel", "online_deepsic", "crc_rollback", "lmmse"):
             jobs += JT(X, 1, "D23", "rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", T5,
                        rx_ov(rx) + scene + RND + ["attack.type=a1", "attack.attacker_antennas=1", "attack.sir_from_geometry=true",
                                                  "attack.budget_ref=signal", f"attack.att_dist={d}"])
+    scene_s = scene + ["frame.ldpc_scramble=true"]   # with NR data scrambling (TS 38.211 Sec. 6.3.1.1)
+    for d in (35, 75, 150):
+        for rx in ("citadel", "online_deepsic", "crc_rollback", "lmmse"):
+            jobs += JT(X, 1, "D23s", "rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", T5,
+                       rx_ov(rx) + scene_s + RND + ["attack.type=a1", "attack.attacker_antennas=1", "attack.sir_from_geometry=true",
+                                                   "attack.budget_ref=signal", f"attack.att_dist={d}"])
     # ===== cloudy, tier 1: test runs with the frozen abstain threshold and backbone tuning =======
     for a in (0.25, 0.75):   # H3 against A4
         jobs += JT(Y, 1, "H3", "rev2_abstain", f"h3_a4_a{a:g}_ratio__sir0", T5,
@@ -642,7 +650,7 @@ class Campaign:
         elif campaign == 6:   # every run of the second campaign, its clean twins on this machine
             src = [Job(shard, j.tier, j.group, CLEAN_DIR[shard] if j.clean_twin else j.out, j.name, j.seeds, j.ov,
                        clean_twin=j.clean_twin, kind=j.kind, parent=j.parent) for j in rev2_jobs() + rev2x_jobs()
-                   if j.tier <= tier and j.group != "H3"]   # H3: the dropped second abstain version
+                   if j.tier <= tier and j.group not in ("H3", "D23")]   # superseded: second abstain version, unscrambled coded scene
             src.sort(key=lambda j: j.tier)
             self.queue = [(j, s) for j in src for s in j.seeds]
         else:

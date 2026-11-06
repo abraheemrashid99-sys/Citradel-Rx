@@ -49,6 +49,10 @@ class FrameConfig:
     coding: str = "crc"
     ldpc_k: int = 520                 # information bits per code block, CRC-24A included
     ldpc_n: int = 1000                # coded bits per code block
+    # NR data scrambling of the coded bits (TS 38.211 Sec. 6.3.1.1, c_init = n_RNTI 2^15 + n_ID, one
+    # RNTI per user). Without it the all-zero codeword, whose CRC-24A is zero, passes the check, so a
+    # detector that outputs one constant symbol "decodes"; the first coded-scene runs had this flaw.
+    ldpc_scramble: bool = False
 
 
 @dataclass
