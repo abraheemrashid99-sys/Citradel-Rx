@@ -1,1 +1,8 @@
 == helper: 316 runs queued (before de-duplication), 4 workers, pre-training cache cache/pretrain
+[1 done, ~315 left | 0.4 h, ~125.7 h to go at this pace] t2 D4 d4_citadel_8x32__sir0 s13 OK 24 min  == d4_citadel_8x32__sir0 seed 13: ser_mean=0.0808 ser_median=0.0549 ser_pre=0.0316 ser_attack=0.1286 ser_post=0.0538
+[2 done, ~314 left | 0.4 h, ~63.4 h to go at this pace] t2 D4 d4_citadel_8x32__sir0 s10 OK 24 min  == d4_citadel_8x32__sir0 seed 10: ser_mean=0.0700 ser_median=0.0648 ser_pre=0.0807 ser_attack=0.0729 ser_post=0.0569
+[3 done, ~313 left | 0.4 h, ~42.5 h to go at this pace] t2 D4 d4_citadel_8x32__sir0 s12 OK 24 min  == d4_citadel_8x32__sir0 seed 12: ser_mean=0.0706 ser_median=0.0644 ser_pre=0.0631 ser_attack=0.0984 ser_post=0.0264
+[4 done, ~312 left | 0.4 h, ~32.1 h to go at this pace] t2 D4 d4_citadel_8x32__sir0 s11 OK 25 min  == d4_citadel_8x32__sir0 seed 11: ser_mean=0.0694 ser_median=0.0623 ser_pre=0.0771 ser_attack=0.0797 ser_post=0.0450
+[5 done, ~311 left | 0.6 h, ~40.2 h to go at this pace] t2 D4 clean_f50ede5b43 s10 OK 15 min  == clean_f50ede5b43 seed 10: ser_mean=0.0578 ser_median=0.0446
+[6 done, ~310 left | 0.7 h, ~33.7 h to go at this pace] t2 D4 clean_f50ede5b43 s11 OK 15 min  == clean_f50ede5b43 seed 11: ser_mean=0.0568 ser_median=0.0462
+[7 done, ~309 left | 0.7 h, ~28.8 h to go at this pace] t2 D4 clean_f50ede5b43 s12 OK 15 min  == clean_f50ede5b43 seed 12: ser_mean=0.0557 ser_median=0.0448
