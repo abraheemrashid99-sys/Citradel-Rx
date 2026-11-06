@@ -15,3 +15,4 @@ pushed results to GitHub (16:11)
 pushed results to GitHub (16:56)
 [11 done, ~130 left | 3.5 h, ~41.3 h to go at this pace] t0 D8tune tune_joint_ep100_lr0.001 s1 OK 41 min  == tune_joint_ep100_lr0.001 seed 1: ser_mean=0.0882 ser_median=0.0940
 [12 done, ~129 left | 3.6 h, ~39.0 h to go at this pace] t0 D8tune tune_joint_ep100_lr0.001 s2 OK 40 min  == tune_joint_ep100_lr0.001 seed 2: ser_mean=0.0904 ser_median=0.0962
+pushed results to GitHub (17:41)
