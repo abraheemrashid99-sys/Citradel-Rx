@@ -59,6 +59,13 @@ Nimier-David, Merlin and Maggi, Lorenzo and Marcus, Guillermo and Vem, Avinash a
 note = {https://nvlabs.github.io/sionna/}, year = {2022}, version = {2.2.0}}`. The UMi drops use
 `sionna.phy.channel.tr38901.UMi` of the same package.
 
+3GPP TS 38.211 "NR; Physical channels and modulation", Sec. 5.2.1 (length-31 Gold sequence,
+N_c = 1600) and Sec. 6.3.1.1 (PUSCH scrambling, c_init = n_RNTI 2^15 + n_ID): the section numbers and
+the initialisation are those of Sionna's implementation (`sionna/phy/nr/utils.py::generate_prng_seq`,
+`sionna/phy/fec/scrambling.py::TB5GScrambler`), which the code uses. The version is not given in the
+bibliography: 3gpp.org and etsi.org were not reachable from the revision session; check it once by eye
+before submission.
+
 ## Items to check once by eye before submission
 
 * TR 38.901 V19.5.0, Table 7.4.1-1: the extracted PDF text was partly garbled; the coefficients
