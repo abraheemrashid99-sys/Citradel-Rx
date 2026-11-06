@@ -73,7 +73,7 @@ RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
-             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud"}   # cloudx / cloudy: second and third driver on the cloud
+             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud"}   # more drivers on the cloud
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
 FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
 T5 = [10, 11, 12, 13, 14]   # second campaign: the 2-seed experiments get seeds 12-14, the 3-seed cells 13-14
@@ -371,8 +371,8 @@ def rev2x_jobs() -> List[Job]:
     for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
                     ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):   # legitimate changes
         jobs += J(Y, 1, "H3", "rev2_abstain", f"h3_ratio_{tag}__none", T5, rx_ov("citadel") + ["@ABST"] + ch + ["attack.type=none"])
-    for rx in ("citadel", "online_deepsic", "crc_rollback"):   # D8: second backbone under A1
-        jobs += JT(Y, 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
+    for rx in ("citadel", "online_deepsic", "crc_rollback"):   # D8: second backbone under A1 (shard cloudz)
+        jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
                    + RND + ["attack.type=a1", "attack.sir_db=0"])
     return jobs
@@ -762,7 +762,7 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy"])
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz"])
     ap.add_argument("--campaign", type=int, choices=[1, 2, 3], default=1,
                     help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy)")
     ap.add_argument("--workers", type=int, default=8)
