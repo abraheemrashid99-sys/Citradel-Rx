@@ -43,6 +43,10 @@ Corrections made before any of the affected test runs (adversarial review of the
 * Abstain: the third version (residual on CRC-verified symbols) replaces the second, whose
   statistic followed the reference's decision errors after a legitimate redraw (3 test runs of the
   second version exist and are not reported).
+* Coded scene: NR data scrambling of the coded bits (TS 38.211 Sec. 6.3.1.1). Without it the
+  all-zero codeword, whose CRC-24A is zero, passes the check, and the first coded runs kept constant
+  detector outputs through the CRC selection (blocks with SER 0.996 and BLER 0). They are renamed
+  d23s_* (pool7, pool8) and the d23_* runs are dropped; no CRC-8 record has such a block.
 * D4: the SED profile is stretched over the array (`channel.sed_stretch`); unstretched, 99% of the
   energy of an 8 x 32 array falls on 9 antennas. The unstretched 8 x 32 and 4 x 16 runs not yet
   made were dropped (`configs/claims.json`, "dropped").

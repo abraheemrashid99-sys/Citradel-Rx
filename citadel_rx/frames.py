@@ -27,7 +27,8 @@ class FrameGenerator:
         self.mod = Modulation(cfg.frame.modulation)
         if getattr(cfg.frame, "coding", "crc") == "ldpc":
             from .coding.ldpc import LDPCFramer
-            self.framer = LDPCFramer(cfg.frame.ldpc_k, cfg.frame.ldpc_n, self.mod.bits_per_symbol)
+            self.framer = LDPCFramer(cfg.frame.ldpc_k, cfg.frame.ldpc_n, self.mod.bits_per_symbol,
+                                     scramble=getattr(cfg.frame, "ldpc_scramble", False))
         else:
             self.framer = CRCFramer(cfg.frame.crc_bits, cfg.frame.crc_subblock_symbols, self.mod.bits_per_symbol)
         self.n_user = cfg.channel.n_user
@@ -49,6 +50,8 @@ class FrameGenerator:
         payload = self.rng.integers(0, 2, size=(self.n_sub, self.n_user, self.framer.payload_bits))
         framed = self.framer.frame(payload)                                # (n_sub, n_user, sub_bits)
         data_bits = framed.transpose(1, 0, 2).reshape(self.n_user, -1)    # (n_user, n_d * bps)
+        if hasattr(self.framer, "scramble"):                               # NR data scrambling (LDPC only)
+            data_bits = self.framer.scramble(data_bits)
         idx_p = self.mod.bits_to_indices(pilot_bits).T                     # (n_p, n_user)
         idx_d = self.mod.bits_to_indices(data_bits).T                      # (n_d, n_user)
         return Block(
@@ -64,4 +67,6 @@ class FrameGenerator:
     def decided_bits_to_subblocks(self, idx_hat: np.ndarray) -> np.ndarray:
         """idx_hat: (n_d, n_user) -> bits (n_sub, n_user, sub_bits) for CRC checking."""
         bits = self.mod.indices_to_bits(idx_hat.T)                          # (n_user, n_d*bps)
+        if hasattr(self.framer, "scramble"):                               # descramble (LDPC only)
+            bits = self.framer.scramble(bits)
         return bits.reshape(self.n_user, self.n_sub, self.framer.sub_bits).transpose(1, 0, 2)

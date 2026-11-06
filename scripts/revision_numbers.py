@@ -55,6 +55,8 @@ def load(folder: str) -> List[dict]:
             if r["config"]["channel"].get("model") == "umi" and (r["summary"].get("umi_drop") or {}).get("t_block") != 0.001:
                 print(f"   left out {os.path.relpath(fn, RES)}: UMi drop without 1 ms blocks (re-run it)")
                 continue
+            if r["config"]["frame"].get("coding") == "ldpc" and not r["summary"].get("ldpc_scrambled"):
+                continue   # first coded-scene version without NR scrambling (superseded by d23s_*)
             out.append(r)
         _cache[folder] = out
     return _cache[folder]
@@ -873,8 +875,8 @@ def campaign2() -> None:
         if sd:
             put(f"d23.d{d}.sirmed", f"{np.median(sd):+.0f}"); put(f"d23.d{d}.sirmin", f"{min(sd):+.0f}"); put(f"d23.d{d}.sirmax", f"{max(sd):+.0f}")
         for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback"), ("lmmse", "LMMSE")):
-            cb = cell("rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", CLEAN_ALL, metric="bler")
-            cs = cell("rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", CLEAN_ALL)
+            cb = cell("rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", CLEAN_ALL, metric="bler")
+            cs = cell("rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", CLEAN_ALL)
             key = f"d23.{rx.replace('_', '')}.d{d}"
             put_cell(key, cs)
             put_cell(key + "bler", cb)
