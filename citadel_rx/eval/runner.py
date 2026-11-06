@@ -171,7 +171,9 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         m.update({k: v for k, v in out.stats.items() if not isinstance(v, (np.ndarray,))})
         blocks.append(m)
         if cfg.run.save_params and hasattr(receiver, "level_snapshot"):
-            level_snaps.append({"block": b, "levels": [{k: v.tolist() for k, v in receiver.level_snapshot(k).items()}
+            # float16 arrays (the precision of the saved file): Python lists took ~8x the memory and,
+            # over hundreds of blocks and several parallel runs, pushed the machine into swap
+            level_snaps.append({"block": b, "levels": [{k: np.asarray(v, dtype=np.float16) for k, v in receiver.level_snapshot(k).items()}
                                                       for k in range(receiver.K)]})
         if verbose and (b % cfg.run.log_every == 0 or b == cfg.frame.n_blocks - 1):
             extra = ""
@@ -195,6 +197,8 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
     record = {"name": cfg.run.name, "seed": seed, "config": cfg.to_dict(), "config_hash": cfg.hash(),
               "receiver": getattr(receiver, "name", cfg.receiver.type), "summary": summary, "blocks": blocks,
               "device": str(device)}
+    if os.environ.get("CITADEL_MACHINE"):   # which machine ran it: a run and its clean twin pair on one machine
+        record["machine"] = os.environ["CITADEL_MACHINE"]
     if level_snaps:
         # displacement curves go into the JSON; the raw snapshots into a compressed side file
         K = len(level_snaps[0]["levels"])

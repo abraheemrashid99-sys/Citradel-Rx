@@ -72,7 +72,9 @@ MATCH_IGNORE = ("run.out_dir", "run.device", "run.seeds", "run.name")
 RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
-CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud"}
+CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win"}
+T5 = [10, 11, 12, 13, 14]   # second campaign: the 2-seed experiments get seeds 12-14, the 3-seed cells 13-14
+NEW3, NEW2 = [12, 13, 14], [13, 14]
 
 
 # ------------------------------------------------------------------------------------ jobs
@@ -215,6 +217,122 @@ def test_jobs() -> List[Job]:
                    rx_ov("citadel") + (["citadel.drift_guard=0.05"] if g else []) +
                    ["frame.n_blocks=400", "attack.type=a3star", f"attack.a3_eps_small={e}", "attack.start_block=30",
                     "attack.end_block=330", "run.save_params=true"])
+    return jobs
+
+
+# ------------------------------------------------------------------------------------ campaign 2
+def rev2_jobs() -> List[Job]:
+    """Second revision campaign (closes the items the first one reduced or left open). Shards:
+    "cloud" (this 4-core machine: long runs, snapshot runs, expensive attacks, the P1 cells with
+    Meta-DeepSIC, the further baselines and the 8 x 32 array) and "windows" (the author's laptop).
+    Seeds are only ever added to the pre-registered test set 10-19; nothing is re-tuned."""
+    W, C = "windows", "cloud"
+    a1 = lambda s: ["attack.type=a1", f"attack.sir_db={s}"]
+    jobs: List[Job] = []
+    P1RX = ["citadel", "online_deepsic", "meta_deepsic", "crc_rollback", "online_select"]
+    # ===== cloud, tier 1 =====================================================================
+    for rx in ("citadel", "online_deepsic"):   # D7: 2000-block clean horizon
+        jobs += J(C, 1, "D7", "rev2_long_clean", f"d7_{rx}__clean2000", T2, rx_ov(rx) + ["frame.n_blocks=2000", "attack.type=none"])
+    drift = ["attack.type=a3star", "attack.a3_eps_small=0.05", "attack.start_block=30", "run.save_params=true"]
+    jobs += JT(C, 1, "H5", "rev2_drift_guard", "h5_a3star_e0.05_guard__long", T2,   # H5: the guard against an accepted drift
+               rx_ov("citadel") + ["citadel.drift_guard=0.05", "frame.n_blocks=400", "attack.end_block=330"] + drift)
+    jobs += JT(C, 1, "B5", "rev2_drift_long", "b5_a3star_e0.05__long1000", T2,      # B5: accepted drift over 900 blocks
+               rx_ov("citadel") + ["frame.n_blocks=1000", "attack.end_block=930"] + drift)
+    for s in (0, 10):   # P4 paired displacement: seeds 13-14 (E2)
+        jobs += JT(C, 1, "P4", "rev_p4_paired", f"p4_citadel__sir{s}", NEW2, rx_ov("citadel") + a1(s) + ["run.save_params=true"])
+    for a in (0.25, 0.75):   # A4 at 6 PGD steps: seeds 12-14 (E2), with the jamming controls
+        jobs += JT(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_a4_a{a:g}__sir0", NEW3,
+                   rx_ov("citadel") + RND + ["attack.type=a4", f"attack.a4_alpha={a}", "attack.sir_db=0", "attack.pgd_steps=6"])
+        jobs += J(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_jamctl_a{a:g}__sir0", NEW3,
+                  rx_ov("citadel") + RND + ["attack.type=data_jam", f"attack.sir_db={-10 * math.log10(1 - a):.3f}"])
+    jobs += JT(C, 1, "B2", "rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", T5,   # B2 at full strength: 20 PGD steps
+               rx_ov("citadel") + RND + ["attack.type=a4", "attack.a4_alpha=0.25", "attack.sir_db=0", "attack.pgd_steps=20"])
+    cells = {"wb_sir-10": a1(-10), "wb_sir10": a1(10), "tr_sir0": a1(0) + ["attack.knowledge=transfer"],
+             "jam": ["attack.type=data_jam", "attack.sir_db=0"]}
+    for rx in P1RX:   # E2: the other headline cells get seeds 13-14 (5 seeds)
+        for cell, cov in cells.items():
+            jobs += JT(C, 1, "P1", "rev_p1", f"p1_{rx}__{cell}", NEW2, rx_ov(rx) + RND + cov)
+    # ===== cloud, tier 2 =====================================================================
+    for rx in ("citadel", "online_deepsic", "lmmse"):   # D4: 8 x 32
+        jobs += JT(C, 2, "D4", "rev2_arrays", f"d4_{rx}_8x32__sir0", T5, rx_ov(rx) + ["channel.n_user=8", "channel.n_ant=32"] + RND + a1(0))
+    for rx in ["lmmse", "lmmse_robust", "rollback_allgates", "l2sp_deepsic", "ema_deepsic", "ewc_deepsic", "dd_deepsic",
+               "cotta_deepsic", "eata_deepsic", "drift_deepsic", "titans_single", "medbn_deepsic"]:   # E2 for C1-C4, C6, C7
+        jobs += JT(C, 2, "P2", "rev_p2", f"p2_{rx}__wb_sir0", NEW3, rx_ov(rx) + RND + a1(0))
+    for w in (1e-3, 1e-1, 1.0):
+        jobs += JT(C, 2, "P2", "rev_p2", f"p2_l2sp_w{w:g}__wb_sir0", NEW3, rx_ov("l2sp_deepsic") + [f"receiver.reg_weight={w}"] + RND + a1(0))
+    # ===== windows, tier 1 ===================================================================
+    lite = ["attack.soft_gate=true", "attack.unroll_steps=10", "attack.pgd_steps=50", "attack.restarts=2", "attack.eot=2"]
+    adaptive = {"unroll10": ["attack.unroll_steps=10"], "softgate": ["attack.soft_gate=true", "attack.unroll_steps=10"],
+                "pgd100_r5": ["attack.pgd_steps=100", "attack.restarts=5"]}
+    for tag, aov in adaptive.items():   # E2 for B4
+        for s in (0, 10):
+            jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", f"p3_citadel_{tag}__sir{s}", NEW3, rx_ov("citadel") + RND + a1(s) + aov)
+    jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_strongest__sir0", NEW3, rx_ov("citadel") + RND + a1(0) + lite)
+    jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_unroll50__sir0", NEW3, rx_ov("citadel") + RND + a1(0) + ["attack.unroll_steps=50"])
+    jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_online_strongest__sir0", NEW3, rx_ov("online_deepsic") + RND + a1(0) + lite[1:])
+    phys = {"M1": ["attack.attacker_antennas=1"], "M2": ["attack.attacker_antennas=2"],
+            "M2_csi0.1": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.1"]}
+    for tag, pov in phys.items():   # E2 for B1
+        for rx in ("citadel", "online_deepsic"):
+            jobs += JT(W, 1, "P3phys", "rev_p3_phys", f"p3_{rx}_{tag}__sir0", NEW3, rx_ov(rx) + RND + a1(0) + pov)
+    for tag, pov in {"M4": ["attack.attacker_antennas=4"],   # B1 completed: full-rank physical attacker, accurate CSI
+                     "M2_csi0.01": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.01"]}.items():
+        for rx in ("citadel", "online_deepsic"):
+            jobs += JT(W, 1, "B1", "rev2_phys", f"b1_{rx}_{tag}__sir0", T5, rx_ov(rx) + RND + a1(0) + pov)
+    jobs += JT(W, 1, "P3know", "rev_p3_know", "p3_citadel_greybox__sir0", NEW3,
+               rx_ov("citadel") + RND + a1(0) + ["attack.knowledge=transfer", "attack.surrogate=citadel"])
+    for rx in ("citadel", "online_deepsic"):
+        jobs += JT(W, 1, "P3know", "rev_p3_know", f"p3_{rx}_query__sir0", NEW3, rx_ov(rx) + RND + a1(0) + ["attack.knowledge=query"])
+        jobs += JT(W, 1, "P3know", "rev_p3_know", f"p3_{rx}_sigbudget__sir0", NEW3, rx_ov(rx) + RND + a1(0) + ["attack.budget_ref=signal"])
+    redraw = ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]
+    bases = (("citadel", rx_ov("citadel")), ("citadel_streak", rx_ov("citadel") + ["citadel.streak_k=5"]),
+             ("online_deepsic", rx_ov("online_deepsic")), ("lmmse", ["receiver.type=lmmse"]))
+    for rx, base in bases:   # B3/H4 as intended: poisoning strong enough to be rejected on every block, during a redraw
+        jobs += J(W, 1, "B3", "rev2_deny_a1", f"b3_{rx}_redraw__none", T5, base + redraw + ["attack.type=none"])
+        jobs += J(W, 1, "B3", "rev2_deny_a1", f"b3_{rx}_redraw__a1deny", T5,
+                  base + redraw + ["attack.type=a1", "attack.sir_db=0", "attack.start_block=40", "attack.end_block=90"])
+    for rx, base in bases:   # E2 for the original denial spoof (B3, D6)
+        jobs += J(W, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_redraw__none", NEW3, base + redraw + ["attack.type=none"])
+        jobs += J(W, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_redraw__deny", NEW3,
+                  base + redraw + ["attack.type=deny", "attack.sir_db=10", "attack.start_block=40", "attack.end_block=90"])
+        jobs += J(W, 1, "P3deny", "rev_p3_deny", f"p3_{rx}_snrdrop__none", NEW3,
+                  base + ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop", "attack.type=none"])
+    for v, vov in (("citadel", []), ("citadel_peruser", ["citadel.per_user_gate=true"])):   # H7: per-user gating
+        for atk, aov in (("a2", ["attack.type=a2", "attack.sir_db=0"]), ("a1", a1(0))):
+            jobs += JT(W, 1, "H7", "rev2_peruser", f"h7_{v}__{atk}", T5, rx_ov("citadel") + vov + RND + aov)
+    jobs += JT(W, 1, "H7", "rev2_peruser", "h7_online_deepsic__a2", T5, rx_ov("online_deepsic") + RND + ["attack.type=a2", "attack.sir_db=0"])
+    # ===== windows, tier 2 ===================================================================
+    ab = {"K1": ["citadel.levels=1", "citadel.periods=[1]", "citadel.consol_clip=[]"],
+          "K2": ["citadel.levels=2", "citadel.periods=[1,8]", "citadel.consol_clip=[8.5]"],
+          "nogate": ["citadel.gates=[]"], "g1": ["citadel.gates=[g1]"], "g2": ["citadel.gates=[g2]"], "g3": ["citadel.gates=[g3]"],
+          "no_anchor": ["citadel.prox_lambda=0.0", "citadel.reanchor_beta=0.0"], "no_fallback": ["citadel.fallback_on_reject=false"],
+          "no_select": ["citadel.crc_select=false"], "no_clip": ["citadel.consol_clip=[]"]}
+    for tag, aov in ab.items():   # E2 for the ablations
+        jobs += JT(W, 2, "P5", "rev_p5_ablate", f"p5_{tag}__wb_sir0", NEW3, rx_ov("citadel") + aov + RND + a1(0))
+    for nd, npil in itertools.product((1000, 5000), (32, 100)):   # E2 for D1, D4, D5, D9
+        for rx in ("citadel", "online_deepsic"):
+            jobs += JT(W, 2, "P6", "rev_p6_blocklen", f"p6_{rx}_nd{nd}_np{npil}__sir0", NEW3,
+                       rx_ov(rx) + [f"frame.data_bits={2 * nd}", f"frame.pilot_bits={2 * npil}"] + RND + a1(0))
+    for rx in ("citadel", "online_deepsic", "lmmse"):
+        jobs += JT(W, 2, "P6", "rev_p6_arrays", f"p6_{rx}_4x16__sir0", NEW3, rx_ov(rx) + ["channel.n_user=4", "channel.n_ant=16"] + RND + a1(0))
+        jobs += JT(W, 2, "P6", "rev_p6_qam16", f"p6_{rx}_qam16__sir0", NEW3,
+                   rx_ov(rx) + ["frame.modulation=QAM16", "receiver.hidden_base=16", "channel.snr_db=20", "frame.data_bits=100000",
+                                "frame.pilot_bits=400"] + RND + a1(0))
+    for tag, vov in {"steps30": ["citadel.fast_steps=30"], "last_layer": ["citadel.adaptable=last"]}.items():
+        jobs += JT(W, 2, "P6", "rev_p6_deploy", f"p6_citadel_{tag}__sir0", NEW3, rx_ov("citadel") + vov + RND + a1(0))
+    # ===== windows, tier 3: sensitivity at x0.75 and x1.5 (E5) and a two-setting grid ========
+    sens = {"g1_slack": ("citadel.g1_tau", lambda m: 1 + 0.25 * m), "g3_slack": ("citadel.g3_tau", lambda m: 1 + 3 * m),
+            "tighten": ("citadel.tighten_floor", lambda m: 1 - 0.3 * m), "soft_width": ("citadel.gate_kappa", lambda m: 0.1 * m),
+            "prox_lambda": ("citadel.prox_lambda", lambda m: 0.5 * m), "delta": ("citadel.dgd_delta", lambda m: 0.1 * m),
+            "crc_rel": ("citadel.g2_rel_slack", lambda m: 1.0 * m)}
+    for m in (0.75, 1.5):
+        for par, (key, f) in sens.items():
+            jobs += JT(W, 3, "P7", "rev_p7_sens", f"p7_{par}_x{m:g}__wb_sir0", T1, rx_ov("citadel") + [f"{key}={f(m):g}"] + RND + a1(0))
+        jobs += JT(W, 3, "P7", "rev_p7_sens", f"p7_eta3_x{m:g}__wb_sir0", T1,
+                   rx_ov("citadel") + [f"citadel.level_lr=[1.0,{0.5 * m:g}]"] + RND + a1(0))
+    for m1, m2 in itertools.product((0.5, 2.0), (0.5, 2.0)):   # grid: CRC slack x G1 slack (corners)
+        jobs += JT(W, 3, "P7grid", "rev2_sens_grid", f"grid_crc{m1:g}_g1{m2:g}__wb_sir0", T1,
+                   rx_ov("citadel") + [f"citadel.g2_rel_slack={1.0 * m1:g}", f"citadel.g1_tau={1 + 0.25 * m2:g}"] + RND + a1(0))
     return jobs
 
 
@@ -400,10 +518,11 @@ def push_results(shard: str) -> None:
 # ------------------------------------------------------------------------------------ scheduler
 class Campaign:
     def __init__(self, shard: str, workers: int, tier: int, wait_hours: float, push_every: float, min_free_mb: int,
-                 cache_gb: float = 0.6):
+                 cache_gb: float = 0.6, campaign: int = 1):
         self.shard, self.workers, self.wait_hours, self.push_every, self.min_free_mb = shard, workers, wait_hours, push_every, min_free_mb
         self.cache_gb = cache_gb
-        jobs = [j for j in calibration_jobs() + test_jobs() if j.shard == shard and j.tier <= tier]
+        src = rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()
+        jobs = [j for j in src if j.shard == shard and j.tier <= tier]
         jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
         self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
         self.cal_kind = "cal" if shard == "cloud" else "tune"
@@ -418,6 +537,9 @@ class Campaign:
         self.last_fetch = 0.0
         self.calibrated = False
         self._freezing = False
+        if campaign == 2:   # settings were frozen by the first campaign's rules; nothing is calibrated again
+            self.fz_cit, self.fz_base = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
+            self.cal_left, self.calibrated = 0, True
         os.makedirs(LOGS, exist_ok=True)
         self.tasklog = open(os.path.join(LOGS, f"{shard}_tasks.jsonl"), "a")
 
@@ -497,9 +619,10 @@ class Campaign:
             job, s, key, ov = nxt
             cmd = [sys.executable, RUN, CFG, "--quiet", "--seeds", str(s), "--set", *ov]
             env = dict(os.environ, OMP_NUM_THREADS="1", MKL_NUM_THREADS="1", VECLIB_MAXIMUM_THREADS="1",
-                       CITADEL_THREADS="1", CITADEL_PRETRAIN_CACHE=CACHE, CITADEL_PRETRAIN_CACHE_GB=str(self.cache_gb))
+                       CITADEL_THREADS="1", CITADEL_PRETRAIN_CACHE=CACHE, CITADEL_PRETRAIN_CACHE_GB=str(self.cache_gb),
+                       CITADEL_MACHINE=self.shard, PYTHONUTF8="1", PYTHONIOENCODING="utf-8")
             t = time.time()
-            r = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT)
+            r = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=ROOT, encoding="utf-8", errors="replace")
             dt = time.time() - t
             with self.lock:
                 self.running -= 1
@@ -558,12 +681,16 @@ class Campaign:
         push_results(self.shard)
 
 
-def dry(shard_filter: Optional[str]) -> None:
+def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
     fzc = {"citadel_overrides": CANDIDATES["rel_select_clip"]}
     fzb = {"online_deepsic": {"overrides": ["receiver.epochs=100"]}, "meta_deepsic": {"overrides": ["receiver.epochs=100"]}}
+    if campaign == 2:
+        fzc, fzb = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
     keys_by_shard: Dict[str, set] = {}
-    for shard in ("laptop", "cloud"):
-        jobs = sorted([j for j in calibration_jobs() + test_jobs() if j.shard == shard], key=lambda j: j.tier)
+    shards = ("cloud", "windows") if campaign == 2 else ("laptop", "cloud")
+    src = rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()
+    for shard in shards:
+        jobs = sorted([j for j in src if j.shard == shard], key=lambda j: j.tier)
         seen, per = set(), {}
         for j in jobs:
             for s in j.seeds:
@@ -577,15 +704,20 @@ def dry(shard_filter: Optional[str]) -> None:
             print(f"{shard}: {len(seen)} runs")
             for (t, g), n in sorted(per.items()):
                 print(f"   tier {t}  {g:10s} {n}")
-    both = keys_by_shard["laptop"] & keys_by_shard["cloud"]
-    outs = {k[0] for k in keys_by_shard["laptop"]} & {k[0] for k in keys_by_shard["cloud"]}
-    print("shared runs:", len(both), "| shared folders:", sorted(outs) or "none")
-    assert not both and not outs, "the two machines must not write the same files"
+    a, b = (keys_by_shard[x] for x in shards)
+    both = a & b
+    print("shared runs:", len(both))
+    assert not both, "the two machines must not write the same files"
+    if campaign == 1:
+        outs = {k[0] for k in a} & {k[0] for k in b}
+        print("shared folders:", sorted(outs) or "none")
+        assert not outs, "the two machines must not write the same files"
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud"])
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows"])
+    ap.add_argument("--campaign", type=int, choices=[1, 2], default=1, help="2 = the second revision campaign")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
     ap.add_argument("--dry", action="store_true")
@@ -597,15 +729,15 @@ def main():
     args = ap.parse_args()
     os.chdir(ROOT)
     if args.dry:
-        dry(args.shard)
+        dry(args.shard, args.campaign)
         return
     if not args.shard:
         ap.error("--shard is required")
     if args.push_only:
         push_results(args.shard)
         return
-    cache_gb = args.cache_gb if args.cache_gb is not None else (0.6 if args.shard == "laptop" else 3.0)
-    Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb).run()
+    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard == "cloud" else 0.6)
+    Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb, args.campaign).run()
 
 
 if __name__ == "__main__":
