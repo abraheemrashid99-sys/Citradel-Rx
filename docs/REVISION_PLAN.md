@@ -17,6 +17,32 @@ computed from these records by `python scripts/revision_numbers.py`; the paper i
 
 The status column of the tables below is the plan as written before the campaign.
 
+## Second campaign (6-8 Nov 2026): closing the reduced and open items
+
+`scripts/revision_fast.py --campaign 2` (shards `cloud`, `windows`) and `--campaign 3` (shards
+`cloudx`, `cloudy`, `cloudz`, new features). Seeds are only added inside the pre-registered test set;
+the two new choices (abstain threshold, second-backbone tuning) are fixed on seeds 0-2 by
+`scripts/freeze_rev2.py` before any test run of those features.
+
+| Item | Second campaign | Where |
+|---|---|---|
+| E2 seeds | 5 seeds (10-14) for every experiment that had 2-3; 10 at the headline cell | both machines |
+| B1 | full-rank physical attacker (M = 4); CSI error 0.1 and 0.01, now passed through the true channel (bug fixed: the first campaign injected the perturbation designed for G_hat) | windows |
+| B2 | A4 at 20 PGD steps (alpha = 0.25), 5 seeds | cloud |
+| B3, H4 | denial by strong poisoning (A1 at SIR 0 dB on blocks 40-89) during a channel redraw, with and without streak recovery | windows |
+| B5 | accepted drift (A3* at 5%) over 900 of 1000 blocks, paired snapshots | cloud |
+| D2 | NR code blocks (CRC-24A + 5G LDPC, Sionna PHY 2.2) replacing the CRC-8 sub-blocks | cloudx |
+| D3 | 38.901 UMi drop with the attacker at 35, 75, 150 m at a user's maximum power; the SIR follows from geometry | cloudx |
+| D4 | 8 x 32 array | cloud |
+| D7 | 2000-block clean horizon (Citadel-Rx, online DeepSIC) | cloud |
+| D8 | second backbone: fully connected joint-symbol detector (Citadel-Rx, online, CRC-Rollback) | cloudz |
+| D9 | multiply-accumulates per block (`scripts/flops.py`); still no GPU measurement | - |
+| E5 | x0.75 and x1.5 for the eight settings; a two-setting grid (CRC slack x G1 slack) | windows |
+| A6 | hill-climbing estimates of G_Phi, L_theta, L_a on three channel families (`scripts/lipschitz_strong.py`) | cloud |
+| H3 | abstain v2 (residual-ratio statistic, threshold from calibration); A4, A1, redraw and SNR drop | cloudy |
+| H5 | drift guard against the accepted 5% drift | cloud |
+| H7 | per-user gating against a single-user attack (A2) and A1 | windows |
+
 Status key: **done** = implemented and tested in the code; **run** = in `scripts/revision_campaign.py`
 (results arrive after the GPU campaign); **text** = manuscript edit, done in the final pass with the
 campaign's numbers; **deferred** = stated as a limitation, with the reason.
