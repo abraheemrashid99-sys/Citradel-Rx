@@ -29,6 +29,7 @@
 \makeatletter
 \newcommand{\val}[1]{\@ifundefined{val@#1}{\textcolor{red}{[\texttt{\detokenize{#1}}?]}}{\@nameuse{val@#1}}}
 \newcommand{\tab}[1]{\@@input tables/#1.tex }   % table body written by scripts/revision_numbers.py
+\newcommand{\ifval}[3]{\@ifundefined{val@#1}{#3}{#2}}   % text that needs a result not computed yet
 \makeatother
 \InputIfFileExists{numbers}{}{}
 \tikzset{
@@ -53,22 +54,21 @@
 Neural receivers that learn at test time adapt to the channel from the pilots of every
 coherence block, so the pilot stream is a training set that an adversary can write to. This
 paper shows that such a receiver resists pilot poisoning when it consolidates into persistent
-memory only what an independent, label-free physical check verifies, and detects unverified
-blocks with the memory that check has protected. Citadel-Rx realises the principle in a DeepSIC
-receiver with a fast level fitted on every block and two slow levels updated every 8 and 32
-blocks through a gated, clipped average of the faster states; three gates, each a ratio against
-a model-based reference on the same block, decide what is consolidated, and each CRC sub-block
-keeps the first of three detections that passes. Whatever the attacker does, the clip bounds the
-paired displacement of the slowest level by twice the clip per consolidation. A receiver that
-uses the same CRC test but keeps a single memory to roll back to fails, because one leaked update
-becomes its rollback state. With every setting fixed on calibration seeds and results on ten
-held-out seeds, white-box poisoning at 0\,dB signal-to-interference ratio raises the symbol error
-rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its own clean run, against
-\val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC; \val{p1.citadel.wb0.rejpct}\% of
-poisoned blocks are rejected at a \val{p1.citadel.wb0.frejpct}\% false-rejection rate, and without
-attack the error rate is \val{cmp.online_deepsic.clnrel}\% relative to tuned online DeepSIC. The
-attacks built against the defence, and the cases in which it does not help, are reported with
-the same protocol.
+memory only what a label-free physical check verifies, and when that check judges every update
+against the protected memory rather than against a reference the attacker also reaches.
+Citadel-Rx realises the principle in a DeepSIC receiver with a fast level fitted on every block
+and two slow levels updated every 8 and 32 blocks through a gated, clipped average of the faster
+states; whatever the attacker does, the clip bounds how far the slowest level can be moved. A
+receiver with the same CRC test and rollback but a single memory fails: its reference, LMMSE on
+the poisoned pilots, degrades with the attack, so the first poisoned block is accepted on every
+seed and becomes the state it rolls back to. With all settings fixed on calibration seeds and
+results on ten held-out seeds, white-box poisoning at 0\,dB signal-to-interference ratio raises
+the symbol error rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its own clean run,
+against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC, and
+\val{p1.citadel.wb0.rejpct}\% of the poisoned blocks are rejected at a
+\val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks built against the gates do not
+raise this excess. An attack that also degrades the references does, and the receiver fails
+where its network is worse than LMMSE, as at 16-QAM.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,14 +98,16 @@ in what the receiver keeps.
 
 This paper argues for one principle: \emph{a test-time receiver resists pilot poisoning when it
 consolidates into persistent memory only what an independent, label-free physical check
-verifies, and detects unverified blocks with the memory that check has protected.} Both halves
-are necessary. The simplest receiver with the first half alone, online DeepSIC with a CRC test and
-rollback to its last accepted weights, fails: one poisoned update that passes the test becomes
-the state it rolls back to, and every later clean update is judged against it
-(Section~\ref{sec:c1}). Citadel-Rx realises both halves with memory at three rates, a fast level
-that fits every block and two slow levels that change only through a gated, clipped average of
-the faster states; multi-rate memory is one realisation of the principle, and the ablation shows
-which of its parts are necessary.
+verifies, and when that check judges every update against the protected memory.} The two parts
+depend on each other. The simplest receiver with a check and a memory, online DeepSIC with a CRC
+test and rollback to its last accepted weights, fails: its only reference is LMMSE on the same
+poisoned pilots, which the attack degrades together with the update, so the first poisoned update
+passes the relative test, becomes the state the receiver rolls back to, and every later update
+starts from it (Section~\ref{sec:c1}). Citadel-Rx keeps memory at three rates, a fast level that
+fits every block and two slow levels that change only through a gated, clipped average of the
+faster states, and its gates compare the fast level with a detector built on the slow memory,
+which the pilots of the block do not reach. Multi-rate memory is one realisation of the principle;
+the ablation shows which of its parts are necessary.
 
 \begin{table}[t]
 \centering\caption{Positioning. Attack surface: what the adversary writes to.}\label{tab:pos}
@@ -154,7 +156,8 @@ The contributions are as follows.
 \item \textbf{The principle and a receiver that realises it} (Section~\ref{sec:citadel}): gated,
 clipped consolidation into two slow levels, a fallback that detects a rejected block with the
 slow memory, and per-sub-block CRC selection among the fast, slow and LMMSE decisions; the
-ablation identifies the slow level, the fallback and the CRC gate as necessary.
+ablation identifies the slow levels, the fallback and a decision-level gate as necessary, and
+attributes most of the clean-SER gain to the CRC selection.
 \item \textbf{Retention bounds for the algorithm as implemented} (Section~\ref{sec:theory}): a
 design bound, with no measured quantity, on the paired displacement of the slowest level under
 any attacker, and a structural bound for unequal gate verdicts computed from the paired
@@ -219,7 +222,7 @@ decisions to a posterior over the user's symbol. Its parameters are adapted on t
 every block, $\theta_b=\Phi(\theta_{b-1};\bm Y_b)$, by $T$ steps of a first-order optimiser on the
 pilot cross-entropy, and then detect the data. Online DeepSIC starts every block from
 $\theta_{b-1}$; Meta-DeepSIC starts from an initialisation meta-learned by MAML \cite{finn2017} on a
-buffer of past pilot blocks, refreshed every five blocks \cite{raviv2023}.
+buffer of the last 20 pilot blocks, refreshed every five blocks \cite{raviv2023}.
 
 \subsection{Threat Model}
 The adversary adds $\bm E_b$ to the received pilot matrix $\bm Y_b\in\mathbb{C}^{N\times N_p}$ of an
@@ -313,7 +316,7 @@ keeps the first passing detection.}
 \end{figure}
 
 \subsection{Levels and the Fast Learner}
-The adaptable parameters $\theta\in\mathbb{R}^d$ (all DeepSIC weights, $d=15\,628$ for $4\times4$)
+The adaptable parameters $\theta\in\mathbb{R}^d$ (all DeepSIC weights, $d=67\,632$ for $4\times4$ QPSK)
 are kept at $K=3$ levels with periods $C=(1,8,32)$ blocks. The fast level is adapted on every
 block by $T=300$ steps of
 \begin{align}
@@ -339,9 +342,11 @@ m&=\frac{\sum_j\gamma_j\theta^{(k)}_j}{\sum_j\gamma_j},\qquad s=\eta^{(k+1)}\min
 \Pi_\kappa(\bm v)&=\bm v\min\{1,\kappa/\norm{\bm v}\},
 \end{aligned}
 \end{equation}
-with $\eta^{(2)}=1$, $\eta^{(3)}=\tfrac12$, and no update when $\sum_j\gamma_j=0$. The clip $\kappa=(8.5,4.5)$ is the
-99th percentile of the clean consolidation increments of levels 2 and 3 on calibration runs, so it
-is inactive on clean blocks and limits what any attacked period can move. The first version of the
+with $\eta^{(2)}=1$, $\eta^{(3)}=\tfrac12$, and no update when $\sum_j\gamma_j=0$. The clip $\kappa=(8.5,4.5)$ lies
+at or just above the largest clean consolidation increments of levels 2 and 3 on the calibration
+runs (\val{clip.calmax2} and \val{clip.calmax3}), so it rarely binds on clean runs (in
+\val{clip.cln} consolidations of the clean twins at the headline cell) and limits what any attacked
+period can move. The first version of the
 receiver divided the gated sum by $\max(1,\sum_j\gamma_j)$; when most blocks of a period are
 rejected, which is the case under attack, this pulls the level toward the origin instead of
 leaving it nearly unchanged, and the update is then not the convex combination that the bounds of
@@ -352,10 +357,12 @@ If $\gamma_b<\tfrac12$ the block is rejected: the fast update is reverted, the r
 the buffer with weight $\gamma_b$, and the data of the block are detected with the anchor, which
 the attacker has not reached. Each CRC sub-block of each user then keeps the first of three
 detections that passes its CRC: the gate's choice (fast level or anchor), the anchor, and LMMSE on
-the least-squares channel estimate. All three are computed for the gates anyway. Three optional
-states answer specific attacks and are evaluated with them: \emph{abstain}, no consolidation when
-the reference itself has degraded (its pass fraction or residual is $z=4$ standard deviations
-from its running level); \emph{streak recovery}, after five consecutive rejections a re-fit from the
+the least-squares channel estimate. All three are computed for the gates anyway; when none
+passes, the gate's choice is kept. Three optional states answer specific attacks and are evaluated
+with them, with mixed results (Sections~\ref{sec:refdeg} and~\ref{sec:retention}): \emph{abstain}, the
+block is rejected and not buffered when the reference itself has degraded (its pass fraction or
+residual is $z=4$ standard deviations from its running level on accepted blocks, with a binomial
+floor on the variance); \emph{streak recovery}, after five consecutive rejections a re-fit from the
 anchor on CRC-verified data, kept if it verifies better than the reference; and a \emph{drift
 guard}, a pull of level $K$ toward the pre-trained weights by $5\%$ per consolidation.
 
@@ -407,12 +414,12 @@ Section~\ref{sec:setup}; first version: set during the development of the first 
 \toprule
 Setting & Value; provenance\\
 \midrule
-$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order, 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}\\
+$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order ($=256$ for QPSK), 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}\\
 $K$, $C$ & 3, $(1,8,32)$; first version; ablation in Section~\ref{sec:ablate}\\
 $\eta^{(2)},\eta^{(3)}$, $\lambda$, $\delta$ & $1,\tfrac12$, $0.5$, $0.1$; first version; sensitivity in Section~\ref{sec:sens}\\
 $\tau_1,\tau_3,\omega$, tightening & $1.25$, $4$, $0.1\tau$, $30\%$; first version; sensitivity\\
 CRC slack & relative $\rho=1$ with floor $2\cdot10^{-3}$, or derived $z=5$; mode chosen by calibration (\val{cal.chosen})\\
-$\kappa$ & $(8.5,4.5)$; 99th percentile of clean consolidation increments, calibration runs\\
+$\kappa$ & $(8.5,4.5)$; at the largest clean consolidation increments of the calibration runs\\
 Consolidation rule, CRC selection & \eqref{eq:consol}; correctness fix; CRC selection kept by calibration\\
 Baseline epochs, learning rate, weight decay & tuned on calibration seeds (Section~\ref{sec:setup})\\
 Attacker & PGD 20 steps of $0.25\epsilon$, 2 unrolled steps \cite{wu2024}; stronger variants in Section~\ref{sec:adaptive}\\
@@ -502,7 +509,7 @@ $\tau_1=1.25$.
 \scriptsize
 \begin{tabular}{@{}L{14mm}L{71mm}@{}}
 \toprule
-System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$; 16-QAM at 20\,dB\\
+System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$; 16-QAM at 20\,dB (MLP width kept at 256)\\
 Block & $N_p=100$ pilot and $N_d=25\,000$ data symbols per user; $N_d\in\{1000,5000\}$, $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
 CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
 Channel & SED with per-user cosine fading (periods 51, 39, 33, 21 blocks; depth 0.8) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
@@ -541,13 +548,14 @@ by the rule and read by every test run.
 \textit{Statistics.} Within a run, consecutive blocks are correlated (decorrelation lengths of
 \val{p1.citadel.wb0.decor} blocks for the excess SER at the headline cell), so intervals are 95\%
 moving-block bootstrap intervals \cite{kunsch1989} that resample seeds and then runs of twice the
-decorrelation length within each seed. Tests are at the seed level: an exact two-sided Wilcoxon
+decorrelation length (at least five blocks) within each seed. Tests are at the seed level: an exact two-sided Wilcoxon
 signed-rank test on the per-seed means \cite{wilcoxon1945}, whose smallest attainable $p$ with ten
 seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1979}. Rates carry
 their counts and Wilson intervals.
 
-\textit{Reproducibility.} The campaign ran on an Apple M4 laptop and a 4-core cloud machine, one
-single-threaded run per core, with disjoint sets of runs. Every record stores its configuration,
+\textit{Reproducibility.} The campaign ran on an Apple M4 laptop (ten cores, eight runs at a time)
+and a 4-core cloud machine (four at a time), every run single-threaded, with disjoint sets of runs;
+times per block are wall-clock times of such runs and compare receivers only roughly. Every record stores its configuration,
 seed, code version and timings; an attacked run and its clean twin always ran on the same machine.
 Pre-training is cached by configuration, seed, code and random-number state, which is exact (the
 repository's tests compare cached and uncached runs). One command re-runs the campaign and one
@@ -598,10 +606,65 @@ Baseline & Seeds & $\Delta$ window SER & $p$ & $\Delta$ clean SER & $p$\\
 \end{tabular}
 \end{table}
 
-Table~\ref{tab:p1} contains the main result. \val{note.p1}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_rev_trace}
+\caption{Test seed 10, white-box A1 at SIR 0\,dB in the shaded window. Top: SER per block of the
+attacked runs (solid) and their clean twins (dashed). Bottom: gate verdict $\gamma_b$ of
+CRC-Rollback and Citadel-Rx; a block is rejected below $\tfrac12$.}
+\label{fig:trace}
+\end{figure}
+
+Table~\ref{tab:p1} contains the main result. Under white-box A1 at SIR 0\,dB the attack raises the
+SER of Citadel-Rx in the attack window by \val{p1.citadel.wb0.excess} over its clean twin (95\%
+interval \val{p1.citadel.wb0.ci}; seed means from \val{p1.citadel.wb0.smin} to
+\val{p1.citadel.wb0.smax}), and that of tuned online DeepSIC by \val{p1.online_deepsic.wb0.excess}.
+The excess of Citadel-Rx is small but not zero: it is positive on \val{p1.citadel.wb0.spos} of 10
+seeds (exact Wilcoxon $p=\val{p1.citadel.wb0.p}$). The gates reject \val{p1.citadel.wb0.rejk}
+poisoned blocks and \val{p1.citadel.wb0.frejk} clean blocks of the clean twins. The ordering is the
+same at SIR $-10$ and $+10$\,dB and under transfer (three seeds each). Over the 30 blocks after the
+window the excess of Citadel-Rx is \val{p1.citadel.wb0.post}; online DeepSIC keeps
+\val{p1.online_deepsic.wb0.post}, Meta-DeepSIC \val{p1.meta_deepsic.wb0.post}, whose meta-training
+buffer keeps poisoned pilots for 20 blocks after the attack, and CRC-Rollback
+\val{p1.crc_rollback.wb0.post}. Fig.~\ref{fig:trace}
+shows one seed.
+
+Paired seed by seed (Table~\ref{tab:paired}), Citadel-Rx has the lower window SER against each of
+the four baselines on every seed (Holm-corrected $p=\val{cmp.online_deepsic.patt}$, the smallest
+attainable with ten seeds and four tests), and also the lower clean SER:
+\val{cmp.online_deepsic.clnrel}\% relative to tuned online DeepSIC. Most of the clean gain,
+\val{sel.share}\%, comes from the per-sub-block CRC selection rather than from the memory: online
+DeepSIC with the same selection has a clean SER of \val{p1.online_select.wb0.clean}, against
+\val{p1.online_deepsic.wb0.clean} without it and \val{p1.citadel.wb0.clean} for Citadel-Rx, and
+the selection does not protect online DeepSIC (excess \val{p1.online_select.wb0.excess}). The
+jamming column is a control, not an attack these receivers are built to resist: at the same SIR,
+jamming spreads its power over the data symbols, \val{jam.energyratio} times the energy of the
+pilot attack, and raises the SER of every receiver by about the same amount (\val{p1.jam.exmin}
+to \val{p1.jam.exmax}); Citadel-Rx rejects \val{p1.citadel.jam.rejk} of the jammed blocks, whose
+pilots are clean.
 
 \subsection{Why Rollback Is Not Enough}\label{sec:c1}
-\val{note.c1}
+CRC-Rollback has the CRC gate and the rollback of Citadel-Rx but one memory, and it fails in every
+column of Table~\ref{tab:p1}. The records show why (Fig.~\ref{fig:trace}). Its only reference is
+LMMSE on the least-squares estimate from the same pilots, and the attack degrades that estimate:
+on attacked blocks the reference passes a fraction \val{c1.crc.refatt} of the CRCs, against
+\val{c1.crc.refcln} on the same blocks of the clean twin. A poisoned fast level that is merely less
+bad than this reference passes the relative test: the first attacked block was accepted on
+\val{c1.crc.first0} of \val{c1.crc.nseeds} seeds (\val{c1.crc.acc} attacked blocks accepted in
+all). The accepted state then becomes the rollback state; every later update starts from it, fails
+the test and is reverted to it. After the attack the receiver rejects a fraction
+\val{c1.crc.postrej} of the clean blocks, and over the last ten blocks of the run its excess SER is
+still \val{c1.crc.endex}. Rollback with all three gates fails in the same way (two seeds:
+\val{c1.rag.acc} attacked blocks accepted, excess \val{c1.rag.endex} at the end of the run), and so
+does Citadel-Rx without its slow levels (Section~\ref{sec:ablate}).
+
+Citadel-Rx compares the fast level with the better of LMMSE and the anchor detector, which detects
+the data with the slow memory and does not use the pilots of the block. Under attack this
+reference passes \val{c1.cit.refatt} of the CRCs (\val{c1.cit.refcln} on the clean twin) while the
+poisoned fast level passes \val{c1.cit.nnatt}; \val{c1.cit.acc} attacked blocks were accepted, on
+\val{c1.cit.seedsacc} of the \val{c1.cit.nseeds} seeds, and the excess over the last ten blocks
+is \val{c1.cit.endex}. The two parts of the principle depend on each other: the gate protects the
+memory, and it can only do so because it judges against the memory.
 
 \subsection{Attacks Built Against the Defence}\label{sec:adaptive}
 \begin{table}[t]
@@ -617,13 +680,31 @@ Attack & Receiver & Seeds & Excess SER [95\% CI] & Window SER & Rej.\\
 \bottomrule
 \end{tabular}
 \end{table}
-\val{note.adaptive}
+Every attack of Table~\ref{tab:attacks} was built with full knowledge of the defence or of its
+feedback and run on test seeds 10--11. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks
+give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, against
+\val{ab.complete.excess} for plain A1 on the same seeds, with rejection rates between
+\val{atk.cit0.rejmin} and 1: deeper unrolling, more steps and restarts, the soft-gate objective
+with the exact thresholds and running statistics, expectation over noise, a Citadel-Rx surrogate
+and a search on the NACK feedback do not get poisoned blocks accepted. At SIR 10\,dB the excess is
+\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The same attacks raise the SER of online DeepSIC by
+\val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With two seeds,
+differences of a few $10^{-3}$ between attacks lie within the intervals; what the table rules out
+is an attack that brings Citadel-Rx near the excess of the undefended receivers.
+
+When the gates reject nearly every attacked block, the excess no longer depends on the attack: it
+is the price of rejecting. The window is detected with the anchor, which has not adapted to the
+block, and the LMMSE alternative of the CRC selection uses the poisoned channel estimate (its pass
+fraction falls from \val{gate.lmmsecln} on the clean twin to \val{gate.lmmseatt} on attacked
+blocks). On the poisoned blocks at the headline cell, the verdict of G2 on its own is below one half
+for \val{gate.g2}\% of them, that of G1 for \val{gate.g1}\% and that of G3 for \val{gate.g3}\%: the
+decision-level gates G1 and G2 do the work, and G3 flags few poisoned blocks at its threshold.
 
 \subsection{Attacks on the References and on Adaptation}\label{sec:refdeg}
 \begin{table}[t]
 \centering\caption{Joint pilot and data attack on the references (A4), white-box SIR 0\,dB, 6 PGD
-steps over all data sub-blocks, test seeds 10--11, with and without the abstain state; jamming
-controls with the data power of A4.}\label{tab:refdeg}
+steps over all data sub-blocks, test seeds 10--11, with and without the abstain state (which
+rejects every block of its clean runs as well, see text); jamming controls with the data power of A4.}\label{tab:refdeg}
 \scriptsize
 \begin{tabular}{@{}llcccc@{}}
 \toprule
@@ -647,7 +728,42 @@ Receiver & Seeds & SER after redraw & False rej. & Spoof excess & After spoof & 
 \bottomrule
 \end{tabular}
 \end{table}
-\val{note.refdeg}
+A4 splits the attacker's power between the pilots and the data so that the references the gates
+compare against degrade together with the fast level (Table~\ref{tab:refdeg}). It is the most
+effective attack on Citadel-Rx in this paper. With a quarter of the power on the pilots, the
+reference passes \val{a4.025.refatt} of the CRCs on attacked blocks (\val{a4.025.refcln} on the
+clean twin), close enough to the poisoned fast level (\val{a4.025.nnatt}) that only
+\val{a4.025.rejk} attacked blocks are rejected, and the excess SER is \val{a4.025.excess}, against
+\val{ab.complete.excess} for A1 on the same seeds; with three quarters on the pilots it is
+\val{a4.075.excess}. An attacker that reaches the data does far more harm by jamming it: the same
+data power as noise raises the SER by \val{a4.jam025} and \val{a4.jam075} for $\alpha=0.25$ and
+$0.75$. The abstain state,
+meant to answer A4, does not work as implemented. Its running statistics are updated only on
+accepted blocks and its variance floor is binomial over thousands of CRC checks, so the fading of
+the channel alone, which lowers the reference pass fraction from \val{abs.ref0} to
+\val{abs.reflock}, trips it at block \val{abs.lockmin}--\val{abs.lockmax}; from then on it rejects
+every block, clean or attacked (\val{abs.rejk} blocks of its clean twins rejected, clean SER
+\val{a4.025abstain.clean}). Its rejection of every A4 block and its lower excess in
+Table~\ref{tab:refdeg} are those of a receiver that no longer adapts in either run, not a defence. A
+usable abstain state needs a reference model that follows legitimate change; it is not evaluated
+here.
+
+An abrupt channel redraw at block 50 is the legitimate change the gates must not block
+(Table~\ref{tab:deny}). After it Citadel-Rx rejects a fraction \val{deny.citadel.frej} of the clean
+blocks and its SER over the remaining blocks is \val{deny.citadel.after}, against
+\val{deny.onlinedeepsic.after} for online DeepSIC and \val{deny.lmmse.after} for LMMSE: the gates
+slow the re-adaptation, a cost of the defence. After a 6\,dB SNR drop, which the receivers are not
+told about, all three are close (\val{deny.citadel.drop}, \val{deny.onlinedeepsic.drop},
+\val{deny.lmmse.drop}). The denial spoof did not achieve its aim of tripping the gates on every
+block: they rejected fractions \val{deny.citadel.rejattmin} and \val{deny.citadel.rejattmax} of the
+spoofed blocks on the two seeds. It acted instead as an accepted perturbation during the change,
+raising the SER in its window by \val{deny.citadel.excess} for Citadel-Rx,
+\val{deny.onlinedeepsic.excess} for online DeepSIC and \val{deny.lmmse.excess} for LMMSE; in the ten
+blocks after it, Citadel-Rx was back at its no-spoof SER (\val{deny.citadel.post}) and online
+DeepSIC was not (\val{deny.onlinedeepsic.post}). Streak recovery was attempted
+\val{deny.streak.attempts} times in these runs and kept once, changing \val{deny.streak.ndiff} of
+\val{deny.streak.nruns} runs; it had no measurable effect, and a denial attack that would test it,
+one that trips the gates on every block, was not found.
 
 \subsection{Retention Under Optimised Slow Drift}\label{sec:retention}
 \begin{table}[t]

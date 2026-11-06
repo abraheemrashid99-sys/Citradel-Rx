@@ -102,7 +102,12 @@ def main():
     recs = {fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.folder, "*.json"))}
     if args.clean:
         recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.clean, "*.json"))})
-    clean = {(match_key(r["config"]), r["seed"]): fn for fn, r in recs.items() if r["config"]["attack"]["type"] == "none"}
+    # clean twins; two clean runs with the same settings (one saved with snapshots, one without) are
+    # the same deterministic run, so prefer the one whose snapshot file exists
+    clean = {}
+    for fn, r in sorted(recs.items(), key=lambda kv: os.path.exists(kv[0].replace(".json", ".levels.npz"))):
+        if r["config"]["attack"]["type"] == "none":
+            clean[(match_key(r["config"]), r["seed"])] = fn
     results = []
     for fn, r in recs.items():
         c = r["config"]
@@ -123,6 +128,12 @@ def main():
         anc_a = sum(wk * la[k + 1][:n] for k, wk in enumerate(w))
         anc_c = sum(wk * lc[k + 1][:n] for k, wk in enumerate(w))
         r["paired_anchor"] = np.linalg.norm(anc_a - anc_c, axis=1).tolist()
+        # how far each run's levels moved from their common state at the window start: the paired
+        # displacement is at most the sum of the two (triangle inequality), so a small `adv` and a
+        # `clean` close to D_k mean the attacked run stood still while the clean run followed the channel
+        w0 = int((r["summary"].get("attack_window") or [c["attack"]["start_block"]])[0])
+        r["paired_move"] = {"adv": [np.linalg.norm(a[:n] - a[w0], axis=1).tolist() for a in la],
+                            "clean": [np.linalg.norm(b[:n] - b[w0], axis=1).tolist() for b in lc]}
         r["paired_with"] = os.path.basename(cfn)
         json.dump(r, open(fn, "w"))
         results.append((r, recs[cfn]))
@@ -133,11 +144,13 @@ def main():
     import matplotlib.pyplot as plt
     groups = {}
     for r, cr in results:
-        key = (r["config"]["attack"]["type"], r["config"]["attack"]["sir_db"], tuple(r["config"]["citadel"]["consol_clip"]))
+        at = r["config"]["attack"]
+        key = (at["type"], at["sir_db"], tuple(r["config"]["citadel"]["consol_clip"]),
+               at.get("a3_eps_small") if at["type"] == "a3star" else None, r["config"]["citadel"].get("drift_guard", 0.0))
         groups.setdefault(key, []).append((r, cr))
     rows = ["| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |",
             "|---|---|---|---|---|---|---|---|"]
-    for (atk, sir, clip), grp in sorted(groups.items()):
+    for (atk, sir, clip, eps, guard), grp in sorted(groups.items(), key=lambda kv: str(kv[0])):
         r0 = grp[0][0]
         c = r0["config"]
         K = len(r0["paired_disp"])
@@ -167,9 +180,10 @@ def main():
         ax.set_xlabel("block"); ax.set_ylabel(r"paired displacement $\|\theta_{\rm adv}-\theta_{\rm clean}\|$")
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, fontsize=6.5)
         fig.subplots_adjust(left=0.17, right=0.98, top=0.97, bottom=0.42)
-        tag = f"{atk}_sir{sir:g}" + ("_clip" if design is not None else "")
+        tag = f"{atk}_sir{sir:g}" + (f"_e{eps:g}" if eps is not None else "") + ("_guard" if guard else "") + \
+            ("_clip" if design is not None else "")
         save(fig, os.path.basename(args.out) + "_" + tag)
-        rows.append(f"| {atk} | {sir:g} | {list(clip) or '-'} | {len(grp)} | {D[:, K - 1, w0:w1].max():.2f} | "
+        rows.append(f"| {atk}{f' e={eps:g}' if eps is not None else ''}{' guard' if guard else ''} | {sir:g} | {list(clip) or '-'} | {len(grp)} | {D[:, K - 1, w0:w1].max():.2f} | "
                     f"{(design.max() if design is not None else float('nan')):.2f} | {ext.max():.2f} | {A[:, w0:w1].max():.2f} |")
     print("\n".join(rows))
     md = os.path.join("docs", f"PAIRED_DISP_{os.path.basename(os.path.normpath(args.folder))}.md")

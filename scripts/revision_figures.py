@@ -83,6 +83,9 @@ def excess() -> None:
     ax.set_xticks([i for i, _ in xs])
     ax.set_xticklabels([l for _, l in xs], rotation=15, fontsize=6.5)
     ax.set_yscale("symlog", linthresh=1e-2)
+    lo = min(0.0, min(min(rn.cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"])["seed_means"]) for rx in
+                      ("citadel", "online_select", "crc_rollback", "online_deepsic", "meta_deepsic")))
+    ax.set_ylim(lo * 1.5, 1.5)   # every seed visible (excess SER is at most 1)
     ax.axhline(0, color="k", lw=0.5)
     ax.set_ylabel("excess SER")
     fig.subplots_adjust(left=0.16, right=0.98, top=0.97, bottom=0.25)
