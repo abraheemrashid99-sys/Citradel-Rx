@@ -6,3 +6,11 @@
 {"shard": "pool4", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.25__sir0", "seed": 10, "ok": true, "seconds": 2379.5, "finished": "2026-11-06T19:26:33.080156+00:00"}
 {"shard": "pool4", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.75__sir0", "seed": 10, "ok": true, "seconds": 2378.0, "finished": "2026-11-06T19:28:44.980647+00:00"}
 {"shard": "pool4", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_citadel_d150__phys", "seed": 10, "ok": true, "seconds": 1885.9, "finished": "2026-11-06T19:46:15.249549+00:00"}
+{"shard": "pool4", "tier": 1, "group": "P3adapt", "out": "rev_p3_adaptive", "name": "p3_online_strongest__sir0", "seed": 13, "ok": true, "seconds": 1248.2, "finished": "2026-11-06T19:47:21.329715+00:00"}
+{"shard": "pool4", "tier": 1, "group": "P3adapt", "out": "rev_p3_adaptive", "name": "p3_online_strongest__sir0", "seed": 12, "ok": true, "seconds": 1323.9, "finished": "2026-11-06T19:50:48.894611+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_online_deepsic_joint__wb_sir0", "seed": 13, "ok": true, "seconds": 1208.4, "finished": "2026-11-06T20:06:23.654521+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev_clean_pool4", "name": "clean_15e7688cc3", "seed": 13, "ok": true, "seconds": 1172.5, "finished": "2026-11-06T20:06:53.801430+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_online_deepsic_joint__wb_sir0", "seed": 12, "ok": true, "seconds": 1219.8, "finished": "2026-11-06T20:11:08.719669+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev_clean_pool4", "name": "clean_15e7688cc3", "seed": 12, "ok": true, "seconds": 1178.0, "finished": "2026-11-06T20:26:01.687576+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_crc_rollback_joint__wb_sir0", "seed": 13, "ok": true, "seconds": 1304.3, "finished": "2026-11-06T20:28:38.094906+00:00"}
+{"shard": "pool4", "tier": 1, "group": "D8", "out": "rev_clean_pool4", "name": "clean_45472e37db", "seed": 13, "ok": true, "seconds": 1241.9, "finished": "2026-11-06T20:31:50.642706+00:00"}
