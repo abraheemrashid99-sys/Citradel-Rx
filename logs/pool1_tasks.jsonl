@@ -12,3 +12,14 @@
 {"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.25__sir0", "seed": 13, "ok": true, "seconds": 2231.0, "finished": "2026-11-06T19:19:08.499521+00:00"}
 {"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.75__sir0", "seed": 13, "ok": true, "seconds": 2104.8, "finished": "2026-11-06T19:24:04.868539+00:00"}
 {"shard": "pool1", "tier": 1, "group": "B2", "out": "rev2_a4_pgd20", "name": "b2_a4_a0.25_pgd20__sir0", "seed": 13, "ok": true, "seconds": 6282.3, "finished": "2026-11-06T19:25:04.491048+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D8", "out": "rev_clean_pool1", "name": "clean_c1416e9241", "seed": 13, "ok": true, "seconds": 1192.0, "finished": "2026-11-06T19:39:00.509004+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_citadel_joint__wb_sir0", "seed": 13, "ok": true, "seconds": 2660.0, "finished": "2026-11-06T19:39:57.439511+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P4", "out": "rev_p4_paired", "name": "p4_citadel__sir0", "seed": 13, "ok": true, "seconds": 532.3, "finished": "2026-11-06T19:48:49.705203+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P4", "out": "rev_clean_pool1", "name": "clean_3b3e8e4941", "seed": 13, "ok": true, "seconds": 489.5, "finished": "2026-11-06T19:56:59.183530+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_citadel_d35__phys", "seed": 13, "ok": true, "seconds": 2139.0, "finished": "2026-11-06T19:59:43.899628+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_citadel_d75__phys", "seed": 13, "ok": true, "seconds": 2127.4, "finished": "2026-11-06T20:00:31.939265+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P4", "out": "rev_p4_paired", "name": "p4_citadel__sir10", "seed": 13, "ok": true, "seconds": 519.8, "finished": "2026-11-06T20:05:39.017242+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3refdeg", "out": "rev_clean_pool1", "name": "clean_0b811be896", "seed": 13, "ok": true, "seconds": 477.5, "finished": "2026-11-06T20:07:41.373338+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.25__sir0", "seed": 13, "ok": true, "seconds": 482.5, "finished": "2026-11-06T20:08:34.409710+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_citadel_d150__phys", "seed": 13, "ok": true, "seconds": 1996.6, "finished": "2026-11-06T20:12:17.072053+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.75__sir0", "seed": 13, "ok": true, "seconds": 489.5, "finished": "2026-11-06T20:13:48.523143+00:00"}
