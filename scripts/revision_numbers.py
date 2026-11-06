@@ -57,6 +57,13 @@ def load(folder: str) -> List[dict]:
 
 
 def mkey(cfg: dict) -> str:
+    """Settings that a clean twin must share with its attacked run. Options added to the code after a
+    record was written are filled in at their defaults, so records of different code versions match."""
+    try:
+        from citadel_rx.config import Config
+        cfg = Config.from_dict(cfg).to_dict()
+    except Exception:
+        pass
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 

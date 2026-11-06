@@ -29,6 +29,10 @@ class ChannelConfig:
     abrupt_block: int = -1            # -1 disables
     abrupt_type: str = "redraw"       # redraw | snr_drop
     abrupt_snr_drop_db: float = 6.0
+    # SED profile exp(-|i - j|) concentrates user j's energy on the antennas next to index j, so with
+    # N > U only about U + 3 antennas carry it (audit D4: an "8 x 32" array is then nearly 8 x 11).
+    # True: exp(-|i U / N - j|), the same profile stretched over the whole array
+    sed_stretch: bool = False
 
 
 @dataclass

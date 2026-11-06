@@ -73,7 +73,7 @@ RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
-             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud",   # more drivers on the cloud
+             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud", "cloudw": "rev_clean_cloud",   # more drivers on the cloud
              "helper": "rev_clean_helper",   # a second cloud machine
              **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 9)}}   # campaign 5: further cloud machines, one folder each
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
@@ -362,6 +362,7 @@ def rev2x_jobs() -> List[Job]:
     scene (NR LDPC + 38.901 UMi with the attacker at 35, 75 and 150 m; Citadel-Rx and the baselines
     keep their frozen settings). cloudy: the test runs that read configs/revision2_frozen_*.json."""
     X, Y = "cloudx", "cloudy"
+    a1 = lambda s: ["attack.type=a1", f"attack.sir_db={s}"]
     jobs: List[Job] = []
     # ===== cloudx, tier 0: calibration and tuning on seeds 0-2 ================================
     jobs += J(X, 0, "H3cal", "rev2_abstain_cal", "h3cal_ratio__clean", CAL,
@@ -400,6 +401,12 @@ def rev2x_jobs() -> List[Job]:
         jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
                    + RND + ["attack.type=a1", "attack.sir_db=0"])
+    # ===== stretched SED profile for the larger arrays (audit D4; shard cloudw, run by a pool machine) ==
+    for rx in ("citadel", "online_deepsic", "lmmse"):
+        jobs += JT("cloudw", 1, "D4s", "rev2_arrays_stretch", f"d4s_{rx}_8x32s__sir0", T5,
+                   rx_ov(rx) + ["channel.n_user=8", "channel.n_ant=32", "channel.sed_stretch=true"] + RND + a1(0))
+        jobs += JT("cloudw", 1, "P6s", "rev2_arrays_stretch", f"p6s_{rx}_4x16s__sir0", T5,
+                   rx_ov(rx) + ["channel.n_user=4", "channel.n_ant=16", "channel.sed_stretch=true"] + RND + a1(0))
     return jobs
 
 

@@ -57,7 +57,7 @@ class BlockFadingChannel:
 
     # ---- channel matrices --------------------------------------------
     def _sed_mean(self) -> np.ndarray:
-        rows = np.arange(self.n_ant)[:, None]
+        rows = np.arange(self.n_ant)[:, None] * (self.n_user / self.n_ant if getattr(self.cfg, "sed_stretch", False) else 1.0)
         cols = np.arange(self.n_user)[None, :]
         return np.exp(-np.abs(rows - cols)).astype(np.float64)
 
