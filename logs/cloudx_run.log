@@ -106,3 +106,4 @@ pushed results to GitHub (17:41)
 [100 done, ~6 left | 4.2 h, ~0.3 h to go at this pace] t1 D23 d23_lmmse_d150__phys s14 OK 0 min  == d23_lmmse_d150__phys seed 14: taken over by the pool5 machine (configs/claims.json), skipped
 [101 done, ~0 left | 4.5 h, ~0.0 h to go at this pace] t0 D8tune tune_joint_ep100_lr0.005 s2 OK 26 min  == tune_joint_ep100_lr0.005 seed 2: ser_mean=0.2650 ser_median=0.2800
 == cloudx finished: 101 runs, 0 failed, 4.5 h
+pushed results to GitHub (18:25)
