@@ -476,12 +476,13 @@ def retention() -> None:
     paired_disp fields that scripts/paired_disp.py stores in the attacked records."""
     from paired_disp import extended_bound
     rows = []
-    specs = [("rev_p4_paired", f"p4_citadel__sir{s}", f"A1, SIR {s} dB") for s in (0, 10)] + \
-        [("rev_p8_drift", f"p8_a3star_e{e}{g}__long", f"A3$^\\ast$, {int(float(e) * 100)}\\%" + (", guard" if g else ""))
+    specs = [("rev_p4_paired", f"p4_citadel__sir{s}", f"A1, SIR {s} dB", f"ret.p4sir{s}") for s in (0, 10)] + \
+        [("rev_p8_drift", f"p8_a3star_e{e}{g}__long", f"A3$^\\ast$, {int(float(e) * 100)}\\%" + (", guard" if g else ""),
+          "ret.p8e" + e.replace(".", "") + g.replace("_", ""))
          for e, g in (("0.05", ""), ("0.2", ""), ("0.5", ""), ("0.5", "_guard"))]
-    for folder, name, lab in specs:
-        c = cell(folder, name, ["rev_clean_cloud"])
-        key = "ret." + re.sub(r"[^A-Za-z0-9]", "", name.split("__")[0].replace("p4_citadel", "p4").replace("p8_a3star", "p8"))
+    for folder, name, lab, key in specs:
+        # P4 ran on the cloud machine, P8 on the laptop (after the cloud machine was stopped)
+        c = cell(folder, name, ["rev_clean", "rev_clean_cloud"])
         put_cell(key, c)
         if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
             continue

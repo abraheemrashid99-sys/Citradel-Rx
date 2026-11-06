@@ -102,7 +102,12 @@ def main():
     recs = {fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.folder, "*.json"))}
     if args.clean:
         recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.clean, "*.json"))})
-    clean = {(match_key(r["config"]), r["seed"]): fn for fn, r in recs.items() if r["config"]["attack"]["type"] == "none"}
+    # clean twins; two clean runs with the same settings (one saved with snapshots, one without) are
+    # the same deterministic run, so prefer the one whose snapshot file exists
+    clean = {}
+    for fn, r in sorted(recs.items(), key=lambda kv: os.path.exists(kv[0].replace(".json", ".levels.npz"))):
+        if r["config"]["attack"]["type"] == "none":
+            clean[(match_key(r["config"]), r["seed"])] = fn
     results = []
     for fn, r in recs.items():
         c = r["config"]
