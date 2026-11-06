@@ -44,9 +44,13 @@ def load_levels(json_path):
     npz = json_path.replace(".json", ".levels.npz")
     if not os.path.exists(npz):
         return None
-    z = np.load(npz)
-    K = len([k for k in z.files if k.startswith("level")])
-    return [z[f"level{k + 1}"].astype(np.float32) for k in range(K)]
+    try:
+        z = np.load(npz)
+        K = len([k for k in z.files if k.startswith("level")])
+        return [z[f"level{k + 1}"].astype(np.float32) for k in range(K)]
+    except Exception as e:   # e.g. written while the disk was full
+        print(f"   skipped {os.path.basename(npz)}: cannot be read ({type(e).__name__}: {e})")
+        return None
 
 
 def consolidation_events(rec, level):

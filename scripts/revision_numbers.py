@@ -533,7 +533,10 @@ def retention() -> None:
         if c is not None and folder == "rev_p8_drift":   # perturbation norm relative to the received pilots
             e = float(c["pairs"][0][0]["config"]["attack"]["a3_eps_small"])
             put(key + ".sir", f"{-20 * np.log10(e):.0f}")
-        if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
+        if c is None:
+            continue
+        if not all("paired_disp" in a for a, _ in c["pairs"]):   # snapshots not analysed (yet)
+            rows.append(f"{lab} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & -- & -- & --\\\\")
             continue
         DK, des, ext, anc, mv = [], [], [], [], []
         for a, cl in c["pairs"]:

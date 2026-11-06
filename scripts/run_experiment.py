@@ -27,9 +27,26 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
     import glob
     import json
     def complete(fn: str) -> bool:
-        # a run that saves level snapshots is finished only when its snapshot file exists too
-        # (the machine may have stopped between writing the record and the snapshots)
-        return not probe.run.save_params or os.path.exists(fn.replace(".json", ".levels.npz"))
+        # a run that saves level snapshots is finished only when its snapshot file exists and reads
+        # back (the machine may have stopped, or the disk filled, while the snapshots were written)
+        if not probe.run.save_params:
+            return True
+        npz = fn.replace(".json", ".levels.npz")
+        if not os.path.exists(npz):
+            return False
+        try:
+            import zipfile
+            with zipfile.ZipFile(npz) as z:
+                if z.testzip() is not None or not any(n.startswith("level1") for n in z.namelist()):
+                    raise ValueError("bad snapshot file")
+            return True
+        except Exception:
+            print(f"   (snapshot file {os.path.basename(npz)} is damaged: removed, the run is redone)")
+            try:
+                os.remove(npz)
+            except OSError:
+                pass
+            return False
 
     exact = os.path.join(out_dir, f"{name}_s{seed}_{probe.hash()}.json")
     if os.path.exists(exact):

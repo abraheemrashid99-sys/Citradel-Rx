@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import random
+import os
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -204,11 +205,23 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
                                                     for key in keys]) for s in level_snaps]))
         record["self_disp"] = [np.linalg.norm(lv - lv[0], axis=1).tolist() for lv in stacks]
     if save:
-        path = save_record(record, cfg.run.out_dir, f"{cfg.run.name}_s{seed}_{cfg.hash()}")
-        record["path"] = path
+        stem = f"{cfg.run.name}_s{seed}_{cfg.hash()}"
         if level_snaps:
-            np.savez_compressed(path.replace(".json", ".levels.npz"),
-                                **{f"level{k + 1}": lv.astype(np.float16) for k, lv in enumerate(stacks)})
+            # the snapshots first and atomically, then the record: a record on disk always has complete
+            # snapshots (a full disk or a stop while writing them leaves no record, so the run is redone)
+            os.makedirs(cfg.run.out_dir, exist_ok=True)
+            npz = os.path.join(cfg.run.out_dir, stem + ".levels.npz")
+            tmp = npz + ".part"
+            try:
+                with open(tmp, "wb") as fh:
+                    np.savez_compressed(fh, **{f"level{k + 1}": lv.astype(np.float16) for k, lv in enumerate(stacks)})
+                os.replace(tmp, npz)
+            except BaseException:
+                if os.path.exists(tmp):
+                    os.remove(tmp)
+                raise
+        path = save_record(record, cfg.run.out_dir, stem)
+        record["path"] = path
         if verbose:
             print(f"saved {path}")
     return record

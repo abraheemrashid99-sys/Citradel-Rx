@@ -120,8 +120,11 @@ PYV=.venv/bin/python
 free_mb=$(df -m . | awk 'NR==2 {print $4}')
 CACHE_GB=$(awk -v f="$free_mb" 'BEGIN { c = (f - 800) / 1024; if (c > 0.6) c = 0.6; if (c < 0.1) c = 0.1; printf "%.2f", c }')
 echo "   free disk after setup: ${free_mb} MB; pre-training cache up to ${CACHE_GB} GB"
-if [ "$free_mb" -lt 600 ]; then
-  echo "!! less than 600 MB free: free some space first (runs pause below 400 MB)"; exit 1
+if [ "$free_mb" -lt 1000 ]; then
+  echo "!! less than 1 GB free: free some space first (the drift runs write about 150 MB of level"
+  echo "   snapshots each, and runs pause below 400 MB). For example: rm -rf cache ; conda clean -a -y ;"
+  echo "   empty the Bin; restarting the Mac also releases its swap files."
+  exit 1
 fi
 if [ "${SETUP_ONLY:-0}" = "1" ]; then echo "== environment ready (SETUP_ONLY=1)"; exit 0; fi
 
