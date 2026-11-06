@@ -67,9 +67,9 @@ results on ten held-out seeds, white-box poisoning at 0\,dB signal-to-interferen
 the symbol error rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its own clean run,
 against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC, and
 \val{p1.citadel.wb0.rejpct}\% of the poisoned blocks are rejected at a
-\val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks built against the gates do not
-raise this excess. An attack that also degrades the references does, and the receiver fails
-where its network is worse than LMMSE, as at 16-QAM.
+\val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks built against the gates leave this
+excess unchanged within its intervals. An attack that also degrades the references raises it, and
+the receiver fails where its network is worse than LMMSE, as at 16-QAM.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -253,12 +253,13 @@ $1-\alpha$ on the data, optimised jointly so that the model-based references the
 against degrade with the fast level.
 \item \emph{Denial of adaptation}: a fixed channel-estimate spoof $\bm E_b=\bm S_b\bm\Delta^{\!\top}$,
 meant to make the gates reject every block, combined with a real abrupt channel change.
-\item \emph{A3$^\ast$, optimised slow drift}: small perturbations over hundreds of blocks that pull
-the receiver toward a spoofed channel while keeping its blocks accepted.
+\item \emph{A3$^\ast$, optimised slow drift}: small perturbations over hundreds of blocks, of norm
+5, 20 or 50\% of that of the received pilots, that pull the receiver toward a spoofed channel while
+keeping its blocks accepted.
 \item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2\}$ attacker antennas, a
 channel $\bm G$ from the same family, and an error on the attacker's estimate of $\bm G$.
-\item \emph{Data jamming}: the same energy on the data part, a control that separates persistent
-poisoning from plain interference.
+\item \emph{Data jamming}: Gaussian noise at the same SIR on the data part, a control that separates
+persistent poisoning from plain interference.
 \end{itemize}
 Table~\ref{tab:knowledge} states what each attacker knows.
 
@@ -476,7 +477,8 @@ If the block map satisfied $\norm{\Phi(\theta;\bm Y+\bm E,a)-\Phi(\theta;\bm Y,a
 jointly $L$-Lipschitz in $(\theta,a)$ with $L<1$, the largest fast displacement after $n_W$ accepted
 attacked blocks would satisfy $\Delta_f\le G_\Phi\epsilon(1-L^{n_W})/(1-L)$. The sufficient condition
 is $L=L_\theta+L_a<1$. Finite-difference probes of the fast learner, which the revision does not change,
-give $L_\theta+L_a$ between $1.08$ and $1.39$ for proximal weights $\lambda$ from $0.5$ to $4$; probes can
+give $L_\theta+L_a$ between \val{lip.summin} and \val{lip.summax} for proximal weights $\lambda$ from
+\val{lip.lammin} to \val{lip.lammax}; probes can
 only underestimate a Lipschitz constant, so the condition fails and this branch cannot be used for the
 default receiver. The regret bound of the first version, which relied on
 it, is withdrawn; a last-layer-adaptable variant, for which the loss is convex, is evaluated in
@@ -499,9 +501,10 @@ target excess error.
 mismatch, the residual of a decision with error $\bm e_n$ is $\mathrm{mean}\norm{\hat{\bm H}\bm
 e_n}^2+\mathrm{mean}\norm{\bm\nu_n+\bm m_n}^2$ plus a cross term that vanishes if decision errors are
 uncorrelated with noise and mismatch. This is an assumption, not a fact: errors occur when the
-noise is large. On clean blocks of the $\tanh$ channel the normalised G1 statistic has mean
-$1.000$, 99th percentile $1.050$ and maximum $1.080$ over 285 blocks, and never reaches
-$\tau_1=1.25$.
+noise is large. On clean blocks of the $\tanh$ channel at 10\,dB (first-version runs, seeds 0--2)
+the normalised G1 statistic has mean \val{g1nl.mean}, 99th percentile \val{g1nl.p99} and maximum
+\val{g1nl.max} over \val{g1nl.n} blocks; its largest value at any SNR from \val{g1nl.snrmin} to
+\val{g1nl.snrmax}\,dB is \val{g1nl.allmax}, below $\tau_1=1.25$.
 
 \section{Experimental Protocol}\label{sec:setup}
 
@@ -964,7 +967,8 @@ to the slow memory and per-sub-block CRC selection, and a clip that bounds how f
 move the slowest level. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by
 \val{p1.citadel.wb0.excess} against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and
 \val{p1.crc_rollback.wb0.excess} for CRC-Rollback, which has the same test but no protected
-reference; attacks built against the gates did not raise this excess. The open problems are the
+reference; attacks built against the gates left this excess unchanged within its intervals. The
+open problems are the
 ones the evaluation exposed: references an attacker cannot degrade through the data, a reference
 model for abstaining that follows legitimate change, a fallback for networks weaker than the
 model-based detector, and a validation in a coded NR link.
