@@ -1,2 +1,4 @@
 {"shard": "pool5", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.25__sir0", "seed": 11, "ok": true, "seconds": 2464.6, "finished": "2026-11-06T18:38:13.037167+00:00"}
 {"shard": "pool5", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a4_a0.75__sir0", "seed": 11, "ok": true, "seconds": 2517.1, "finished": "2026-11-06T18:39:05.501990+00:00"}
+{"shard": "pool5", "tier": 1, "group": "D8", "out": "rev_clean_pool5", "name": "clean_c1416e9241", "seed": 11, "ok": true, "seconds": 2732.2, "finished": "2026-11-06T19:24:37.670603+00:00"}
+{"shard": "pool5", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_citadel_joint__wb_sir0", "seed": 11, "ok": true, "seconds": 2860.7, "finished": "2026-11-06T19:25:53.698678+00:00"}
