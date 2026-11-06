@@ -586,6 +586,78 @@
    0,
    1,
    2
+  ],
+  "d4_citadel_8x32__sir0": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_f50ede5b43": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d4_online_deepsic_8x32__sir0": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_af32e4070d": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "d4_lmmse_8x32__sir0": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "clean_f36aac759c": [
+   10,
+   11,
+   12,
+   13,
+   14
+  ],
+  "p6_citadel_4x16__sir0": [
+   12,
+   13,
+   14
+  ],
+  "clean_d112e36fb7": [
+   12,
+   13,
+   14
+  ],
+  "p6_online_deepsic_4x16__sir0": [
+   12,
+   13,
+   14
+  ],
+  "clean_ce65268207": [
+   12,
+   13,
+   14
+  ],
+  "p6_lmmse_4x16__sir0": [
+   12,
+   13,
+   14
+  ],
+  "clean_2ce8d97305": [
+   12,
+   13,
+   14
   ]
  },
  "owners": {
@@ -1677,6 +1749,96 @@
      14
     ]
    }
+  },
+  "pool6": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "d4s_citadel_8x32s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_fd5475317b": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "p6s_citadel_4x16s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_14c6d5f538": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "d4s_online_deepsic_8x32s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_cd9eecb9b3": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "p6s_online_deepsic_4x16s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_1135058394": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "d4s_lmmse_8x32s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_dc8fe6c9d7": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "p6s_lmmse_4x16s__sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_22f325a6b3": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ]
+   }
   }
- }
+ },
+ "dropped_note": "tune_joint_ep300_*: dropped before any test run of the second backbone (compute). d4_*_8x32, p6_*_4x16 and their clean twins: the unstretched SED profile illuminates only about U+3 antennas; replaced by the stretched profile (d4s_*, p6s_*, channel.sed_stretch=true) before their analysis"
 }

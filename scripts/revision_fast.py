@@ -73,9 +73,10 @@ RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
-             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud",   # more drivers on the cloud
+             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud", "cloudw": "rev_clean_cloud",   # more drivers on the cloud
              "helper": "rev_clean_helper",   # a second cloud machine
-             **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 9)}}   # campaign 5: further cloud machines, one folder each
+             **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 9)},   # campaign 5: further cloud machines, one folder each
+             "local": "rev_clean_local"}   # campaign 6: the whole second campaign on one machine
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
 FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
 FZ_ABSTV = os.path.join(ROOT, "configs", "revision2_frozen_abstain_verified.json")
@@ -362,6 +363,7 @@ def rev2x_jobs() -> List[Job]:
     scene (NR LDPC + 38.901 UMi with the attacker at 35, 75 and 150 m; Citadel-Rx and the baselines
     keep their frozen settings). cloudy: the test runs that read configs/revision2_frozen_*.json."""
     X, Y = "cloudx", "cloudy"
+    a1 = lambda s: ["attack.type=a1", f"attack.sir_db={s}"]
     jobs: List[Job] = []
     # ===== cloudx, tier 0: calibration and tuning on seeds 0-2 ================================
     jobs += J(X, 0, "H3cal", "rev2_abstain_cal", "h3cal_ratio__clean", CAL,
@@ -400,6 +402,12 @@ def rev2x_jobs() -> List[Job]:
         jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
                    + RND + ["attack.type=a1", "attack.sir_db=0"])
+    # ===== stretched SED profile for the larger arrays (audit D4; shard cloudw, run by a pool machine) ==
+    for rx in ("citadel", "online_deepsic", "lmmse"):
+        jobs += JT("cloudw", 1, "D4s", "rev2_arrays_stretch", f"d4s_{rx}_8x32s__sir0", T5,
+                   rx_ov(rx) + ["channel.n_user=8", "channel.n_ant=32", "channel.sed_stretch=true"] + RND + a1(0))
+        jobs += JT("cloudw", 1, "P6s", "rev2_arrays_stretch", f"p6s_{rx}_4x16s__sir0", T5,
+                   rx_ov(rx) + ["channel.n_user=4", "channel.n_ant=16", "channel.sed_stretch=true"] + RND + a1(0))
     return jobs
 
 
@@ -631,6 +639,12 @@ class Campaign:
         self.campaign = campaign
         if campaign == 5:
             self.queue: List[Tuple[Job, int]] = pool_jobs(shard)
+        elif campaign == 6:   # every run of the second campaign, its clean twins on this machine
+            src = [Job(shard, j.tier, j.group, CLEAN_DIR[shard] if j.clean_twin else j.out, j.name, j.seeds, j.ov,
+                       clean_twin=j.clean_twin, kind=j.kind, parent=j.parent) for j in rev2_jobs() + rev2x_jobs()
+                   if j.tier <= tier and j.group != "H3"]   # H3: the dropped second abstain version
+            src.sort(key=lambda j: j.tier)
+            self.queue = [(j, s) for j in src for s in j.seeds]
         else:
             src = helper_jobs() if campaign == 4 else (rev2x_jobs() if campaign == 3 else
                                                         (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()))
@@ -652,7 +666,7 @@ class Campaign:
         self.last_fetch = 0.0
         self.calibrated = False
         self._freezing = False
-        if campaign in (2, 3, 4, 5):   # settings were frozen by the first campaign's rules; nothing is calibrated again
+        if campaign in (2, 3, 4, 5, 6):   # settings were frozen by the first campaign's rules; nothing is calibrated again
             self.fz_cit, self.fz_base = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
             self.cal_left, self.calibrated = 0, True
         os.makedirs(LOGS, exist_ok=True)
@@ -847,13 +861,14 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper"] +
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper", "local"] +
                     [f"pool{i}" for i in range(1, 9)])
-    ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4, 5], default=1,
+    ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4, 5, 6], default=1,
                     help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy), "
-                         "4 = the helper machine, 5 = the pool machines (configs/pool_assign.json)")
+                         "4 = the helper machine, 5 = the pool machines (configs/pool_assign.json), "
+                         "6 = the whole second campaign on one machine (--shard local)")
     ap.add_argument("--workers", type=int, default=8)
-    ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
+    ap.add_argument("--tier", type=int, choices=[0, 1, 2, 3], default=3, help="run tiers up to this one (0: calibration and tuning only)")
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--push-only", action="store_true")
     ap.add_argument("--push-every", type=float, default=45.0, help="minutes between automatic pushes")
@@ -870,7 +885,7 @@ def main():
     if args.push_only:
         push_results(args.shard)
         return
-    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith(("cloud", "pool")) or args.shard == "helper" else 0.6)
+    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith(("cloud", "pool", "local")) or args.shard == "helper" else 0.6)
     Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb, args.campaign).run()
 
 

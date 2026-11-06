@@ -37,6 +37,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def match_key(cfg):
+    try:   # options added to the code after a record was written: at their defaults
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from citadel_rx.config import Config
+        cfg = Config.from_dict(cfg).to_dict()
+    except Exception:
+        pass
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 

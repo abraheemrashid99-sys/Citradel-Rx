@@ -19,6 +19,8 @@ pull) until the claims expire. Nothing about a run's settings changes: names, fo
 those of the campaign that defined it; only the clean twins go to results/rev_clean_poolK.
 
     python scripts/assign_pool.py --pools 5 --until 2026-11-07T20:00:00+00:00 --extra /home/user/cloudrun/results
+    # later: give new groups to one more machine, keeping the assignment of the others
+    python scripts/assign_pool.py --names pool6 --groups cloudw:D4s cloudw:P6s --merge --until 2026-11-07T20:00:00+00:00
 """
 from __future__ import annotations
 
@@ -63,7 +65,11 @@ def main() -> None:
     ap.add_argument("--pools", type=int, default=5)
     ap.add_argument("--until", required=True, help="claims expire then (ISO time, UTC)")
     ap.add_argument("--extra", nargs="*", default=[], help="further results folders to look for finished runs in")
+    ap.add_argument("--names", nargs="*", default=None, help="pool machine names (default pool1 ... poolK)")
+    ap.add_argument("--groups", nargs="*", default=None, help="shard:group pairs to assign (default: POOL_GROUPS)")
+    ap.add_argument("--merge", action="store_true", help="keep the existing assignment of the other pool machines")
     args = ap.parse_args()
+    groups = {tuple(g.split(":")) for g in args.groups} if args.groups else POOL_GROUPS
     roots = [os.path.join(ROOT, "results")] + args.extra
     claims = json.load(open(os.path.join(ROOT, "configs", "claims.json")))
     helper = claims.get("runs", {})
@@ -77,7 +83,7 @@ def main() -> None:
     seen = set()
     n_done = n_helper = 0
     for j in rf.rev2_jobs() + rf.rev2x_jobs():
-        if (j.shard, j.group) not in POOL_GROUPS:
+        if (j.shard, j.group) not in groups:
             continue
         for s in j.seeds:
             try:
@@ -98,7 +104,7 @@ def main() -> None:
                     n_done += 1
                     continue
             chunks.setdefault((s, rx), []).append((j.lid, s, name, cost(j, ov)))
-    pools = [f"pool{i}" for i in range(1, args.pools + 1)]
+    pools = args.names or [f"pool{i}" for i in range(1, args.pools + 1)]
     load = {p: 0.0 for p in pools}
     assign = {p: [] for p in pools}
     for key, runs in sorted(chunks.items(), key=lambda kv: -sum(r[3] for r in kv[1])):
@@ -110,6 +116,11 @@ def main() -> None:
     out = {"note": "written by scripts/assign_pool.py; read by scripts/revision_fast.py --campaign 5",
            "assign": {p: [[r[0], r[1]] for r in v] for p, v in assign.items()},
            "estimated_core_minutes": {p: round(v) for p, v in load.items()}}
+    if args.merge and os.path.exists(rf.POOL_ASSIGN):
+        old = json.load(open(rf.POOL_ASSIGN))
+        old["assign"].update(out["assign"])
+        old["estimated_core_minutes"].update(out["estimated_core_minutes"])
+        out = old
     json.dump(out, open(rf.POOL_ASSIGN, "w"), indent=1)
     owners = claims.setdefault("owners", {})
     for p, v in assign.items():

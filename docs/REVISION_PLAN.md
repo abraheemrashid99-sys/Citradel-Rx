@@ -21,8 +21,31 @@ The status column of the tables below is the plan as written before the campaign
 
 `scripts/revision_fast.py --campaign 2` (shards `cloud`, `windows`) and `--campaign 3` (shards
 `cloudx`, `cloudy`, `cloudz`, new features). Seeds are only added inside the pre-registered test set;
-the two new choices (abstain threshold, second-backbone tuning) are fixed on seeds 0-2 by
+the new choices (abstain threshold, second-backbone tuning) are fixed on seeds 0-2 by
 `scripts/freeze_rev2.py` before any test run of those features.
+
+Compute: the queues of the cloud machine and the Windows laptop were longer than the time left, so
+`scripts/assign_pool.py` handed every unfinished run (except the helper machine's, `--campaign 4`,
+and the long runs already started on the cloud) to six further 4-core cloud machines
+(`--campaign 5`, shards `pool1`-`pool6`, assignment in `configs/pool_assign.json`). All runs of one
+seed and receiver go to one machine, which also runs their clean twins (`results/rev_clean_poolK`),
+so every attacked run is still paired with a twin from its own machine; `configs/claims.json` makes
+the machines that held these runs skip them. Run names, settings and seeds are unchanged.
+
+Corrections made before any of the affected test runs (adversarial review of the new code):
+* UMi drops: 1 ms blocks (one NR slot at 15 kHz over 150 PRBs, the paper's block of 25,000 symbols)
+  instead of 5 ms, at which the channel changed by 24% per block (synthetic model 3.5%); the
+  power-control target is fixed by the model (cell-edge NLoS user without shadowing), and the
+  attacker's budget is a user's maximum power through its own channel in every block.
+* G2 under LDPC: the pass fraction of decoded code blocks is replaced by the virtual pass fraction of
+  the raw SER on decoder-verified symbols, so the design rule holds.
+* Per-user gating uses the relative CRC slack of the block gate.
+* Abstain: the third version (residual on CRC-verified symbols) replaces the second, whose
+  statistic followed the reference's decision errors after a legitimate redraw (3 test runs of the
+  second version exist and are not reported).
+* D4: the SED profile is stretched over the array (`channel.sed_stretch`); unstretched, 99% of the
+  energy of an 8 x 32 array falls on 9 antennas. The unstretched 8 x 32 and 4 x 16 runs not yet
+  made were dropped (`configs/claims.json`, "dropped").
 
 | Item | Second campaign | Where |
 |---|---|---|
@@ -31,15 +54,15 @@ the two new choices (abstain threshold, second-backbone tuning) are fixed on see
 | B2 | A4 at 20 PGD steps (alpha = 0.25), 5 seeds | cloud |
 | B3, H4 | denial by strong poisoning (A1 at SIR 0 dB on blocks 40-89) during a channel redraw, with and without streak recovery | windows |
 | B5 | accepted drift (A3* at 5%) over 900 of 1000 blocks, paired snapshots | cloud |
-| D2 | NR code blocks (CRC-24A + 5G LDPC, Sionna PHY 2.2) replacing the CRC-8 sub-blocks | cloudx |
-| D3 | 38.901 UMi drop with the attacker at 35, 75, 150 m at a user's maximum power; the SIR follows from geometry | cloudx |
-| D4 | 8 x 32 array | cloud |
+| D2 | NR code blocks (CRC-24A + 5G LDPC, Sionna PHY 2.2) replacing the CRC-8 sub-blocks | pool |
+| D3 | 38.901 UMi drop with the attacker at 35, 75, 150 m at a user's maximum power; the SIR follows from geometry | pool |
+| D4 | 4 x 16 and 8 x 32 arrays with the stretched SED profile, 5 seeds | pool6 |
 | D7 | 2000-block clean horizon (Citadel-Rx, online DeepSIC) | cloud |
 | D8 | second backbone: fully connected joint-symbol detector (Citadel-Rx, online, CRC-Rollback) | cloudz |
 | D9 | multiply-accumulates per block (`scripts/flops.py`); still no GPU measurement | - |
 | E5 | x0.75 and x1.5 for the eight settings; a two-setting grid (CRC slack x G1 slack) | windows |
 | A6 | hill-climbing estimates of G_Phi, L_theta, L_a on three channel families (`scripts/lipschitz_strong.py`) | cloud |
-| H3 | abstain v2 (residual-ratio statistic, threshold from calibration); A4, A1, redraw and SNR drop | cloudy |
+| H3 | abstain, final version (residual on CRC-verified symbols, threshold from calibration); A4, A1, redraw and SNR drop | pool |
 | H5 | drift guard against the accepted 5% drift | cloud |
 | H7 | per-user gating against a single-user attack (A2) and A1 | windows |
 
