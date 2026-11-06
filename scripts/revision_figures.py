@@ -31,7 +31,7 @@ LAB = {"citadel": "Citadel-Rx", "crc_rollback": "CRC-Rollback", "online_deepsic"
 def trace(seed: int) -> None:
     rows = {}
     for rx in ("citadel", "crc_rollback", "online_deepsic", "meta_deepsic"):
-        c = rn.cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"])
+        c = rn.cell("rev_p1", f"p1_{rx}__wb_sir0", rn.CLEAN_ALL)
         if c is None:
             continue
         pr = [p for p in c["pairs"] if p[0]["seed"] == seed]
@@ -68,7 +68,7 @@ def excess() -> None:
     fig, ax = plt.subplots(1, 1, figsize=(3.45, 1.9))
     xs = []
     for i, rx in enumerate(("citadel", "online_select", "crc_rollback", "online_deepsic", "meta_deepsic")):
-        c = rn.cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"])
+        c = rn.cell("rev_p1", f"p1_{rx}__wb_sir0", rn.CLEAN_ALL)
         if c is None:
             continue
         y = np.array(c["seed_means"])
@@ -83,7 +83,7 @@ def excess() -> None:
     ax.set_xticks([i for i, _ in xs])
     ax.set_xticklabels([l for _, l in xs], rotation=15, fontsize=6.5)
     ax.set_yscale("symlog", linthresh=1e-2)
-    lo = min(0.0, min(min(rn.cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"])["seed_means"]) for rx in
+    lo = min(0.0, min(min(rn.cell("rev_p1", f"p1_{rx}__wb_sir0", rn.CLEAN_ALL)["seed_means"]) for rx in
                       ("citadel", "online_select", "crc_rollback", "online_deepsic", "meta_deepsic")))
     ax.set_ylim(lo * 1.5, 1.5)   # every seed visible (excess SER is at most 1)
     ax.axhline(0, color="k", lw=0.5)
@@ -102,7 +102,7 @@ def drift() -> None:
     fig, ax = plt.subplots(1, 1, figsize=(3.45, 2.2))
     drawn, w0 = 0, None
     for (e, g, lab), col in zip(cfgs, cols):
-        c = rn.cell("rev_p8_drift", f"p8_a3star_e{e}{g}__long", ["rev_clean", "rev_clean_cloud"])
+        c = rn.cell("rev_p8_drift", f"p8_a3star_e{e}{g}__long", rn.CLEAN_ALL)
         if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
             continue
         a0 = c["pairs"][0][0]

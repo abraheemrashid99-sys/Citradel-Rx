@@ -46,6 +46,12 @@ Psychol. Rev. 102(3):419-457, 1995; Kumaran, Hassabis, McClelland, Trends Cogn. 
 Huber, Ann. Math. Statist. 35(1):73-101, 1964; 3GPP TR 38.901 V19.5.0 Table 7.4.1-1
 (UMi-Street Canyon LOS: PL1 = 32.4 + 21 log10(d3D) + 20 log10(fc) below the breakpoint).
 
+## Added in the second revision campaign
+
+3GPP TS 38.212 "NR; Multiplexing and channel coding", V19.2.0 (2025-12): Sec. 5.1 CRC calculation,
+Sec. 5.3.2 low density parity check coding (table of contents of the 3GPP draft record). The code
+blocks of the coded scene are built by Sionna PHY 2.2 (`LDPC5GEncoder`, `CRCEncoder("CRC24A")`).
+
 ## Items to check once by eye before submission
 
 * TR 38.901 V19.5.0, Table 7.4.1-1: the extracted PDF text was partly garbled; the coefficients

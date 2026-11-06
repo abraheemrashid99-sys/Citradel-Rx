@@ -60,13 +60,35 @@ def mkey(cfg: dict) -> str:
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 
+MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "windows": "windows"}
+
+
+CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win"]
+
+
+def machine(r: dict):
+    """Which machine ran a record: second-campaign records carry it; a first-campaign record is placed
+    by its folder (the cloud ran P4, the reference-degradation runs and the calibration; the MacBook
+    the rest)."""
+    if r.get("machine"):
+        return MACHINE_GROUP.get(r["machine"], r["machine"])
+    folder = os.path.basename(os.path.dirname(r.get("_file", "")))
+    return "cloud" if folder in CLOUD_V1 else "mac"
+
+
 def twins(clean_folders: List[str]) -> Dict[Tuple[str, int], dict]:
-    idx = {}
+    """(settings, seed) -> {machine: clean record}; a run is paired only with a twin from its own machine."""
+    idx: Dict[Tuple[str, int], dict] = {}
     for f in clean_folders:
         for r in load(f):
             if r["config"]["attack"]["type"] == "none":
-                idx[(mkey(r["config"]), r["seed"])] = r
+                idx.setdefault((mkey(r["config"]), r["seed"]), {})[machine(r)] = r
     return idx
+
+
+def twin_of(tw: Dict[Tuple[str, int], dict], a: dict) -> Optional[dict]:
+    return tw.get((mkey(a["config"]), a["seed"]), {}).get(machine(a))
 
 
 def window(r: dict) -> Tuple[int, int]:
@@ -76,8 +98,8 @@ def window(r: dict) -> Tuple[int, int]:
     return int(r["config"]["attack"]["start_block"]), int(r["config"]["attack"]["end_block"])
 
 
-def ser(r: dict) -> np.ndarray:
-    return np.array([b["ser"] for b in r["blocks"]], dtype=float)
+def ser(r: dict, metric: str = "ser") -> np.ndarray:
+    return np.array([b.get(metric, np.nan) for b in r["blocks"]], dtype=float)
 
 
 def rejections(r: dict, attacked: Optional[bool], skip: int = 5) -> Tuple[int, int]:
@@ -92,13 +114,13 @@ def rejections(r: dict, attacked: Optional[bool], skip: int = 5) -> Tuple[int, i
 
 
 # ------------------------------------------------------------------------------------ one cell
-def cell(folder: str, name: str, clean: List[str]) -> Optional[dict]:
-    """Attacked configuration `name` in `folder`, paired with its clean twins (same seed, settings)."""
+def cell(folder: str, name: str, clean: List[str], metric: str = "ser") -> Optional[dict]:
+    """Attacked configuration `name` in `folder`, paired with its clean twins (same seed, settings, machine)."""
     tw = twins(clean)
     prs = []
     for r in load(folder):
         if r["name"] == name and r["config"]["attack"]["type"] != "none":
-            c = tw.get((mkey(r["config"]), r["seed"]))
+            c = twin_of(tw, r)
             if c is not None:
                 prs.append((r, c))
     if not prs:
@@ -108,7 +130,7 @@ def cell(folder: str, name: str, clean: List[str]) -> Optional[dict]:
     k1 = n1 = k0 = n0 = 0
     for a, c in prs:
         w0, w1 = window(a)
-        sa, sc = ser(a), ser(c)
+        sa, sc = ser(a, metric), ser(c, metric)
         n = min(sa.size, sc.size)
         win.append(sa[w0:min(w1, n)] - sc[w0:min(w1, n)])
         post.append(sa[w1:min(w1 + 30, n)] - sc[w1:min(w1 + 30, n)])
@@ -128,7 +150,7 @@ def cell(folder: str, name: str, clean: List[str]) -> Optional[dict]:
             "clean_win": float(np.mean([x.mean() for x in cwin])), "seed_means": sm.tolist(), "decor": L, "boot_block": blk,
             "rej": (k1, n1), "frej": (k0, n0), "wilcoxon_p": st["wilcoxon_p"], "min_p": st["min_attainable_p"],
             "sign_p": st["sign_p"], "pairs": prs,
-            "clean_all": float(np.mean([ser(c)[5:].mean() for _, c in prs]))}
+            "clean_all": float(np.mean([ser(c, metric)[5:].mean() for _, c in prs]))}
 
 
 # ------------------------------------------------------------------------------------ formatting
@@ -208,7 +230,8 @@ def put_cell(prefix: str, c: Optional[dict]) -> None:
 
 
 NCOLS = {"p1": 9, "p1_paired": 6, "attacks": 6, "refdeg": 6, "deny": 7, "baselines": 5, "ablations": 6, "scenarios": 7,
-         "sensitivity": 7, "calibration": 7, "retention": 7}
+         "sensitivity": 6, "calibration": 7, "retention": 7,
+         "deny2": 7, "peruser": 6, "joint": 6, "umi": 7}
 
 
 def write_table(name: str, rows: List[str], pending: str = "runs pending") -> None:
@@ -224,7 +247,7 @@ CK = {"wb_sir-10": "wbm10", "wb_sir0": "wb0", "wb_sir10": "wb10", "tr_sir0": "tr
 
 
 def p1() -> None:
-    cells = {(rx, cl): cell("rev_p1", f"p1_{rx}__{cl}", ["rev_clean"]) for rx in P1RX for cl in P1CELLS}
+    cells = {(rx, cl): cell("rev_p1", f"p1_{rx}__{cl}", CLEAN_ALL) for rx in P1RX for cl in P1CELLS}
     rows = []
     for rx in P1RX:
         for cl in P1CELLS:
@@ -302,8 +325,11 @@ def adaptive() -> None:
             ("p3_citadel_pgd100_r5__sir10", "PGD 100 x 5, SIR 10 dB", "Citadel-Rx"),
             ("p3_citadel_M1__sir0", "Rank-1 physical", "Citadel-Rx"), ("p3_online_deepsic_M1__sir0", "Rank-1 physical", "Online DeepSIC"),
             ("p3_citadel_M2__sir0", "Rank-2 physical", "Citadel-Rx"), ("p3_online_deepsic_M2__sir0", "Rank-2 physical", "Online DeepSIC"),
-            ("p3_citadel_M2_csi0.1__sir0", "Rank-2, CSI error 0.1", "Citadel-Rx"),
-            ("p3_online_deepsic_M2_csi0.1__sir0", "Rank-2, CSI error 0.1", "Online DeepSIC"),
+            ("b1_citadel_M2_csi0.1__sir0", "Rank-2, CSI error 0.1", "Citadel-Rx"),
+            ("b1_online_deepsic_M2_csi0.1__sir0", "Rank-2, CSI error 0.1", "Online DeepSIC"),
+            ("b1_citadel_M2_csi0.01__sir0", "Rank-2, CSI error 0.01", "Citadel-Rx"),
+            ("b1_online_deepsic_M2_csi0.01__sir0", "Rank-2, CSI error 0.01", "Online DeepSIC"),
+            ("b1_citadel_M4__sir0", "Rank-4 physical", "Citadel-Rx"), ("b1_online_deepsic_M4__sir0", "Rank-4 physical", "Online DeepSIC"),
             ("p3_citadel_greybox__sir0", "Grey-box (Citadel-Rx surrogate)", "Citadel-Rx"),
             ("p3_citadel_query__sir0", "Query (NACK feedback)", "Citadel-Rx"), ("p3_online_deepsic_query__sir0", "Query (NACK feedback)", "Online DeepSIC"),
             ("p3_citadel_sigbudget__sir0", "Signal-referenced budget", "Citadel-Rx"),
@@ -311,8 +337,8 @@ def adaptive() -> None:
     rows, rng = [], {}
     for name, l1, l2 in spec:
         folder = "rev_p3_adaptive" if any(t in name for t in ("unroll", "softgate", "strongest", "pgd")) else \
-            ("rev_p3_phys" if "_M" in name else "rev_p3_know")
-        c = cell(folder, name, ["rev_clean"])
+            ("rev2_phys" if name.startswith("b1_") else ("rev_p3_phys" if "_M" in name else "rev_p3_know"))
+        c = cell(folder, name, CLEAN_ALL)
         put_cell("atk." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p3_", "")), c)
         if c is not None:
             rows.append(f"{l1} & {l2} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])} & {f_rate(c['rej'])}\\\\")
@@ -328,18 +354,23 @@ def adaptive() -> None:
 def refdeg() -> None:
     rows = []
     for a in ("0.25", "0.75"):
-        for ab in ("", "_abstain"):
-            name = f"p3_a4_a{a}{ab}__sir0"
-            c = cell("rev_p3_refdeg", name, ["rev_clean_cloud"])
-            put_cell("a4." + a.replace(".", "") + ab.replace("_", ""), c)
+        variants = [("rev_p3_refdeg", f"p3_a4_a{a}__sir0", "--", "a4." + a.replace(".", "")),
+                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain v1", "a4." + a.replace(".", "") + "abstain"),
+                    ("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", "abstain v2", None)]
+        if a == "0.25":
+            variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
+        for folder, name, state, key in variants:
+            c = cell(folder, name, CLEAN_ALL)
+            if key:
+                put_cell(key, c)
             if c is not None:
-                rows.append(f"$\\alpha={a}$ & {'abstain' if ab else '--'} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
+                rows.append(f"$\\alpha={a}$ & {state} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
                             f"{f_ser(c['raw'])} & {f_rate(c['rej'])}\\\\")
         jam = [r for r in load("rev_p3_refdeg") if r["name"] == f"p3_jamctl_a{a}__sir0"]
-        tw = twins(["rev_clean_cloud"])
+        tw = twins(CLEAN_ALL)
         ex = []
         for r in jam:
-            c = tw.get((mkey(r["config"]), r["seed"]))
+            c = twin_of(tw, r)
             if c is not None:
                 w0, w1 = window(r)
                 ex.append(float(np.mean(ser(r)[w0:w1] - ser(c)[w0:w1])))
@@ -393,17 +424,17 @@ def baselines() -> None:
              "cotta_deepsic", "eata_deepsic", "drift_deepsic", "titans_single", "medbn_deepsic"]
     rows = []
     for rx in names:
-        c = cell("rev_p2", f"p2_{rx}__wb_sir0", ["rev_clean"])
+        c = cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL)
         put_cell("p2." + rx.replace("_", ""), c)
         if c is not None:
             rows.append(f"{RXLABEL[rx]} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])}\\\\")
-    exs = [cell("rev_p2", f"p2_{rx}__wb_sir0", ["rev_clean"]) for rx in names]
+    exs = [cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL) for rx in names]
     exs = [c for c in exs if c is not None]
     if exs:
         put("p2.exmin", f_sig(min(c["excess"] for c in exs))); put("p2.exmax", f_sig(max(c["excess"] for c in exs)))
         put("p2.n", str(len(exs)))
     for w in ("0.001", "0.1", "1"):
-        c = cell("rev_p2", f"p2_l2sp_w{w}__wb_sir0", ["rev_clean"])
+        c = cell("rev_p2", f"p2_l2sp_w{w}__wb_sir0", CLEAN_ALL)
         put_cell("p2.l2spw" + w.replace(".", ""), c)
         if c is not None:
             rows.append(f"L2-SP, weight {w} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])}\\\\")
@@ -415,7 +446,7 @@ def ablations() -> None:
            ("g1", "G1 only"), ("g2", "G2 only"), ("g3", "G3 only"), ("no_anchor", "No anchor ($\\lambda=0$)"),
            ("no_fallback", "No fallback"), ("no_select", "No CRC selection"), ("no_clip", "No consolidation clip")]
     rows = []
-    ref = cell("rev_p1", "p1_citadel__wb_sir0", ["rev_clean"])
+    ref = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL)
     if ref is not None:
         sel = [p for p in ref["pairs"] if p[0]["seed"] in (10, 11)]
         if sel:
@@ -427,7 +458,7 @@ def ablations() -> None:
             put("ab.complete.clean", f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))); put("ab.complete.excess", f_sig(ex))
             put("ab.complete.rej", f_rate((k1, n1))); put("ab.complete.frej", f_rate((k0, n0)))
     for tag, l in lab:
-        c = cell("rev_p5_ablate", f"p5_{tag}__wb_sir0", ["rev_clean"])
+        c = cell("rev_p5_ablate", f"p5_{tag}__wb_sir0", CLEAN_ALL)
         put_cell("ab." + tag.replace("_", ""), c)
         if c is not None:
             rows.append(f"{l} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {f_rate(c['frej'])}\\\\")
@@ -444,19 +475,22 @@ def scenarios() -> None:
     for rx in ("citadel", "online_deepsic", "lmmse"):
         spec.append(("rev_p6_arrays", f"p6_{rx}_4x16__sir0", "$U\\times N=4\\times16$", RXLABEL[rx]))
     for rx in ("citadel", "online_deepsic", "lmmse"):
+        spec.append(("rev2_arrays", f"d4_{rx}_8x32__sir0", "$U\\times N=8\\times32$", RXLABEL[rx]))
+    for rx in ("citadel", "online_deepsic", "lmmse"):
         spec.append(("rev_p6_qam16", f"p6_{rx}_qam16__sir0", "16-QAM, 20 dB", RXLABEL[rx]))
     spec += [("rev_p6_deploy", "p6_citadel_steps30__sir0", "30 fast steps", "Citadel-Rx"),
              ("rev_p6_deploy", "p6_citadel_last_layer__sir0", "last layer adaptable", "Citadel-Rx")]
     bl = {}
     for folder, name, l1, l2 in spec:
-        c = cell(folder, name, ["rev_clean"])
-        put_cell("sc." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p6_", "").split("__")[0]), c)
+        c = cell(folder, name, CLEAN_ALL)
+        put_cell("sc." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p6_", "").replace("d4_", "").split("__")[0]), c)
         if c is not None and folder == "rev_p6_blocklen":
             bl.setdefault("cit" if "citadel" in name else "onl", []).append(c)
         if c is not None:
-            mt = np.mean([np.mean([b["t_rx"] for b in a["blocks"]]) for a, _ in c["pairs"]])
+            mac = [a for a, _ in c["pairs"] if machine(a) == "mac"]
+            mt = np.mean([np.mean([b["t_rx"] for b in a["blocks"]]) for a in mac]) if mac else float("nan")
             rows.append(f"{l1} & {l2} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
-                        f"{f_rate(c['rej']) if l2 == 'Citadel-Rx' else '--'} & {mt:.1f}\\\\")
+                        f"{f_rate(c['rej']) if l2 == 'Citadel-Rx' else '--'} & {'--' if not np.isfinite(mt) else f'{mt:.1f}'}\\\\")
     for g, cs in bl.items():
         put(f"sc.bl.{g}exmin", f_sig(min(c["excess"] for c in cs))); put(f"sc.bl.{g}exmax", f_sig(max(c["excess"] for c in cs)))
         put(f"sc.bl.{g}rejmin", f_rate(min((c["rej"] for c in cs), key=lambda kn: kn[0] / max(1, kn[1]))))
@@ -464,25 +498,30 @@ def scenarios() -> None:
 
 
 def sensitivity() -> None:
+    """E5: one setting at a time at x0.5, x0.75, x1.5 and x2 (seed 10; x0.5 and x2 from the first campaign)."""
     allc = []
     pars = [("g1_slack", "G1 slack $\\tau_1-1$"), ("g3_slack", "G3 slack $\\tau_3-1$"), ("tighten", "tightening $1-$floor"),
             ("soft_width", "soft-step width"), ("prox_lambda", "proximal weight $\\lambda$"), ("delta", "delta decay $\\delta$"),
             ("crc_rel", "CRC relative slack $\\rho$"), ("eta3", "level-3 rate $\\eta^{(3)}$")]
     rows = []
     for p, l in pars:
-        cs = [cell("rev_p7_sens", f"p7_{p}_x{m}__wb_sir0", ["rev_clean"]) for m in ("0.5", "2")]
+        cs = [cell("rev_p7_sens", f"p7_{p}_x{m}__wb_sir0", CLEAN_ALL) for m in ("0.5", "0.75", "1.5", "2")]
         if all(c is None for c in cs):
             continue
-        parts = []
-        for c in cs:
-            parts += ["--"] * 3 if c is None else [f_ser(c["clean_all"]), f_sig(c["excess"]), f_rate(c["frej"])]
-        rows.append(f"{l} & " + " & ".join(parts) + "\\\\")
+        fr = [c["frej"][0] / max(1, c["frej"][1]) for c in cs if c is not None]
+        rows.append(f"{l} & " + " & ".join("--" if c is None else f_sig(c["excess"]) for c in cs) + f" & {max(fr):.3f}\\\\")
         allc += [(c, l) for c in cs if c is not None]
     if allc:
         put("sens.exmin", f_sig(min(c["excess"] for c, _ in allc))); put("sens.exmax", f_sig(max(c["excess"] for c, _ in allc)))
         put("sens.cleanmin", f_ser(min(c["clean_all"] for c, _ in allc))); put("sens.cleanmax", f_ser(max(c["clean_all"] for c, _ in allc)))
         cmax, lmax = max(allc, key=lambda cl: cl[0]["frej"][0] / max(1, cl[0]["frej"][1]))
         put("sens.frejmax", f_rate(cmax["frej"])); put("sens.n", str(len(allc)))
+    grid = [cell("rev2_sens_grid", f"grid_crc{m1}_g1{m2}__wb_sir0", CLEAN_ALL) for m1 in ("0.5", "2") for m2 in ("0.5", "2")]
+    grid = [c for c in grid if c is not None]
+    if grid:   # two settings changed together (corners of CRC slack x G1 slack)
+        put("sens.grid.n", str(len(grid)))
+        put("sens.grid.exmin", f_sig(min(c["excess"] for c in grid))); put("sens.grid.exmax", f_sig(max(c["excess"] for c in grid)))
+        put("sens.grid.frejmax", f"{max(c['frej'][0] / max(1, c['frej'][1]) for c in grid):.3f}")
     write_table("sensitivity", rows)
 
 
@@ -525,12 +564,14 @@ def retention() -> None:
     specs = [("rev_p4_paired", f"p4_citadel__sir{s}", f"A1, SIR {s} dB", f"ret.p4sir{s}") for s in (0, 10)] + \
         [("rev_p8_drift", f"p8_a3star_e{e}{g}__long", f"A3$^\\ast$, {int(float(e) * 100)}\\%" + (", guard" if g else ""),
           "ret.p8e" + e.replace(".", "") + g.replace("_", ""))
-         for e, g in (("0.05", ""), ("0.2", ""), ("0.5", ""), ("0.5", "_guard"))]
+         for e, g in (("0.05", ""), ("0.2", ""), ("0.5", ""), ("0.5", "_guard"))] + \
+        [("rev2_drift_guard", "h5_a3star_e0.05_guard__long", "A3$^\\ast$, 5\\%, guard", "ret.h5"),
+         ("rev2_drift_long", "b5_a3star_e0.05__long1000", "A3$^\\ast$, 5\\%, 900 blocks", "ret.b5")]
     for folder, name, lab, key in specs:
         # P4 ran on the cloud machine, P8 on the laptop (after the cloud machine was stopped)
-        c = cell(folder, name, ["rev_clean", "rev_clean_cloud"])
+        c = cell(folder, name, CLEAN_ALL)
         put_cell(key, c)
-        if c is not None and folder == "rev_p8_drift":   # perturbation norm relative to the received pilots
+        if c is not None and folder in ("rev_p8_drift", "rev2_drift_guard", "rev2_drift_long"):   # norm relative to the pilots
             e = float(c["pairs"][0][0]["config"]["attack"]["a3_eps_small"])
             put(key + ".sir", f"{-20 * np.log10(e):.0f}")
         if c is None:
@@ -579,7 +620,7 @@ def extras() -> None:
     # when the first poisoned block is accepted, and whether the receiver recovers after the window
     for rx, tag in (("crc_rollback", "crc"), ("citadel", "cit"), ("rollback_allgates", "rag")):
         folder, nm = ("rev_p2", f"p2_{rx}__wb_sir0") if rx == "rollback_allgates" else ("rev_p1", f"p1_{rx}__wb_sir0")
-        c = cell(folder, nm, ["rev_clean"])
+        c = cell(folder, nm, CLEAN_ALL)
         if c is None:
             continue
         first0 = nacc = acc = att = 0
@@ -601,7 +642,7 @@ def extras() -> None:
         put(k + ".acc", f"{acc}/{att}"); put(k + ".postrej", f"{np.mean(postrej):.2f}")
         put(k + ".refatt", f"{np.mean(refA):.2f}"); put(k + ".refcln", f"{np.mean(refC):.2f}")
         put(k + ".nnatt", f"{np.mean(nnA):.2f}"); put(k + ".endex", f_sig(float(np.mean(endex))))
-    c = cell("rev_p1", "p1_citadel__wb_sir0", ["rev_clean"])
+    c = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL)
     if c is not None:
         att = [b for a, _ in c["pairs"] for b in a["blocks"] if b.get("attacked")]
         for g in ("g1", "g2", "g3"):   # share of the poisoned blocks each gate rejects on its own
@@ -630,18 +671,19 @@ def extras() -> None:
             if inc:
                 put(f"clip.calmax{lev}", f"{max(inc):.1f}"); put(f"clip.calp99{lev}", f"{np.percentile(inc, 99):.1f}")
     # where the clean-SER gain comes from: online DeepSIC -> + CRC selection -> Citadel-Rx (10 seeds)
-    cs = {rx: cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"]) for rx in P1RX}
+    cs = {rx: cell("rev_p1", f"p1_{rx}__wb_sir0", CLEAN_ALL) for rx in P1RX}
     if all(cs[rx] is not None for rx in ("citadel", "online_deepsic", "online_select")):
         o, sl, ci = (cs[rx]["clean_all"] for rx in ("online_deepsic", "online_select", "citadel"))
         put("sel.share", f"{100 * (o - sl) / (o - ci):.0f}")
-    for rx, cc in cs.items():   # wall time per block of one single-threaded run (clean twins)
+    for rx, cc in cs.items():   # wall time per block of one single-threaded run (clean twins, MacBook)
         if cc is not None:
-            put("time." + rx.replace("_", ""), f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs']]):.2f}")
+            put("time." + rx.replace("_", ""),
+                f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs'] if machine(cl) == 'mac']):.2f}")
     for folder, nm, k in (("rev_p2", "p2_lmmse__wb_sir0", "lmmse"), ("rev_p6_deploy", "p6_citadel_steps30__sir0", "steps30"),
                           ("rev_p6_deploy", "p6_citadel_last_layer__sir0", "lastlayer")):
-        cc = cell(folder, nm, ["rev_clean"])
+        cc = cell(folder, nm, CLEAN_ALL)
         if cc is not None:
-            put("time." + k, f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs']]):.2f}")
+            put("time." + k, f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs'] if machine(cl) == 'mac']):.2f}")
     # jamming at the same SIR covers the data symbols: energy ratio to pilot poisoning
     r0 = next(iter(load("rev_p1")), None)
     if r0 is not None:
@@ -653,7 +695,7 @@ def extras() -> None:
         thr = 0.4 * np.log(4)
         put("eata.maxent", f"{max(ents):.2f}"); put("eata.thr", f"{thr:.2f}"); put("eata.nfilt", str(sum(e > thr for e in ents)))
     # 16-QAM: clean blocks, CRC pass fraction of the network against the reference
-    cq = cell("rev_p6_qam16", "p6_citadel_qam16__sir0", ["rev_clean"])
+    cq = cell("rev_p6_qam16", "p6_citadel_qam16__sir0", CLEAN_ALL)
     if cq is not None:
         cb = [b for _, cl in cq["pairs"] for b in cl["blocks"][5:]]
         put("qam.passnn", f"{np.mean([b['pass_nn'] for b in cb]):.2f}"); put("qam.passref", f"{np.mean([b['pass_mm'] for b in cb]):.2f}")
@@ -674,7 +716,7 @@ def extras() -> None:
         put("abs.rejk", f"{nrej}/{nall}")
     # A4: the reference the gates compare against, attacked blocks against the clean twin
     for a in ("0.25", "0.75"):
-        ca = cell("rev_p3_refdeg", f"p3_a4_a{a}__sir0", ["rev_clean_cloud"])
+        ca = cell("rev_p3_refdeg", f"p3_a4_a{a}__sir0", CLEAN_ALL)
         if ca is not None:
             put("a4." + a.replace(".", "") + ".refatt", f"{np.mean([b['pass_mm'] for x, _ in ca['pairs'] for b in x['blocks'] if b.get('attacked')]):.2f}")
             put("a4." + a.replace(".", "") + ".refcln", f"{np.mean([b['pass_mm'] for x, cl in ca['pairs'] for b in cl['blocks'][window(x)[0]:window(x)[1]]]):.2f}")
@@ -716,6 +758,133 @@ def lipschitz() -> None:
         put("lip.lammin", f"{min(sums):g}"); put("lip.lammax", f"{max(sums):g}")
 
 
+def campaign2() -> None:
+    """Second campaign: experiments added to close the audit items."""
+    # B2 at full strength: A4 with 20 PGD steps
+    c = cell("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", CLEAN_ALL)
+    put_cell("b2.a4pgd20", c)
+    # H3, second version: abstain on the residual-ratio statistic, frozen threshold
+    fz = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
+    if os.path.exists(fz):
+        f = json.load(open(fz))
+        put("h3.z", f"{f['chosen_z']:g}"); put("h3.calrate", f"{100 * f['clean_abstention_rate'][str(f['chosen_z'])]:.1f}")
+        put("h3.calmax", f"{f['max_abs_dev']:.1f}")
+    for a in ("0.25", "0.75"):
+        put_cell("h3.a4" + a.replace(".", ""), cell("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", CLEAN_ALL))
+    put_cell("h3.a1", cell("rev2_abstain", "h3_a1_ratio__sir0", CLEAN_ALL))
+    for tag in ("redraw", "snrdrop"):   # legitimate changes: blocks abstained after the change, SER after it
+        recs = [r for r in load("rev2_abstain") if r["name"] == f"h3_ratio_{tag}__none"]
+        if recs:
+            ab = [sum(bool(b.get("abstain")) for b in r["blocks"][50:]) for r in recs]
+            put(f"h3.{tag}.abst", f"{np.mean(ab):.1f}"); put(f"h3.{tag}.abstmax", str(max(ab)))
+            put(f"h3.{tag}.after", f_ser(float(np.mean([ser(r)[50:].mean() for r in recs])))); put(f"h3.{tag}.n", str(len(recs)))
+    # B3/H4 as intended: strong poisoning (A1 at SIR 0 dB) on blocks 40-89 while the channel is redrawn at block 50
+    rows, recs = [], load("rev2_deny_a1")
+    lab = {"citadel": "Citadel-Rx", "citadel_streak": "+ streak recovery", "online_deepsic": "Online DeepSIC", "lmmse": "LMMSE"}
+    for rx in ("citadel", "citadel_streak", "online_deepsic", "lmmse"):
+        none = {r["seed"]: r for r in recs if r["name"] == f"b3_{rx}_redraw__none"}
+        den = {r["seed"]: r for r in recs if r["name"] == f"b3_{rx}_redraw__a1deny"}
+        sd = sorted(set(none) & set(den))
+        if not sd:
+            continue
+        k = "b3." + rx.replace("_", "")
+        win = float(np.mean([(ser(den[i])[40:90] - ser(none[i])[40:90]).mean() for i in sd]))
+        post = float(np.mean([(ser(den[i])[90:] - ser(none[i])[90:]).mean() for i in sd]))
+        after = float(np.mean([ser(none[i])[50:].mean() for i in sd]))
+        rj = [rejections(den[i], True, skip=0) for i in sd]
+        rjk = (sum(x for x, _ in rj), sum(y for _, y in rj))
+        att = sum("recovery_pass" in b for i in sd for b in den[i]["blocks"])
+        acc = sum(bool(b.get("recovered")) for i in sd for b in den[i]["blocks"])
+        put(k + ".n", str(len(sd))); put(k + ".win", f_sig(win)); put(k + ".post", f_sig(post)); put(k + ".after", f_ser(after))
+        put(k + ".rej", f_rate(rjk) if rjk[1] else "--"); put(k + ".att", str(att)); put(k + ".acc", str(acc))
+        rows.append(f"{lab[rx]} & {len(sd)} & {f_rate(rjk) if rjk[1] and rx.startswith('citadel') else '--'} & {f_ser(after)} & "
+                    f"{f_sig(win)} & {f_sig(post)} & {f'{att}/{acc}' if rx == 'citadel_streak' else '--'}\\\\")
+    write_table("deny2", rows)
+    # H7: per-user gating against a single-user attack (A2, target user 0) and against A1
+    rows = []
+    spec = [("h7_citadel__a2", "A2 (user 1)", "Citadel-Rx"), ("h7_citadel_peruser__a2", "A2 (user 1)", "+ per-user gating"),
+            ("h7_online_deepsic__a2", "A2 (user 1)", "Online DeepSIC"), ("h7_citadel__a1", "A1", "Citadel-Rx"),
+            ("h7_citadel_peruser__a1", "A1", "+ per-user gating")]
+    for name, l1, l2 in spec:
+        c = cell("rev2_peruser", name, CLEAN_ALL)
+        key = "h7." + re.sub(r"[^A-Za-z0-9]", "", name.replace("h7_", ""))
+        put_cell(key, c)
+        if c is None:
+            continue
+        tgt = float(np.mean([np.mean([b["ser_user"][0] for b in a["blocks"][window(a)[0]:window(a)[1]]])
+                             - np.mean([b["ser_user"][0] for b in cl["blocks"][window(a)[0]:window(a)[1]]]) for a, cl in c["pairs"]]))
+        put(key + ".tgt", f_sig(tgt))
+        rows.append(f"{l1} & {l2} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_sig(tgt)} & "
+                    f"{f_rate(c['rej']) if 'Citadel' in l2 or 'per-user' in l2 else '--'}\\\\")
+    write_table("peruser", rows)
+    # D8: the second backbone (joint-symbol detector) under white-box A1 at SIR 0 dB
+    fz = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
+    if os.path.exists(fz):
+        f = json.load(open(fz))
+        put("d8.tuned", f["chosen"].replace("_", ", ").replace("ep", "").replace("lr", "learning rate ") + " epochs")
+    rows = []
+    for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback")):
+        c = cell("rev2_joint", f"d8_{rx}_joint__wb_sir0", CLEAN_ALL)
+        put_cell("d8." + rx.replace("_", ""), c)
+        if c is not None:
+            rows.append(f"{l} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
+                        f"{f_rate(c['rej']) if rx != 'online_deepsic' else '--'} & {f_rate(c['frej']) if rx != 'online_deepsic' else '--'}\\\\")
+    write_table("joint", rows)
+    # D2/D3: NR LDPC code blocks over 38.901 UMi channels, attacker at 35, 75 and 150 m
+    rows = []
+    summ = os.path.join(ROOT, "resources", "umi", "summary.json")
+    sirs = json.load(open(summ)) if os.path.exists(summ) else []
+    for d in (35, 75, 150):
+        sd = [x["sir_db"] for x in sirs if x["d_att"] == d]
+        if sd:
+            put(f"d23.d{d}.sirmed", f"{np.median(sd):+.0f}"); put(f"d23.d{d}.sirmin", f"{min(sd):+.0f}"); put(f"d23.d{d}.sirmax", f"{max(sd):+.0f}")
+        for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback"), ("lmmse", "LMMSE")):
+            cb = cell("rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", CLEAN_ALL, metric="bler")
+            cs = cell("rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", CLEAN_ALL)
+            key = f"d23.{rx.replace('_', '')}.d{d}"
+            put_cell(key, cs)
+            put_cell(key + "bler", cb)
+            if cb is None:
+                continue
+            first = f"{d}\\,m ({np.median(sd):+.0f}\\,dB)" if (rx == "citadel" and sd) else ""
+            rows.append(f"{first} & {l} & {cb['n']} & {f_ser(cb['clean_all'])} & {f_sig(cb['excess'])} {f_ci(cb['ci'])} & "
+                        f"{f_sig(cs['excess'])} & {f_rate(cs['rej']) if rx in ('citadel', 'crc_rollback') else '--'}\\\\")
+    write_table("umi", rows)
+    # D4: the 8 x 32 array (rows added to the scenarios table by scenarios())
+    # D7: 2000-block clean horizon
+    for rx in ("citadel", "online_deepsic"):
+        recs = [r for r in load("rev2_long_clean") if r["name"] == f"d7_{rx}__clean2000"]
+        if recs:
+            k = "d7." + rx.replace("_", "")
+            s_ = [ser(r) for r in recs]
+            put(k + ".n", str(len(recs))); put(k + ".ser", f_ser(float(np.mean([x[5:].mean() for x in s_]))))
+            put(k + ".first", f_ser(float(np.mean([x[5:500].mean() for x in s_]))))
+            put(k + ".last", f_ser(float(np.mean([x[-500:].mean() for x in s_]))))
+            if rx == "citadel":
+                fr = [rejections(r, None, skip=5) for r in recs]
+                put(k + ".frej", f_rate((sum(a for a, _ in fr), sum(b for _, b in fr))))
+                put(k + ".frejk", f"{sum(a for a, _ in fr)}/{sum(b for _, b in fr)}")
+                late = [rejections({"blocks": r["blocks"][-500:]}, None, skip=0) for r in recs]
+                put(k + ".frejlast", f_rate((sum(a for a, _ in late), sum(b for _, b in late))))
+    # A6: stronger Lipschitz estimates (hill-climbing input gain, per channel family)
+    fn = os.path.join(ROOT, "docs", "lipschitz_strong.json")
+    if os.path.exists(fn):
+        res = json.load(open(fn))["results"]
+        for r in res:
+            k = "lip2." + r["family"].replace("cost2100", "cost")
+            put(k + ".sum", f"{r['L_sum_max']:.2f}"); put(k + ".lt", f"{r['L_theta']['max']:.2f}"); put(k + ".la", f"{r['L_a']['max']:.2f}")
+            put(k + ".g", f"{r['G_Phi']['max']:.2f}")
+        put("lip2.summin", f"{min(r['L_sum_max'] for r in res):.2f}"); put("lip2.summax", f"{max(r['L_sum_max'] for r in res):.2f}")
+    # D9: multiply-accumulates per block (scripts/flops.py)
+    fn = os.path.join(ROOT, "docs", "flops.json")
+    if os.path.exists(fn):
+        fl = json.load(open(fn))["4x4_qpsk"]
+        for rx, r in fl.items():
+            put("flops." + rx.replace("_", ""), f"{r['total'] / 1e9:.1f}")
+        put("flops.ratio", f"{fl['citadel']['total'] / fl['online_deepsic']['total']:.1f}")
+        put("flops.trainshare", f"{100 * fl['citadel']['train'] / fl['citadel']['total']:.0f}")
+
+
 def campaign_size() -> None:
     n = 0
     for d in glob.glob(os.path.join(RES, "rev_*")):
@@ -726,7 +895,7 @@ def campaign_size() -> None:
 def main() -> None:
     for name in NCOLS:   # every table file exists, so the paper always compiles
         write_table(name, [])
-    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras(); g1_mismatch(); lipschitz()
+    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras(); g1_mismatch(); lipschitz(); campaign2()
     campaign_size()
     lines = ["% generated by scripts/revision_numbers.py -- do not edit",
              "\\makeatletter"]
