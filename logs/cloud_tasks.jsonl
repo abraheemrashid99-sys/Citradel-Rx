@@ -121,3 +121,16 @@
 {"shard": "cloud", "tier": 1, "group": "P4", "out": "rev_p4_paired", "name": "p4_citadel__sir10", "seed": 11, "ok": true, "seconds": 1.8, "finished": "2026-11-06T08:47:06.767648+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P4", "out": "rev_p4_paired", "name": "p4_citadel__sir10", "seed": 12, "ok": true, "seconds": 1.9, "finished": "2026-11-06T08:47:07.161033+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25__sir0", "seed": 10, "ok": true, "seconds": 1.8, "finished": "2026-11-06T08:47:07.218780+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25__sir0", "seed": 11, "ok": true, "seconds": 1.8, "finished": "2026-11-06T08:47:08.616543+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_0b811be896", "seed": 10, "ok": true, "seconds": 1.7, "finished": "2026-11-06T08:47:08.930593+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_0b811be896", "seed": 11, "ok": true, "seconds": 1.7, "finished": "2026-11-06T08:47:08.951279+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25_abstain__sir0", "seed": 10, "ok": true, "seconds": 1.7, "finished": "2026-11-06T08:47:10.274816+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_6ab41a151b", "seed": 10, "ok": true, "seconds": 1.6, "finished": "2026-11-06T08:47:10.563691+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_6ab41a151b", "seed": 11, "ok": true, "seconds": 1.8, "finished": "2026-11-06T08:47:12.107110+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.25__sir0", "seed": 10, "ok": true, "seconds": 455.9, "finished": "2026-11-06T08:54:46.425079+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.25__sir0", "seed": 11, "ok": true, "seconds": 459.8, "finished": "2026-11-06T08:54:50.591503+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25_abstain__sir0", "seed": 11, "ok": true, "seconds": 1869.4, "finished": "2026-11-06T09:18:18.340681+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75__sir0", "seed": 10, "ok": true, "seconds": 1934.6, "finished": "2026-11-06T09:19:26.752686+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75_abstain__sir0", "seed": 10, "ok": true, "seconds": 1821.5, "finished": "2026-11-06T09:25:12.073922+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75__sir0", "seed": 11, "ok": true, "seconds": 1862.3, "finished": "2026-11-06T09:25:48.734315+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.75__sir0", "seed": 10, "ok": true, "seconds": 439.1, "finished": "2026-11-06T09:26:45.888521+00:00"}

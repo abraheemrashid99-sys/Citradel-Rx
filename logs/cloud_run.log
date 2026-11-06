@@ -132,3 +132,17 @@ pushed results to GitHub (07:54)
 [36 done, ~20 left | 0.0 h, ~0.0 h to go at this pace] t1 P4 p4_citadel__sir10 s12 OK 0 min  == p4_citadel__sir10 seed 12: exists, skipped (results/rev_p4_paired/p4_citadel__sir10_s12_bab27f7112d4.json)
 [37 done, ~19 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s10 OK 0 min  == p3_a4_a0.25__sir0 seed 10: exists, skipped (results/rev_p3_refdeg/p3_a4_a0.25__sir0_s10_575f7e05a94c.json)
 Citadel-Rx frozen: rel_select_clip {'rel_select_clip': 0.01329, 'derived_select_clip': 0.01414, 'rel_select_clip_anchorstart': 0.01627}
+[38 done, ~18 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s11 OK 0 min  == p3_a4_a0.25__sir0 seed 11: exists, skipped (results/rev_p3_refdeg/p3_a4_a0.25__sir0_s11_298c054d6c87.json)
+[39 done, ~17 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg clean_0b811be896 s10 OK 0 min  == clean_0b811be896 seed 10: exists, skipped (results/rev_clean_cloud/clean_0b811be896_s10_ddd0022e34fa.json)
+[40 done, ~16 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg clean_0b811be896 s11 OK 0 min  == clean_0b811be896 seed 11: exists, skipped (results/rev_clean_cloud/clean_0b811be896_s11_103d74de550d.json)
+[41 done, ~15 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg p3_a4_a0.25_abstain__sir0 s10 OK 0 min  == p3_a4_a0.25_abstain__sir0 seed 10: exists, skipped (results/rev_p3_refdeg/p3_a4_a0.25_abstain__sir0_s10_20661b34f9c2.json)
+[42 done, ~14 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg clean_6ab41a151b s10 OK 0 min  == clean_6ab41a151b seed 10: exists, skipped (results/rev_clean_cloud/clean_6ab41a151b_s10_a00237a60e01.json)
+pushed results to GitHub (08:47)
+[43 done, ~13 left | 0.0 h, ~0.0 h to go at this pace] t1 P3refdeg clean_6ab41a151b s11 OK 0 min  == clean_6ab41a151b seed 11: exists, skipped (results/rev_clean_cloud/clean_6ab41a151b_s11_290e52ae8e04.json)
+[44 done, ~12 left | 0.1 h, ~0.0 h to go at this pace] t1 P3refdeg p3_jamctl_a0.25__sir0 s10 OK 8 min  == p3_jamctl_a0.25__sir0 seed 10: ser_mean=0.3292 ser_median=0.0341 ser_pre=0.0238 ser_attack=0.7966 ser_post=0.0121
+[45 done, ~11 left | 0.1 h, ~0.0 h to go at this pace] t1 P3refdeg p3_jamctl_a0.25__sir0 s11 OK 8 min  == p3_jamctl_a0.25__sir0 seed 11: ser_mean=0.3304 ser_median=0.0356 ser_pre=0.0226 ser_attack=0.7990 ser_post=0.0122
+[46 done, ~8 left | 0.5 h, ~0.1 h to go at this pace] t1 P3refdeg p3_a4_a0.25_abstain__sir0 s11 OK 31 min  == p3_a4_a0.25_abstain__sir0 seed 11: ser_mean=0.0402 ser_median=0.0236 ser_pre=0.0483 ser_attack=0.0456 ser_post=0.0223
+[47 done, ~7 left | 0.5 h, ~0.1 h to go at this pace] t1 P3refdeg p3_a4_a0.75__sir0 s10 OK 32 min  == p3_a4_a0.75__sir0 seed 10: ser_mean=0.0270 ser_median=0.0162 ser_pre=0.0238 ser_attack=0.0411 ser_post=0.0121
+[48 done, ~4 left | 0.6 h, ~0.1 h to go at this pace] t1 P3refdeg p3_a4_a0.75_abstain__sir0 s10 OK 30 min  == p3_a4_a0.75_abstain__sir0 seed 10: ser_mean=0.0377 ser_median=0.0213 ser_pre=0.0481 ser_attack=0.0452 ser_post=0.0192
+[49 done, ~3 left | 0.7 h, ~0.0 h to go at this pace] t1 P3refdeg p3_a4_a0.75__sir0 s11 OK 31 min  == p3_a4_a0.75__sir0 seed 11: ser_mean=0.0293 ser_median=0.0160 ser_pre=0.0226 ser_attack=0.0458 ser_post=0.0130
+[50 done, ~2 left | 0.7 h, ~0.0 h to go at this pace] t1 P3refdeg p3_jamctl_a0.75__sir0 s10 OK 7 min  == p3_jamctl_a0.75__sir0 seed 10: ser_mean=0.2047 ser_median=0.0341 ser_pre=0.0238 ser_attack=0.4855 ser_post=0.0119
