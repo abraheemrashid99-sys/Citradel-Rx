@@ -21,3 +21,5 @@
 {"shard": "pool3", "tier": 1, "group": "P3refdeg", "out": "rev_clean_pool3", "name": "clean_0b811be896", "seed": 12, "ok": true, "seconds": 889.8, "finished": "2026-11-06T20:12:51.993698+00:00"}
 {"shard": "pool3", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.25__sir0", "seed": 12, "ok": true, "seconds": 896.4, "finished": "2026-11-06T20:15:10.852402+00:00"}
 {"shard": "pool3", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.75__sir0", "seed": 12, "ok": true, "seconds": 903.6, "finished": "2026-11-06T20:17:46.921881+00:00"}
+{"shard": "pool3", "tier": 1, "group": "D8", "out": "rev_clean_pool3", "name": "clean_c1416e9241", "seed": 12, "ok": true, "seconds": 2685.2, "finished": "2026-11-06T20:21:29.098474+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P3phys", "out": "rev_p3_phys", "name": "p3_citadel_M1__sir0", "seed": 12, "ok": true, "seconds": 548.6, "finished": "2026-11-06T20:22:00.593725+00:00"}
