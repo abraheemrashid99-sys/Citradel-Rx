@@ -154,3 +154,5 @@
 {"shard": "pool3", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_lmmse_redraw__none", "seed": 10, "ok": true, "seconds": 1.9, "finished": "2026-11-06T22:33:56.674220+00:00"}
 {"shard": "pool3", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_lmmse_redraw__a1deny", "seed": 10, "ok": true, "seconds": 1.8, "finished": "2026-11-06T22:33:57.855370+00:00"}
 {"shard": "pool3", "tier": 1, "group": "D23", "out": "rev_clean_pool3", "name": "clean_59f668f264", "seed": 10, "ok": true, "seconds": 2.0, "finished": "2026-11-06T22:33:58.665640+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__jam", "seed": 13, "ok": true, "seconds": 2895.4, "finished": "2026-11-06T23:21:49.067894+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P1", "out": "rev_clean_pool3", "name": "clean_1950a64849", "seed": 13, "ok": true, "seconds": 2989.4, "finished": "2026-11-06T23:23:22.519743+00:00"}
