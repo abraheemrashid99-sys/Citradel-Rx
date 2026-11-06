@@ -296,3 +296,7 @@ pushed results to GitHub (22:22)
 [286 done, ~30 left | 7.2 h, ~0.8 h to go at this pace] t3 P7 p7_prox_lambda_x0.75__wb_sir0 s10 OK 10 min  == p7_prox_lambda_x0.75__wb_sir0 seed 10: ser_mean=0.0202 ser_median=0.0140 ser_pre=0.0235 ser_attack=0.0244 ser_post=0.0120
 [287 done, ~29 left | 7.3 h, ~0.7 h to go at this pace] t3 P7 p7_delta_x0.75__wb_sir0 s10 OK 10 min  == p7_delta_x0.75__wb_sir0 seed 10: ser_mean=0.0200 ser_median=0.0136 ser_pre=0.0238 ser_attack=0.0242 ser_post=0.0116
 [288 done, ~28 left | 7.3 h, ~0.7 h to go at this pace] t3 P7 clean_6f26f17f05 s10 OK 10 min  == clean_6f26f17f05 seed 10: ser_mean=0.0149 ser_median=0.0104
+[289 done, ~27 left | 7.4 h, ~0.7 h to go at this pace] t3 P7 clean_884433ce78 s10 OK 9 min  == clean_884433ce78 seed 10: ser_mean=0.0150 ser_median=0.0110
+[290 done, ~26 left | 7.4 h, ~0.7 h to go at this pace] t3 P7 p7_crc_rel_x0.75__wb_sir0 s10 OK 10 min  == p7_crc_rel_x0.75__wb_sir0 seed 10: ser_mean=0.0204 ser_median=0.0142 ser_pre=0.0237 ser_attack=0.0250 ser_post=0.0117
+[291 done, ~25 left | 7.4 h, ~0.6 h to go at this pace] t3 P7 clean_1bf5bcfbbb s10 OK 9 min  == clean_1bf5bcfbbb seed 10: ser_mean=0.0150 ser_median=0.0109
+[292 done, ~24 left | 7.4 h, ~0.6 h to go at this pace] t3 P7 p7_eta3_x0.75__wb_sir0 s10 OK 10 min  == p7_eta3_x0.75__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0136 ser_pre=0.0238 ser_attack=0.0255 ser_post=0.0116
