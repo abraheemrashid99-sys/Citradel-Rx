@@ -663,3 +663,12 @@ fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git
 [491 done, ~1 left | 10.3 h, ~0.0 h to go at this pace] t3 P7 p7_eta3_x2__wb_sir0 s10 OK 7 min  == p7_eta3_x2__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0142 ser_pre=0.0240 ser_attack=0.0245 ser_post=0.0117
 [492 done, ~0 left | 10.3 h, ~0.0 h to go at this pace] t3 P7 clean_4792c45b16 s10 OK 6 min  == clean_4792c45b16 seed 10: ser_mean=0.0152 ser_median=0.0117
 == laptop finished: 492 runs, 0 failed, 10.3 h
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+!! push failed; will retry at the next push (11:21)
