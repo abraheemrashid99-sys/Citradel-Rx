@@ -257,8 +257,9 @@ meant to make the gates reject every block, combined with a real abrupt channel 
 5, 20 or 50\% of that of the received pilots, that pull the receiver toward a spoofed channel while
 keeping its blocks accepted.
 \item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2,4\}$ attacker antennas and a
-channel $\bm G$ from the same family; with an error on its estimate $\hat{\bm G}$ the attacker designs
-$\bm X_b$ for $\hat{\bm G}$ and the receiver sees $\bm G\hat{\bm G}^{+}\bm E_b$.
+fixed channel $\bm G$ with i.i.d. $\mathcal N(0,1/N)$ entries drawn per seed; with an estimate
+$\hat{\bm G}=\bm G+$ an error of relative variance $0.1$ or $0.01$, the attacker designs $\bm X_b$ for
+$\hat{\bm G}$ and the receiver sees $\bm G\hat{\bm G}^{+}\bm E_b$.
 \item \emph{Attacker in a 3GPP scene}: the physical attacker placed in a TR 38.901 UMi drop at 35, 75
 or 150\,m from the base station at the maximum power of a user, so that its SIR follows from the
 geometry, path loss and shadowing (Section~\ref{sec:umi}).
@@ -288,7 +289,8 @@ attacked run minus that of the matched clean run (same configuration, seed and c
 attack disabled, same machine), averaged over the attack window. Two runs of a pair are identical
 up to the first attacked block, so the excess isolates the attack from the difficulty of the
 blocks it hits. The gate is characterised by the rejection rate of poisoned blocks and the false
-rejection rate of clean blocks, each with its count and a Wilson interval \cite{wilson1927}. The
+rejection rate of clean blocks, each with its count (and a Wilson interval \cite{wilson1927} at the
+headline cell). The
 paired displacement $D_k(b)=\norm{\theta^{(k)}_{{\rm adv},b}-\theta^{(k)}_{{\rm clean},b}}$ measures what the attack
 left in level $k$.
 
@@ -420,8 +422,10 @@ against the threshold $\tau_2$ of the design rule below. The gate is tied to the
 attacker's own objective: an attack that raises the SER lowers the pass rate. With LDPC code blocks
 (Section~\ref{sec:umi}) the CRC after decoding tolerates raw symbol errors, so the pass fraction of
 a code block does not follow the design rule. There $F$ is replaced by the virtual pass fraction
-$(1-\hat p)^L$, with $\hat p$ the raw SER of a detector on the code blocks that decode under a
-reference (their re-encoded codewords are the transmitted symbols), and the rule applies unchanged.
+$(1-\hat p)^L$, with $\hat p$ the per-user symbol error rate of a detector (the $p$ of the design
+rule) on the code blocks that decode under a reference, whose re-encoded codewords are the
+transmitted symbols, and the rule applies unchanged; when no code block decodes under any reference,
+the code-block pass fractions are used.
 
 \textit{G3, channel prior.} The innovation energy of the LS estimate against its AR(1) prediction,
 relative to its running level and floored by the $\chi^2_{0.999}$ quantile, against $\tau_3=4$.
@@ -431,7 +435,8 @@ Table~\ref{tab:hyper} gives the provenance of every setting.
 \begin{table}[t]
 \centering\caption{Settings and their provenance. Calibration: seeds 0--2 by the rules of
 Section~\ref{sec:setup}; first version: set during the development of the first version on seeds
-0--4. No setting was chosen on the test seeds 10--19.}\label{tab:hyper}
+0--4. No setting was chosen on the test seeds 10--19, with one exception stated in the table: the
+statistic of the final abstain state was adopted after first test runs of the second version.}\label{tab:hyper}
 \scriptsize
 \begin{tabular}{@{}L{36mm}L{49mm}@{}}
 \toprule
@@ -445,6 +450,8 @@ CRC slack & relative $\rho=1$ with floor $2\cdot10^{-3}$, or derived $z=5$; mode
 $\kappa$ & $(8.5,4.5)$; at the largest clean consolidation increments of the calibration runs\\
 Consolidation rule, CRC selection & \eqref{eq:consol}; correctness fix; CRC selection kept by calibration\\
 Baseline epochs, learning rate, weight decay & tuned on calibration seeds (Section~\ref{sec:setup})\\
+Abstain (final version) & statistic and re-base after 50 abstentions: adopted after the second version's first test runs (seeds 10--12, A4); $z=\val{h3.z}$ by calibration; also tested on seeds 15--19, untouched by any choice\\
+Second backbone & 512 hidden units; epochs and learning rate tuned on calibration seeds (\val{d8.tuned})\\
 Attacker & PGD 20 steps of $0.25\epsilon$, 2 unrolled steps \cite{wu2024}; stronger variants in Section~\ref{sec:adaptive}\\
 \bottomrule
 \end{tabular}
@@ -500,8 +507,9 @@ attacked blocks would satisfy $\Delta_f\le G_\Phi\epsilon(1-L^{n_W})/(1-L)$. The
 is $L=L_\theta+L_a<1$. Finite-difference probes of the fast learner, which the revision does not change,
 give $L_\theta+L_a$ between \val{lip.summin} and \val{lip.summax} for proximal weights $\lambda$ from
 \val{lip.lammin} to \val{lip.lammax}, and a stronger search, a finite-difference hill climb on the
-input direction and the largest value over blocks and probes, gives \val{lip2.summin} to
-\val{lip2.summax} on the cosine, Jakes and COST2100 channels at the frozen settings; probes can
+input direction for $G_\Phi$ and the largest of 20 random parameter and anchor directions on each
+of 10 blocks for $L_\theta$ and $L_a$, gives \val{lip2.summin} to \val{lip2.summax} on the cosine,
+Jakes and COST2100 channels at the frozen settings; probes can
 only underestimate a Lipschitz constant, so the condition fails and this branch cannot be used for the
 default receiver. The regret bound of the first version, which relied on
 it, is withdrawn; a last-layer-adaptable variant, for which the loss is convex, is evaluated in
@@ -539,10 +547,10 @@ the normalised G1 statistic has mean \val{g1nl.mean}, 99th percentile \val{g1nl.
 System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$ and $8\times32$ with the SED profile stretched over the array; 16-QAM at 20\,dB (MLP width kept at 256)\\
 Block & $N_p=100$ pilot and $N_d=25\,000$ data symbols per user; $N_d\in\{1000,5000\}$, $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
 CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
-Channel & SED with per-user cosine fading (periods 51, 39, 33, 21 blocks; depth 0.8) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
+Channel & SED with per-user cosine fading, gain $0.8+0.2\cos(2\pi b/T_j)$ with $T_j=51,39,33,21$ blocks (users 5--8: 47, 29, 43, 23) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
 Run & 100 blocks (400 and 1000 for A3$^\ast$, 2000 clean); 40-block attack window starting at a block drawn uniformly from 10--50 per seed\\
 Seeds & calibration 0--2; test 10--19 (headline cell), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
-Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h; one block per 1\,ms slot (15\,kHz, 150 PRBs); NR CRC-24A and LDPC code blocks ($k=520$, $n=1000$) \cite{ts38212}\\
+Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h; one block per 1\,ms slot (15\,kHz, 150 PRBs); NR LDPC code blocks (base graph 2, $k=520$, $n=1000$), each with a CRC-24A \cite{ts38212}, scrambled \cite{ts38211}\\
 Attacker & PGD 20 steps of $0.25\epsilon$ through 2 unrolled steps \cite{wu2024,madry2018}, unless stated\\
 \bottomrule
 \end{tabular}
@@ -588,7 +596,7 @@ moving-block bootstrap intervals \cite{kunsch1989} that resample seeds and then 
 decorrelation length (at least five blocks) within each seed. Tests are at the seed level: an exact two-sided Wilcoxon
 signed-rank test on the per-seed means \cite{wilcoxon1945}, whose smallest attainable $p$ with ten
 seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1979}. Rates carry
-their counts and Wilson intervals.
+their counts.
 
 \textit{Reproducibility.} The first campaign ran on an Apple M4 laptop (ten cores, eight runs at a
 time) and a 4-core cloud machine, the second on 4-core cloud machines, every run single-threaded,
@@ -659,7 +667,8 @@ interval \val{p1.citadel.wb0.ci}; seed means from \val{p1.citadel.wb0.smin} to
 \val{p1.citadel.wb0.smax}), and that of tuned online DeepSIC by \val{p1.online_deepsic.wb0.excess}.
 The excess of Citadel-Rx is small but not zero: it is positive on \val{p1.citadel.wb0.spos} of 10
 seeds (exact Wilcoxon $p=\val{p1.citadel.wb0.p}$). The gates reject \val{p1.citadel.wb0.rejk}
-poisoned blocks and \val{p1.citadel.wb0.frejk} clean blocks of the clean twins. The ordering is the
+poisoned blocks (95\% Wilson interval \val{p1.citadel.wb0.rejci}) and \val{p1.citadel.wb0.frejk}
+clean blocks of the clean twins (\val{p1.citadel.wb0.frejci}). The ordering is the
 same at SIR $-10$ and $+10$\,dB and under transfer (\val{p1.citadel.wbm10.n} seeds each). Over the 30 blocks after the
 window the excess of Citadel-Rx is \val{p1.citadel.wb0.post}; online DeepSIC keeps
 \val{p1.online_deepsic.wb0.post}, Meta-DeepSIC \val{p1.meta_deepsic.wb0.post}, whose meta-training
@@ -742,8 +751,8 @@ decision-level gates G1 and G2 do the work, and G3 flags few poisoned blocks at 
 \begin{table}[t]
 \centering\caption{Joint pilot and data attack on the references (A4), white-box SIR 0\,dB, 6 PGD
 steps over all data sub-blocks, test seeds 10--14 (seeds per row), with and without the abstain state
-(first version: rejects every block of its clean runs as well, see text); 20 PGD steps; jamming
-controls with the data power of A4.}\label{tab:refdeg}
+(first version: rejects every block of its clean runs as well, see text); one row with 20 PGD steps;
+jamming controls with the data power of A4.}\label{tab:refdeg}
 \scriptsize
 \begin{tabular}{@{}L{12mm}L{12mm}cccc@{}}
 \toprule
@@ -1055,11 +1064,13 @@ with its channel from the same drop, so its SIR is not a setting: over the five 
 \val{d23.d75.sirmin} to \val{d23.d75.sirmax}\,dB at 75\,m (median \val{d23.d75.sirmed}) and from
 \val{d23.d150.sirmin} to \val{d23.d150.sirmax}\,dB at 150\,m (median \val{d23.d150.sirmed}). It
 knows the receiver (white-box) and designs its pilot perturbation through its own channel. The data
-of every user are NR code blocks with CRC-24A and LDPC base graph 2 ($k=520$, $n=1000$)
-\cite{ts38212}, scrambled with the user's NR PUSCH sequence ($c_{\rm init}=n_{\rm RNTI}2^{15}+n_{\rm ID}$)
+of every user are independent NR LDPC code blocks (base graph 2, $k=520$, $n=1000$), each with a
+CRC-24A \cite{ts38212} (a simplification: NR would attach one CRC to the transport block and segment
+it), scrambled with the user's NR PUSCH sequence ($c_{\rm init}=n_{\rm RNTI}2^{15}+n_{\rm ID}$)
 \cite{ts38211}, decoded with 20 belief-propagation iterations from the hard symbol decisions, and
 the CRC after decoding gives the block error rate (BLER). The scrambling matters for the gates: the
-all-zero codeword has a zero CRC, so without it a detector stuck on one symbol would pass every check
+all-zero codeword has a zero CRC, so without it a detector stuck on the symbol whose bits are all zero
+would pass every check
 (a first version of these runs had this flaw and is not reported). All receivers keep their frozen settings;
 the CRC gate uses the virtual pass fraction of Section~\ref{sec:gates}.
 % RESULTS-PENDING: coded scene prose
@@ -1077,10 +1088,10 @@ Setting & $\times0.5$ & $\times0.75$ & $\times1.5$ & $\times2$ & \thead{Max fals
 \bottomrule
 \end{tabular}
 \end{table}
-Halving or doubling any one of eight settings (Table~\ref{tab:sens}, seed 10) keeps the clean SER
+Multiplying any one of eight settings by 0.5, 0.75, 1.5 or 2 (Table~\ref{tab:sens}, seed 10) keeps the clean SER
 between \val{sens.cleanmin} and \val{sens.cleanmax}, the excess between \val{sens.exmin} and
 \val{sens.exmax}, and the clean false rejection at or below \val{sens.frejmax}; no setting of the
-gates or of the memory is critical within a factor of two. The test uses one seed and two
+gates or of the memory is critical within a factor of two. The test uses one seed and four
 multipliers per setting, so it shows the absence of a cliff near the chosen values, not an optimum.
 
 \section{Discussion}\label{sec:discussion}

@@ -22,6 +22,7 @@ import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
+sys.path.insert(0, ROOT)   # citadel_rx (config defaults for twin matching), also when run as a script
 from revision_stats import decorrelation_length, holm, moving_block_bootstrap, seed_tests, wilson  # noqa: E402
 
 RES = os.path.join(ROOT, "results")
@@ -65,10 +66,10 @@ def load(folder: str) -> List[dict]:
 def mkey(cfg: dict) -> str:
     """Settings that a clean twin must share with its attacked run. Options added to the code after a
     record was written are filled in at their defaults, so records of different code versions match."""
+    from citadel_rx.config import Config   # ROOT is on sys.path (top of this file); a failure here must not pass silently
     try:
-        from citadel_rx.config import Config
         cfg = Config.from_dict(cfg).to_dict()
-    except Exception:
+    except KeyError:   # a record with an option the code no longer has: compare as written
         pass
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
@@ -77,7 +78,8 @@ MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz
 
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper"] + [f"rev_clean_pool{i}" for i in range(1, 9)]
+# every clean-twin folder any driver writes (scripts/revision_fast.py CLEAN_DIR), so a new machine cannot be missed
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 13)]
 
 
 def machine(r: dict):
@@ -230,6 +232,10 @@ def put_cell(prefix: str, c: Optional[dict]) -> None:
     put(prefix + ".post", f_sig(c["post"]))
     put(prefix + ".rej", f_rate(c["rej"]))
     put(prefix + ".rejk", f"{c['rej'][0]}/{c['rej'][1]}")
+    if c["rej"][1]:
+        put(prefix + ".rejci", "[{:.3f}, {:.3f}]".format(*wilson(*c["rej"])))
+    if c["frej"][1]:
+        put(prefix + ".frejci", "[{:.3f}, {:.3f}]".format(*wilson(*c["frej"])))
     put(prefix + ".frej", f_rate(c["frej"]))
     put(prefix + ".frejk", f"{c['frej'][0]}/{c['frej'][1]}")
     put(prefix + ".rejpct", f"{100 * c['rej'][0] / max(1, c['rej'][1]):.0f}")
@@ -409,7 +415,8 @@ def deny() -> None:
         post = float(np.mean([(ser(den[i])[90:] - ser(none[i])[90:]).mean() for i in s]))
         fr = [rejections(none[i], None, skip=50) for i in s]
         frk = (sum(k for k, _ in fr), sum(n for _, n in fr))
-        dr = float(np.mean([ser(drop[i])[50:].mean() for i in sorted(drop)])) if drop else float("nan")
+        sd_ = sorted(set(drop) & set(s))   # the same seeds as the other columns
+        dr = float(np.mean([ser(drop[i])[50:].mean() for i in sd_])) if sd_ else float("nan")
         lab = {"citadel": "Citadel-Rx", "citadel_streak": "+ streak recovery", "online_deepsic": "Online DeepSIC",
                "lmmse": "LMMSE"}[rx]
         k = "deny." + rx.replace("_", "")
@@ -591,11 +598,13 @@ def retention() -> None:
             put(key + ".sir", f"{-20 * np.log10(e):.0f}")
         if c is None:
             continue
-        if not all("paired_disp" in a for a, _ in c["pairs"]):   # snapshots not analysed (yet)
+        snap = [(a, cl) for a, cl in c["pairs"] if "paired_disp" in a]   # pairs whose snapshots were analysed
+        if not snap:
             rows.append(f"{lab} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & -- & -- & --\\\\")
             continue
+        put(key + ".nsnap", str(len(snap)))
         DK, des, ext, anc, mv = [], [], [], [], []
-        for a, cl in c["pairs"]:
+        for a, cl in snap:
             cfg = a["config"]["citadel"]
             K = len(a["paired_disp"])
             w0, w1 = window(a)
@@ -619,7 +628,8 @@ def retention() -> None:
             put(key + ".movpct", f"{100 * np.mean([m[0] / m[1] for m in mv]):.0f}")
         put(key + ".DK", f"{np.mean(DK):.2f}"); put(key + ".design", f"{np.mean(des):.1f}")
         put(key + ".struct", f"{np.mean(ext):.1f}"); put(key + ".anchor", f"{np.mean(anc):.2f}")
-        rows.append(f"{lab} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {np.mean(DK):.2f} & "
+        nn = f"{c['n']}" if len(snap) == c["n"] else f"{c['n']} ({len(snap)})"   # (seeds with level snapshots)
+        rows.append(f"{lab} & {nn} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {np.mean(DK):.2f} & "
                     f"{np.mean(ext):.1f} & {np.mean(des):.1f}\\\\")
         if folder == "rev_p8_drift":
             p8.append((c, np.mean(DK), np.mean(ext)))
@@ -839,11 +849,12 @@ def campaign2() -> None:
                              - np.mean([b["ser_user"][0] for b in cl["blocks"][window(a)[0]:window(a)[1]]]) for a, cl in c["pairs"]]))
         put(key + ".tgt", f_sig(tgt))
         if "peruser" in name:   # per-user gating: the gate reverts users, not blocks; count (block, user) reverts
-            vt = [b["verdict_g2_user"][0] < 0.5 for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]]
-                  if b.get("verdict_g2_user")]
-            vo = [v < 0.5 for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]] if b.get("verdict_g2_user")
-                  for v in b["verdict_g2_user"][1:]]
-            vc = [v < 0.5 for _, cl in c["pairs"] for b in cl["blocks"][5:] if b.get("verdict_g2_user") for v in b["verdict_g2_user"]]
+            # a user is reverted on a block if the whole block is rejected (G1, G3, abstain) or its own G2 test fails
+            rev = lambda b, u: (b.get("gamma") is not None and b["gamma"] < 0.5) or u in (b.get("users_reverted") or [])
+            U = c["pairs"][0][0]["config"]["channel"]["n_user"]
+            vt = [rev(b, 0) for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]]]
+            vo = [rev(b, u) for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]] for u in range(1, U)]
+            vc = [rev(b, u) for _, cl in c["pairs"] for b in cl["blocks"][5:] for u in range(U)]
             rj = f"{f_rate((sum(vt), len(vt)))} / {f_rate((sum(vo), len(vo)))}" if vt else "--"
             put(key + ".revtgt", f_rate((sum(vt), len(vt)))); put(key + ".revoth", f_rate((sum(vo), len(vo))))
             put(key + ".revclean", f_rate((sum(vc), len(vc))))
@@ -874,6 +885,7 @@ def campaign2() -> None:
         sd = [x["sir_db"] for x in sirs if x["d_att"] == d]
         if sd:
             put(f"d23.d{d}.sirmed", f"{np.median(sd):+.0f}"); put(f"d23.d{d}.sirmin", f"{min(sd):+.0f}"); put(f"d23.d{d}.sirmax", f"{max(sd):+.0f}")
+        labelled = False
         for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback"), ("lmmse", "LMMSE")):
             cb = cell("rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", CLEAN_ALL, metric="bler")
             cs = cell("rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", CLEAN_ALL)
@@ -882,10 +894,39 @@ def campaign2() -> None:
             put_cell(key + "bler", cb)
             if cb is None:
                 continue
-            first = f"{d}\\,m ({np.median(sd):+.0f}\\,dB)" if (rx == "citadel" and sd) else ""
+            first = f"{d}\\,m ({np.median(sd):+.0f}\\,dB)" if (not labelled and sd) else ""
+            labelled = True
             rows.append(f"{first} & {l} & {cb['n']} & {f_ser(cb['clean_all'])} & {f_sig(cb['excess'])} {f_ci(cb['ci'])} & "
                         f"{f_sig(cs['excess'])} & {f_rate(cs['rej']) if rx in ('citadel', 'crc_rollback') else '--'}\\\\")
     write_table("umi", rows)
+    # mechanism in the coded scene: how often the fast level is trusted on clean blocks, what the
+    # reference (the better of LMMSE and the anchor, virtual pass fraction) does under attack, and how
+    # the clean BLER of the online receivers moves over a run
+    for d in (35, 75, 150):
+        c = cell("rev2_umi_ldpc_scr", f"d23s_citadel_d{d}__phys", CLEAN_ALL)
+        if c is None:
+            continue
+        k = f"d23m.d{d}"
+        att = [b for a, _ in c["pairs"] for b in a["blocks"] if b.get("attacked")]
+        cln = [b for a, cl in c["pairs"] for b in cl["blocks"][window(a)[0]:window(a)[1]]]
+        put(k + ".refatt", f"{np.mean([b['pass_mm'] for b in att if b.get('pass_mm') is not None]):.2f}")
+        put(k + ".refcln", f"{np.mean([b['pass_mm'] for b in cln if b.get('pass_mm') is not None]):.2f}")
+        put(k + ".nnatt", f"{np.mean([b['pass_nn'] for b in att if b.get('pass_nn') is not None]):.2f}")
+        put(k + ".nncln", f"{np.mean([b['pass_nn'] for b in cln if b.get('pass_nn') is not None]):.2f}")
+    for rx in ("citadel", "online_deepsic", "crc_rollback", "lmmse"):
+        tw = twins(CLEAN_ALL)
+        cl = [twin_of(tw, a) for a in load("rev2_umi_ldpc_scr") if a["name"] == f"d23s_{rx}_d75__phys"]
+        cl = [c for c in cl if c is not None]
+        if cl:
+            k = "d23m." + rx.replace("_", "")
+            put(k + ".blerfirst", f_ser(float(np.mean([np.mean([b["bler"] for b in c["blocks"][:20]]) for c in cl]))))
+            put(k + ".blerlast", f_ser(float(np.mean([np.mean([b["bler"] for b in c["blocks"][-20:]]) for c in cl]))))
+            put(k + ".serfirst", f_ser(float(np.mean([np.mean([b["ser"] for b in c["blocks"][:20]]) for c in cl]))))
+            put(k + ".serlast", f_ser(float(np.mean([np.mean([b["ser"] for b in c["blocks"][-20:]]) for c in cl]))))
+            put(k + ".ncl", str(len(cl)))
+            if rx == "citadel":
+                fr = [rejections(c, None, skip=5) for c in cl]
+                put(k + ".frej", f_rate((sum(a for a, _ in fr), sum(b for _, b in fr))))
     # D4: the 8 x 32 array (rows added to the scenarios table by scenarios())
     # D7: 2000-block clean horizon
     for rx in ("citadel", "online_deepsic"):
@@ -940,7 +981,7 @@ def main() -> None:
     lines.append("\\makeatother")
     open(OUT_NUM, "w").write("\n".join(lines) + "\n")
     tex = open(os.path.join(ROOT, "paper", "main.tex")).read() if os.path.exists(os.path.join(ROOT, "paper", "main.tex")) else ""
-    tex = "\n".join(l.split("%")[0] if not l.lstrip().startswith("%") else "" for l in tex.splitlines())
+    tex = "\n".join(re.split(r"(?<!\\)%", l)[0] for l in tex.splitlines())   # comments; an escaped \% is text
     used = sorted(set(re.findall(r"\\val\{([^}]+)\}", tex)))
     missing = [k for k in used if k not in V]
     print(f"{len(V)} numbers written to {os.path.relpath(OUT_NUM, ROOT)}; tables in {os.path.relpath(OUT_TAB, ROOT)}")

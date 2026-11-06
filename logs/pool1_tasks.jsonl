@@ -40,3 +40,17 @@
 {"shard": "pool1", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_citadel_streak_redraw__a1deny", "seed": 13, "ok": true, "seconds": 590.2, "finished": "2026-11-06T20:56:46.200810+00:00"}
 {"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_redraw__none", "seed": 13, "ok": true, "seconds": 485.2, "finished": "2026-11-06T20:59:56.797653+00:00"}
 {"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_redraw__deny", "seed": 13, "ok": true, "seconds": 476.1, "finished": "2026-11-06T21:00:09.878961+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_streak_redraw__none", "seed": 13, "ok": true, "seconds": 489.6, "finished": "2026-11-06T21:04:55.791665+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_snrdrop__none", "seed": 13, "ok": true, "seconds": 771.1, "finished": "2026-11-06T21:05:20.114586+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_streak_redraw__deny", "seed": 13, "ok": true, "seconds": 486.2, "finished": "2026-11-06T21:08:03.041413+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_streak_snrdrop__none", "seed": 13, "ok": true, "seconds": 790.0, "finished": "2026-11-06T21:13:19.870721+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H7", "out": "rev2_peruser", "name": "h7_citadel__a2", "seed": 13, "ok": true, "seconds": 534.7, "finished": "2026-11-06T21:13:50.532588+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H7", "out": "rev2_peruser", "name": "h7_citadel__a1", "seed": 13, "ok": true, "seconds": 526.8, "finished": "2026-11-06T21:14:06.869310+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev_clean_pool1", "name": "clean_7188cad35c", "seed": 13, "ok": true, "seconds": 2.1, "finished": "2026-11-06T21:14:08.987066+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H7", "out": "rev2_peruser", "name": "h7_citadel_peruser__a2", "seed": 13, "ok": true, "seconds": 797.3, "finished": "2026-11-06T21:21:20.307652+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H7", "out": "rev_clean_pool1", "name": "clean_69fac9f0c0", "seed": 13, "ok": true, "seconds": 486.5, "finished": "2026-11-06T21:21:26.376306+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H7", "out": "rev2_peruser", "name": "h7_citadel_peruser__a1", "seed": 13, "ok": true, "seconds": 515.0, "finished": "2026-11-06T21:22:25.582833+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev_clean_pool1", "name": "clean_2cb3064d71", "seed": 13, "ok": true, "seconds": 817.1, "finished": "2026-11-06T21:27:46.104973+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a1__sir0", "seed": 13, "ok": true, "seconds": 544.8, "finished": "2026-11-06T21:30:25.149589+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_redraw__none", "seed": 13, "ok": true, "seconds": 810.9, "finished": "2026-11-06T21:34:57.286560+00:00"}
+{"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_snrdrop__none", "seed": 13, "ok": true, "seconds": 800.8, "finished": "2026-11-06T21:35:46.357517+00:00"}
