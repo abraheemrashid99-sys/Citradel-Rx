@@ -310,3 +310,7 @@
 {"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev_clean_helper", "name": "clean_d0ff4d0066", "seed": 10, "ok": true, "seconds": 540.7, "finished": "2026-11-06T23:48:35.250284+00:00"}
 {"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev_clean_helper", "name": "clean_f6ba623745", "seed": 10, "ok": true, "seconds": 523.8, "finished": "2026-11-06T23:48:43.815694+00:00"}
 {"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev2_sens_grid", "name": "grid_crc0.5_g12__wb_sir0", "seed": 10, "ok": true, "seconds": 563.8, "finished": "2026-11-06T23:49:23.314569+00:00"}
+{"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev_clean_helper", "name": "clean_d91463c616", "seed": 10, "ok": true, "seconds": 540.8, "finished": "2026-11-06T23:57:36.080883+00:00"}
+{"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev2_sens_grid", "name": "grid_crc2_g12__wb_sir0", "seed": 10, "ok": true, "seconds": 543.7, "finished": "2026-11-06T23:57:47.512524+00:00"}
+{"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev2_sens_grid", "name": "grid_crc2_g10.5__wb_sir0", "seed": 10, "ok": true, "seconds": 561.0, "finished": "2026-11-06T23:57:53.578386+00:00"}
+{"shard": "helper", "tier": 3, "group": "P7grid", "out": "rev_clean_helper", "name": "clean_085f370f5d", "seed": 10, "ok": true, "seconds": 536.9, "finished": "2026-11-06T23:58:20.187847+00:00"}

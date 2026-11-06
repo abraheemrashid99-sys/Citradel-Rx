@@ -321,3 +321,9 @@ pushed results to GitHub (23:07)
 [310 done, ~6 left | 8.2 h, ~0.2 h to go at this pace] t3 P7grid clean_d0ff4d0066 s10 OK 9 min  == clean_d0ff4d0066 seed 10: ser_mean=0.0150 ser_median=0.0109
 [311 done, ~5 left | 8.2 h, ~0.1 h to go at this pace] t3 P7grid clean_f6ba623745 s10 OK 9 min  == clean_f6ba623745 seed 10: ser_mean=0.0151 ser_median=0.0112
 [312 done, ~4 left | 8.2 h, ~0.1 h to go at this pace] t3 P7grid grid_crc0.5_g12__wb_sir0 s10 OK 9 min  == grid_crc0.5_g12__wb_sir0 seed 10: ser_mean=0.0205 ser_median=0.0147 ser_pre=0.0238 ser_attack=0.0248 ser_post=0.0123
+pushed results to GitHub (23:53)
+[313 done, ~3 left | 8.3 h, ~0.1 h to go at this pace] t3 P7grid clean_d91463c616 s10 OK 9 min  == clean_d91463c616 seed 10: ser_mean=0.0149 ser_median=0.0108
+[314 done, ~2 left | 8.3 h, ~0.1 h to go at this pace] t3 P7grid grid_crc2_g12__wb_sir0 s10 OK 9 min  == grid_crc2_g12__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0143 ser_pre=0.0236 ser_attack=0.0246 ser_post=0.0120
+[315 done, ~1 left | 8.3 h, ~0.0 h to go at this pace] t3 P7grid grid_crc2_g10.5__wb_sir0 s10 OK 9 min  == grid_crc2_g10.5__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0137 ser_pre=0.0234 ser_attack=0.0249 ser_post=0.0117
+[316 done, ~0 left | 8.4 h, ~0.0 h to go at this pace] t3 P7grid clean_085f370f5d s10 OK 9 min  == clean_085f370f5d seed 10: ser_mean=0.0149 ser_median=0.0113
+== helper finished: 316 runs, 0 failed, 8.4 h
