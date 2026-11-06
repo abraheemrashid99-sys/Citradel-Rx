@@ -8,3 +8,5 @@
 {"shard": "cloudx", "tier": 0, "group": "D8tune", "out": "rev2_joint_tune", "name": "tune_joint_ep30_lr0.005", "seed": 1, "ok": true, "seconds": 2926.3, "finished": "2026-11-06T16:12:34.939483+00:00"}
 {"shard": "cloudx", "tier": 0, "group": "D8tune", "out": "rev2_joint_tune", "name": "tune_joint_ep30_lr0.005", "seed": 2, "ok": true, "seconds": 2805.8, "finished": "2026-11-06T16:45:07.412049+00:00"}
 {"shard": "cloudx", "tier": 0, "group": "D8tune", "out": "rev2_joint_tune", "name": "tune_joint_ep100_lr0.001", "seed": 0, "ok": true, "seconds": 2457.3, "finished": "2026-11-06T16:53:32.197817+00:00"}
+{"shard": "cloudx", "tier": 0, "group": "D8tune", "out": "rev2_joint_tune", "name": "tune_joint_ep100_lr0.001", "seed": 1, "ok": true, "seconds": 2440.4, "finished": "2026-11-06T17:25:47.852257+00:00"}
+{"shard": "cloudx", "tier": 0, "group": "D8tune", "out": "rev2_joint_tune", "name": "tune_joint_ep100_lr0.001", "seed": 2, "ok": true, "seconds": 2411.7, "finished": "2026-11-06T17:33:43.942882+00:00"}
