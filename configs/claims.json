@@ -1,7 +1,7 @@
 {
  "owner": "helper",
  "until": "2026-11-07T08:00:00+00:00",
- "note": "runs the helper cloud machine (campaign 4) is doing; other machines skip them until 'until', then run whatever is still missing",
+ "note": "runs the helper cloud machine (campaign 4) is doing; other machines skip them until 'until', then run whatever is still missing; 'dropped': runs no machine does (the 300-epoch setting of the second-backbone tuning, removed from the grid before any test run to save ~3 h)",
  "runs": {
   "clean_00fb50fde3": [
    12,
@@ -574,6 +574,18 @@
   ],
   "p7_tighten_x1.5__wb_sir0": [
    10
+  ]
+ },
+ "dropped": {
+  "tune_joint_ep300_lr0.001": [
+   0,
+   1,
+   2
+  ],
+  "tune_joint_ep300_lr0.005": [
+   0,
+   1,
+   2
   ]
  }
 }

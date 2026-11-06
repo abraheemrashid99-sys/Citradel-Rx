@@ -81,8 +81,12 @@ def claimed_elsewhere(name: str, seed: int) -> str:
         return ""
     try:
         c = json.load(open(fn))
+        if seed in c.get("dropped", {}).get(name, []):
+            return "nobody (dropped from the plan)"
         if me == c["owner"] or dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(c["until"]):
             return ""
+        if seed in c.get("dropped", {}).get(name, []):
+            return "nobody (dropped from the plan)"
         return c["owner"] if seed in c["runs"].get(name, []) else ""
     except Exception:
         return ""
