@@ -106,24 +106,24 @@ def extended_bound(adv, cln, D_prev, eta_K, K, w0, w1):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
-    ap.add_argument("--clean", default=None, help="folder of the clean twins (default: same folder)")
+    ap.add_argument("--clean", nargs="*", default=None, help="folder(s) of the clean twins (default: same folder)")
     ap.add_argument("--out", default="docs/figures/fig_paired_disp")
     args = ap.parse_args()
     recs = {fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.folder, "*.json"))}
-    if args.clean:
-        recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.clean, "*.json"))})
+    for folder in args.clean or []:   # several machines' clean folders: a record is paired with the twin of its own machine
+        recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(folder, "*.json"))})
     # clean twins; two clean runs with the same settings (one saved with snapshots, one without) are
     # the same deterministic run, so prefer the one whose snapshot file exists
     clean = {}
     for fn, r in sorted(recs.items(), key=lambda kv: os.path.exists(kv[0].replace(".json", ".levels.npz"))):
         if r["config"]["attack"]["type"] == "none":
-            clean[(match_key(r["config"]), r["seed"])] = fn
+            clean[(match_key(r["config"]), r["seed"], r.get("machine"))] = fn
     results = []
     for fn, r in recs.items():
         c = r["config"]
         if c["attack"]["type"] == "none" or c["receiver"]["type"] != "citadel":
             continue
-        cfn = clean.get((match_key(c), r["seed"]))
+        cfn = clean.get((match_key(c), r["seed"], r.get("machine")))
         if cfn is None:
             continue
         la, lc = load_levels(fn), load_levels(cfn)

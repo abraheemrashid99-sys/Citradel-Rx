@@ -88,6 +88,7 @@ The revised manuscript (`paper/main.tex`) is rebuilt from the records alone:
 
 ```
 python scripts/revision_numbers.py          # every number (paper/numbers.tex) and table body (paper/tables/)
+python scripts/fill_response.py              # the response letter, docs/RESPONSE_TO_REVIEWERS.md, from the same numbers
 cd paper && pdflatex main && pdflatex main  # the PDF
 ```
 
