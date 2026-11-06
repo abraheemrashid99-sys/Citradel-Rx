@@ -135,6 +135,13 @@ AWAKE=""
 command -v caffeinate >/dev/null 2>&1 && AWAKE="caffeinate -ims"
 $AWAKE "$PYV" scripts/revision_fast.py --shard laptop --workers "$WORKERS" --tier "$TIER" --cache-gb "$CACHE_GB"
 
+# ---- 4b. paired displacement of the drift runs: needs the level snapshots, which stay on this Mac
+if ls results/rev_p8_drift/*.levels.npz >/dev/null 2>&1; then
+  echo "== paired displacement of the drift runs"
+  "$PYV" scripts/paired_disp.py results/rev_p8_drift --clean results/rev_clean --out docs/figures/fig_rev_p8_drift \
+    || echo "!! paired displacement failed: send this output"
+fi
+
 # ---- 5. final push ---------------------------------------------------------------------------
 "$PYV" scripts/revision_fast.py --shard laptop --push-only
 echo "== finished $(date). Results are on GitHub (branch $BRANCH)."

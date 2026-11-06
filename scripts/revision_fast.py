@@ -210,7 +210,8 @@ def test_jobs() -> List[Job]:
         jobs += J(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_jamctl_a{a:g}__sir0", T2,   # jamming only, same data power
                   rx_ov("citadel") + RND + ["attack.type=data_jam", f"attack.sir_db={-10 * math.log10(1 - a):.3f}"])
     for e, g in ((0.05, False), (0.2, False), (0.5, False), (0.5, True)):   # B5 optimised slow drift, 400 blocks (H5)
-        jobs += JT(C, 1, "P8", "rev_p8_drift", f"p8_a3star_e{e:g}{'_guard' if g else ''}__long", T2,
+        # (moved to the laptop after the cloud machine was stopped)
+        jobs += JT(L, 1, "P8", "rev_p8_drift", f"p8_a3star_e{e:g}{'_guard' if g else ''}__long", T2,
                    rx_ov("citadel") + (["citadel.drift_guard=0.05"] if g else []) +
                    ["frame.n_blocks=400", "attack.type=a3star", f"attack.a3_eps_small={e}", "attack.start_block=30",
                     "attack.end_block=330", "run.save_params=true"])
