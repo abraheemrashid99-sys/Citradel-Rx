@@ -590,3 +590,5 @@ Traceback (most recent call last):
                 ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 numpy.exceptions.AxisError: axis 1 is out of bounds for array of dimension 0
 !! paired displacement failed: send this output
+pushed results to GitHub (16:03)
+== finished Fri Nov  6 16:03:30 PKT 2026. Results are on GitHub (branch claude/fervent-cray-ah5drn).
