@@ -138,3 +138,5 @@
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75_abstain__sir0", "seed": 11, "ok": true, "seconds": 1792.7, "finished": "2026-11-06T09:48:11.064547+00:00"}
 {"shard": "cloud", "tier": 1, "group": "D7", "out": "rev2_long_clean", "name": "d7_online_deepsic__clean2000", "seed": 11, "ok": true, "seconds": 8609.8, "finished": "2026-11-06T15:59:20.939567+00:00"}
 {"shard": "cloud", "tier": 1, "group": "D7", "out": "rev2_long_clean", "name": "d7_online_deepsic__clean2000", "seed": 10, "ok": true, "seconds": 8690.4, "finished": "2026-11-06T16:00:41.553007+00:00"}
+{"shard": "cloud", "tier": 1, "group": "H5", "out": "rev2_drift_guard", "name": "h5_a3star_e0.05_guard__long", "seed": 10, "ok": true, "seconds": 10010.5, "finished": "2026-11-06T18:46:11.478681+00:00"}
+{"shard": "cloud", "tier": 1, "group": "H5", "out": "rev2_drift_guard", "name": "h5_a3star_e0.05_guard__long", "seed": 11, "ok": true, "seconds": 9930.2, "finished": "2026-11-06T18:46:11.724054+00:00"}
