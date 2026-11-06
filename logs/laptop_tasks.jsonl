@@ -1326,3 +1326,7 @@
 {"shard": "laptop", "tier": 3, "group": "P7", "out": "rev_clean", "name": "clean_8dad5f666e", "seed": 10, "ok": true, "seconds": 2.0, "finished": "2026-11-06T10:15:10.906689+00:00"}
 {"shard": "laptop", "tier": 3, "group": "P7", "out": "rev_p7_sens", "name": "p7_eta3_x2__wb_sir0", "seed": 10, "ok": true, "seconds": 1.9, "finished": "2026-11-06T10:15:11.182405+00:00"}
 {"shard": "laptop", "tier": 3, "group": "P7", "out": "rev_clean", "name": "clean_4792c45b16", "seed": 10, "ok": true, "seconds": 1.9, "finished": "2026-11-06T10:15:11.325746+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P8", "out": "rev_p8_drift", "name": "p8_a3star_e0.5_guard__long", "seed": 10, "ok": true, "seconds": 2686.9, "finished": "2026-11-06T10:28:46.389040+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P8", "out": "rev_p8_drift", "name": "p8_a3star_e0.5_guard__long", "seed": 11, "ok": true, "seconds": 2661.7, "finished": "2026-11-06T10:28:50.459891+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P8", "out": "rev_clean", "name": "clean_265be639e5", "seed": 10, "ok": true, "seconds": 991.1, "finished": "2026-11-06T10:29:14.870681+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P8", "out": "rev_clean", "name": "clean_265be639e5", "seed": 11, "ok": true, "seconds": 960.4, "finished": "2026-11-06T10:29:20.069633+00:00"}
