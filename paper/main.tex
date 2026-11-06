@@ -890,11 +890,20 @@ structural bound of \val{ret.p8e02.struct}); at 50\% they reject all of them, th
 nearly stands still (it moved \val{ret.p8e05.movpct}\% as far as the clean one), and
 $D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. After every A3$^\ast$ setting the excess is at
 most \val{ret.p8.postmax}. Over 300 blocks the design bound is loose, while the structural bound is
-\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. The drift guard was run
-only at 50\%, where every attacked block is rejected and it has nothing to guard: it lowered $D_K$ to
-\val{ret.p8e05guard.DK} by pulling both runs toward the pre-trained weights (the clean memory moved
-\val{ret.p8e05guard.movcln} instead of \val{ret.p8e05.movcln}), at an excess of
-\val{ret.p8e05guard.excess}; whether it helps against an accepted drift is not tested here.
+\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. At 50\%, where every
+attacked block is rejected, the drift guard lowered $D_K$ to \val{ret.p8e05guard.DK} by pulling both
+runs toward the pre-trained weights (the clean memory moved \val{ret.p8e05guard.movcln} instead of
+\val{ret.p8e05.movcln}), at an excess of \val{ret.p8e05guard.excess}. Against the accepted 5\% drift,
+the case it is meant for, the drift was still accepted (\val{ret.h5.rejk} attacked blocks rejected),
+both memories moved less (\val{ret.h5.movadv} instead of \val{ret.p8e005.movadv}) and $D_K$ fell from
+\val{ret.p8e005.DK} to \val{ret.h5.DK} (structural bound \val{ret.h5.struct}), but the excess SER was
+unchanged (\val{ret.h5.excess}, \val{ret.h5.post} after the window): the guard shrinks what an
+accepted drift leaves in the memory without lowering its cost.
+
+Without attack the memory does not drift either. Over 2000 clean blocks (two seeds) the SER of
+Citadel-Rx was \val{d7.citadel.first} over blocks 5--499 and \val{d7.citadel.last} over the last 500,
+with \val{d7.citadel.frejk} blocks falsely rejected; that of tuned online DeepSIC was
+\val{d7.onlinedeepsic.first} and \val{d7.onlinedeepsic.last}.
 
 \subsection{Other Baselines}\label{sec:baselines}
 \begin{table}[t]
