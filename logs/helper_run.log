@@ -300,3 +300,24 @@ pushed results to GitHub (22:22)
 [290 done, ~26 left | 7.4 h, ~0.7 h to go at this pace] t3 P7 p7_crc_rel_x0.75__wb_sir0 s10 OK 10 min  == p7_crc_rel_x0.75__wb_sir0 seed 10: ser_mean=0.0204 ser_median=0.0142 ser_pre=0.0237 ser_attack=0.0250 ser_post=0.0117
 [291 done, ~25 left | 7.4 h, ~0.6 h to go at this pace] t3 P7 clean_1bf5bcfbbb s10 OK 9 min  == clean_1bf5bcfbbb seed 10: ser_mean=0.0150 ser_median=0.0109
 [292 done, ~24 left | 7.4 h, ~0.6 h to go at this pace] t3 P7 p7_eta3_x0.75__wb_sir0 s10 OK 10 min  == p7_eta3_x0.75__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0136 ser_pre=0.0238 ser_attack=0.0255 ser_post=0.0116
+pushed results to GitHub (23:07)
+[293 done, ~23 left | 7.6 h, ~0.6 h to go at this pace] t3 P7 clean_d722c60f34 s10 OK 9 min  == clean_d722c60f34 seed 10: ser_mean=0.0151 ser_median=0.0112
+[294 done, ~22 left | 7.6 h, ~0.6 h to go at this pace] t3 P7 p7_g1_slack_x1.5__wb_sir0 s10 OK 10 min  == p7_g1_slack_x1.5__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0138 ser_pre=0.0238 ser_attack=0.0245 ser_post=0.0119
+[295 done, ~21 left | 7.6 h, ~0.5 h to go at this pace] t3 P7 p7_g3_slack_x1.5__wb_sir0 s10 OK 10 min  == p7_g3_slack_x1.5__wb_sir0 seed 10: ser_mean=0.0207 ser_median=0.0137 ser_pre=0.0238 ser_attack=0.0256 ser_post=0.0118
+[296 done, ~20 left | 7.6 h, ~0.5 h to go at this pace] t3 P7 clean_94e01b5f7d s10 OK 9 min  == clean_94e01b5f7d seed 10: ser_mean=0.0150 ser_median=0.0110
+[297 done, ~19 left | 7.7 h, ~0.5 h to go at this pace] t3 P7 clean_97d262caed s10 OK 9 min  == clean_97d262caed seed 10: ser_mean=0.0150 ser_median=0.0111
+[298 done, ~18 left | 7.7 h, ~0.5 h to go at this pace] t3 P7 p7_tighten_x1.5__wb_sir0 s10 OK 10 min  == p7_tighten_x1.5__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0141 ser_pre=0.0235 ser_attack=0.0247 ser_post=0.0120
+[299 done, ~17 left | 7.7 h, ~0.4 h to go at this pace] t3 P7 clean_fe1cb19075 s10 OK 10 min  == clean_fe1cb19075 seed 10: ser_mean=0.0149 ser_median=0.0111
+[300 done, ~16 left | 7.7 h, ~0.4 h to go at this pace] t3 P7 p7_soft_width_x1.5__wb_sir0 s10 OK 10 min  == p7_soft_width_x1.5__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0147 ser_pre=0.0236 ser_attack=0.0253 ser_post=0.0120
+[301 done, ~15 left | 7.9 h, ~0.4 h to go at this pace] t3 P7 clean_18623b379d s10 OK 9 min  == clean_18623b379d seed 10: ser_mean=0.0152 ser_median=0.0111
+[302 done, ~14 left | 7.9 h, ~0.4 h to go at this pace] t3 P7 p7_prox_lambda_x1.5__wb_sir0 s10 OK 10 min  == p7_prox_lambda_x1.5__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0139 ser_pre=0.0247 ser_attack=0.0248 ser_post=0.0118
+[303 done, ~13 left | 7.9 h, ~0.3 h to go at this pace] t3 P7 clean_4a4c1e8dfa s10 OK 9 min  == clean_4a4c1e8dfa seed 10: ser_mean=0.0152 ser_median=0.0115
+[304 done, ~12 left | 7.9 h, ~0.3 h to go at this pace] t3 P7 p7_delta_x1.5__wb_sir0 s10 OK 10 min  == p7_delta_x1.5__wb_sir0 seed 10: ser_mean=0.0205 ser_median=0.0142 ser_pre=0.0238 ser_attack=0.0249 ser_post=0.0122
+[305 done, ~11 left | 8.0 h, ~0.3 h to go at this pace] t3 P7 clean_29db531e08 s10 OK 9 min  == clean_29db531e08 seed 10: ser_mean=0.0149 ser_median=0.0110
+[306 done, ~10 left | 8.0 h, ~0.3 h to go at this pace] t3 P7 p7_crc_rel_x1.5__wb_sir0 s10 OK 10 min  == p7_crc_rel_x1.5__wb_sir0 seed 10: ser_mean=0.0205 ser_median=0.0138 ser_pre=0.0236 ser_attack=0.0251 ser_post=0.0120
+[307 done, ~9 left | 8.0 h, ~0.2 h to go at this pace] t3 P7 p7_eta3_x1.5__wb_sir0 s10 OK 9 min  == p7_eta3_x1.5__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0137 ser_pre=0.0238 ser_attack=0.0254 ser_post=0.0117
+[308 done, ~8 left | 8.0 h, ~0.2 h to go at this pace] t3 P7 clean_7407e0ac7f s10 OK 9 min  == clean_7407e0ac7f seed 10: ser_mean=0.0150 ser_median=0.0108
+[309 done, ~7 left | 8.2 h, ~0.2 h to go at this pace] t3 P7grid grid_crc0.5_g10.5__wb_sir0 s10 OK 9 min  == grid_crc0.5_g10.5__wb_sir0 seed 10: ser_mean=0.0206 ser_median=0.0141 ser_pre=0.0238 ser_attack=0.0250 ser_post=0.0121
+[310 done, ~6 left | 8.2 h, ~0.2 h to go at this pace] t3 P7grid clean_d0ff4d0066 s10 OK 9 min  == clean_d0ff4d0066 seed 10: ser_mean=0.0150 ser_median=0.0109
+[311 done, ~5 left | 8.2 h, ~0.1 h to go at this pace] t3 P7grid clean_f6ba623745 s10 OK 9 min  == clean_f6ba623745 seed 10: ser_mean=0.0151 ser_median=0.0112
+[312 done, ~4 left | 8.2 h, ~0.1 h to go at this pace] t3 P7grid grid_crc0.5_g12__wb_sir0 s10 OK 9 min  == grid_crc0.5_g12__wb_sir0 seed 10: ser_mean=0.0205 ser_median=0.0147 ser_pre=0.0238 ser_attack=0.0248 ser_post=0.0123
