@@ -899,6 +899,34 @@ def campaign2() -> None:
             rows.append(f"{first} & {l} & {cb['n']} & {f_ser(cb['clean_all'])} & {f_sig(cb['excess'])} {f_ci(cb['ci'])} & "
                         f"{f_sig(cs['excess'])} & {f_rate(cs['rej']) if rx in ('citadel', 'crc_rollback') else '--'}\\\\")
     write_table("umi", rows)
+    # mechanism in the coded scene: how often the fast level is trusted on clean blocks, what the
+    # reference (the better of LMMSE and the anchor, virtual pass fraction) does under attack, and how
+    # the clean BLER of the online receivers moves over a run
+    for d in (35, 75, 150):
+        c = cell("rev2_umi_ldpc_scr", f"d23s_citadel_d{d}__phys", CLEAN_ALL)
+        if c is None:
+            continue
+        k = f"d23m.d{d}"
+        att = [b for a, _ in c["pairs"] for b in a["blocks"] if b.get("attacked")]
+        cln = [b for a, cl in c["pairs"] for b in cl["blocks"][window(a)[0]:window(a)[1]]]
+        put(k + ".refatt", f"{np.mean([b['pass_mm'] for b in att if b.get('pass_mm') is not None]):.2f}")
+        put(k + ".refcln", f"{np.mean([b['pass_mm'] for b in cln if b.get('pass_mm') is not None]):.2f}")
+        put(k + ".nnatt", f"{np.mean([b['pass_nn'] for b in att if b.get('pass_nn') is not None]):.2f}")
+        put(k + ".nncln", f"{np.mean([b['pass_nn'] for b in cln if b.get('pass_nn') is not None]):.2f}")
+    for rx in ("citadel", "online_deepsic", "crc_rollback", "lmmse"):
+        tw = twins(CLEAN_ALL)
+        cl = [twin_of(tw, a) for a in load("rev2_umi_ldpc_scr") if a["name"] == f"d23s_{rx}_d75__phys"]
+        cl = [c for c in cl if c is not None]
+        if cl:
+            k = "d23m." + rx.replace("_", "")
+            put(k + ".blerfirst", f_ser(float(np.mean([np.mean([b["bler"] for b in c["blocks"][:20]]) for c in cl]))))
+            put(k + ".blerlast", f_ser(float(np.mean([np.mean([b["bler"] for b in c["blocks"][-20:]]) for c in cl]))))
+            put(k + ".serfirst", f_ser(float(np.mean([np.mean([b["ser"] for b in c["blocks"][:20]]) for c in cl]))))
+            put(k + ".serlast", f_ser(float(np.mean([np.mean([b["ser"] for b in c["blocks"][-20:]]) for c in cl]))))
+            put(k + ".ncl", str(len(cl)))
+            if rx == "citadel":
+                fr = [rejections(c, None, skip=5) for c in cl]
+                put(k + ".frej", f_rate((sum(a for a, _ in fr), sum(b for _, b in fr))))
     # D4: the 8 x 32 array (rows added to the scenarios table by scenarios())
     # D7: 2000-block clean horizon
     for rx in ("citadel", "online_deepsic"):
