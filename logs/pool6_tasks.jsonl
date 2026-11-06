@@ -1,0 +1,4 @@
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev_clean_pool6", "name": "clean_14c6d5f538", "seed": 10, "ok": true, "seconds": 907.9, "finished": "2026-11-06T17:41:45.391783+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev2_arrays_stretch", "name": "p6s_citadel_4x16s__sir0", "seed": 10, "ok": true, "seconds": 949.3, "finished": "2026-11-06T17:42:26.719789+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev_clean_pool6", "name": "clean_fd5475317b", "seed": 10, "ok": true, "seconds": 1895.8, "finished": "2026-11-06T17:58:13.295535+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_citadel_8x32s__sir0", "seed": 10, "ok": true, "seconds": 2004.8, "finished": "2026-11-06T18:00:02.272861+00:00"}
