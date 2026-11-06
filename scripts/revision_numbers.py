@@ -521,7 +521,7 @@ def retention() -> None:
     against the design bound 2 kappa_K n(W) and the structural bound (Theorem 1). Needs the
     paired_disp fields that scripts/paired_disp.py stores in the attacked records."""
     from paired_disp import extended_bound
-    rows = []
+    rows, p8 = [], []
     specs = [("rev_p4_paired", f"p4_citadel__sir{s}", f"A1, SIR {s} dB", f"ret.p4sir{s}") for s in (0, 10)] + \
         [("rev_p8_drift", f"p8_a3star_e{e}{g}__long", f"A3$^\\ast$, {int(float(e) * 100)}\\%" + (", guard" if g else ""),
           "ret.p8e" + e.replace(".", "") + g.replace("_", ""))
@@ -565,6 +565,11 @@ def retention() -> None:
         put(key + ".struct", f"{np.mean(ext):.1f}"); put(key + ".anchor", f"{np.mean(anc):.2f}")
         rows.append(f"{lab} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {np.mean(DK):.2f} & "
                     f"{np.mean(ext):.1f} & {np.mean(des):.1f}\\\\")
+        if folder == "rev_p8_drift":
+            p8.append((c, np.mean(DK), np.mean(ext)))
+    if p8:   # over the A3* settings: the structural bound relative to D_K, and the excess after the attack
+        put("ret.p8.ratiomax", f"{max(e / d for _, d, e in p8):.1f}"); put("ret.p8.ratiomin", f"{min(e / d for _, d, e in p8):.1f}")
+        put("ret.p8.postmax", f_sig(max(c["post"] for c, _, _ in p8)))
     write_table("retention", rows)
 
 

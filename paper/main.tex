@@ -805,9 +805,34 @@ weight $\gamma_b\approx0$, so the attacked memory follows the channel more slowl
 \val{ret.p4sir0.movpct}\% as far as the clean memory at SIR 0\,dB and \val{ret.p4sir10.movpct}\%
 at 10\,dB, and $D_K$ measures that lag.
 
-\ifval{ret.p8e05.DK}{\val{note.p8}}{The A3$^\ast$ runs (400 blocks each) were not complete when this
-version was compiled; their rows of Table~\ref{tab:retention} appear when
-\texttt{revision\_numbers.py} is re-run on their records.}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{fig_rev_drift}
+\caption{A3$^\ast$ on blocks 30--329 (shaded): paired displacement of the slowest level for each
+perturbation size (mean over seeds 10--11, band from the smaller to the larger seed) and the design
+bound \eqref{eq:design}.}
+\label{fig:drift}
+\end{figure}
+
+A3$^\ast$ spreads its perturbation over 300 of 400 blocks and adds a soft-gate term to keep them
+accepted (Table~\ref{tab:retention}, Fig.~\ref{fig:drift}). With a norm of 5\% of that of the
+received pilots (SIR \val{ret.p8e005.sir}\,dB) it succeeds: \val{ret.p8e005.rejk} attacked blocks
+are rejected. This is the case the retention bounds are for. Over the window the slowest level of
+the attacked run moved as far as that of the clean run (\val{ret.p8e005.movadv} and
+\val{ret.p8e005.movcln}), in nearly the same direction (cosine \val{ret.p8e005.movcos}); their paired
+displacement reached \val{ret.p8e005.DK}, below the structural bound (\val{ret.p8e005.struct}) and far
+below the design bound (\val{ret.p8e005.design}). The accepted drift cost \val{ret.p8e005.excess} in
+SER during the attack and \val{ret.p8e005.post} in the 30 blocks after it. At 20\% the gates reject
+\val{ret.p8e02.rejk} attacked blocks (excess \val{ret.p8e02.excess}, $D_K=\val{ret.p8e02.DK}$ against a
+structural bound of \val{ret.p8e02.struct}); at 50\% they reject all of them, the attacked memory
+nearly stands still (it moved \val{ret.p8e05.movpct}\% as far as the clean one), and
+$D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. After every A3$^\ast$ setting the excess is at
+most \val{ret.p8.postmax}. Over 300 blocks the design bound is loose, while the structural bound is
+\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. The drift guard was run
+only at 50\%, where every attacked block is rejected and it has nothing to guard: it lowered $D_K$ to
+\val{ret.p8e05guard.DK} by pulling both runs toward the pre-trained weights (the clean memory moved
+\val{ret.p8e05guard.movcln} instead of \val{ret.p8e05.movcln}), at an excess of
+\val{ret.p8e05guard.excess}; whether it helps against an accepted drift is not tested here.
 
 \subsection{Other Baselines}\label{sec:baselines}
 \begin{table}[t]
@@ -869,7 +894,7 @@ measured robustness.
 \subsection{Block Length, Arrays, Modulation and Cost}\label{sec:scen}
 \begin{table}[t]
 \centering\caption{Block length, a $4\times16$ array, 16-QAM and two cheaper variants, white-box A1
-at SIR 0\,dB, test seeds 10--11; time per block on one core of the laptop.}\label{tab:scen}
+at SIR 0\,dB, test seeds 10--11; wall time per block of single-threaded runs on the laptop.}\label{tab:scen}
 \scriptsize
 \begin{tabular}{@{}L{14mm}L{12mm}ccccc@{}}
 \toprule
@@ -935,8 +960,10 @@ something the attacker cannot reach. In Citadel-Rx that is the slow memory, thro
 detector, and the CRC of the data; CRC-Rollback has the same test but judges against LMMSE on the
 poisoned pilots, and fails for that reason. What remains under attack, an excess of
 \val{p1.citadel.wb0.excess} at the headline cell, is the price of rejecting: forty blocks detected
-with a memory that did not adapt to them. The gain without attack is mostly the CRC selection, which
-any receiver with a CRC can use.
+with a memory that did not adapt to them. A slow drift kept small enough to be accepted is the case
+the retention bounds address: under A3$^\ast$ at 5\% it moved the slowest level within the
+structural bound and cost \val{ret.p8e005.excess} in SER. The gain without attack is mostly the CRC
+selection, which any receiver with a CRC can use.
 
 \textit{Where it fails.} The defence is only as good as its references. An attacker that also
 perturbs the data degrades them and gets more poisoned blocks accepted (A4), and the abstain state
@@ -967,7 +994,8 @@ to the slow memory and per-sub-block CRC selection, and a clip that bounds how f
 move the slowest level. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by
 \val{p1.citadel.wb0.excess} against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and
 \val{p1.crc_rollback.wb0.excess} for CRC-Rollback, which has the same test but no protected
-reference; attacks built against the gates left this excess unchanged within its intervals. The
+reference; attacks built against the gates left this excess unchanged within its intervals, and a
+slow drift that the gates accepted moved the slowest level only within its structural bound. The
 open problems are the
 ones the evaluation exposed: references an attacker cannot degrade through the data, a reference
 model for abstaining that follows legitimate change, a fallback for networks weaker than the

@@ -61,7 +61,7 @@ What the evaluation itself changed in the manuscript (all from the test-seed rec
 | B2 joint pilot + data | Attacker A4: fraction alpha of the energy on the pilots and 1 - alpha on all data sub-blocks, optimised jointly behind the soft gates, alpha = 0.25 and 0.75, with and without the abstain state; jamming controls with the same data power. A4 is the most effective attack on Citadel-Rx (rejection 0.575, excess +0.042 at alpha = 0.25, against +0.014 for A1 on the same seeds); the abstain state locks on clean runs and is reported as not working | Table (refdeg), Sec. VI-D |
 | B3 denial of adaptation | Fixed channel-estimate spoof on blocks 40-89 combined with an abrupt channel redraw at block 50; with and without streak recovery; online DeepSIC and LMMSE references. The spoof tripped the gates on only 4% / 32% of its blocks, so it acted as an accepted perturbation: excess +0.106 (online DeepSIC +0.198), back to the no-spoof SER within ten blocks (online DeepSIC not). A spoof that trips the gates on every block was not found | Table (deny), Sec. VI-D |
 | B4 adaptive strength | Unroll 10 and 50, PGD 100 with 5 restarts, BPDA soft-gate output objective with the exact thresholds and running statistics, EOT; combined attack also against online DeepSIC | Table (attacks) |
-| B5 optimal slow drift | A3*: 300 attacked blocks of a 400-block run, drift toward a spoofed basin with the soft-gate term, perturbation norm 5, 20 and 50% of the received pilots (SIR 26, 14, 6 dB), drift guard at 50%; paired snapshots | Sec. VI-E, Table (retention) |
+| B5 optimal slow drift | A3*: 300 attacked blocks of a 400-block run, drift toward a spoofed basin with the soft-gate term, perturbation norm 5, 20 and 50% of the received pilots (SIR 26, 14, 6 dB), drift guard at 50%; paired snapshots. At 5% the drift is accepted (1 of 600 blocks rejected): the slowest level moves as far as the clean one, cosine 0.95, paired displacement 8.5 against a structural bound of 11.3 and a design bound of 90; excess SER +0.0019, +0.0003 after. At 20% / 50% the gates reject 27% / 100%. The drift guard ran only at 50%, where nothing is accepted | Sec. VI-E, Table (retention), Fig. (drift) |
 | B6 transfer too narrow | Grey-box attacker with a Citadel-Rx surrogate; query attacker on NACK feedback | Table (attacks) |
 | B7 knowledge vague | Knowledge table; synchronisation and pilot knowledge stated | Table (knowledge) |
 | B8 budget includes noise | Both budgets defined; the signal-referenced one evaluated | Eq. (budget), Table (attacks) |
@@ -102,7 +102,7 @@ What the evaluation itself changed in the manuscript (all from the test-seed rec
 | E4 thresholds after test | Calibration seeds 0-2 with rules fixed in advance; all reported results on seeds 10-19, never used for any choice | Sec. V, Table (provenance) |
 | E5 sensitivity | One-at-a-time x0.5 and x2 for eight settings (reduced from four multipliers; heat map dropped) | Table (sensitivity) |
 | E6 intervals and counts | Wilson intervals with counts | Sec. II-C, tables |
-| E7 Fig. 3c | Paired displacement of every level and the anchor, with the design and structural bounds | Sec. VI-E |
+| E7 Fig. 3c | Paired displacement of every level and the anchor, with the design and structural bounds, for A1 (3 seeds) and A3* (2 seeds, 400 blocks); both bounds hold in every run | Sec. VI-E, Figs. (retention, drift) |
 | E8 Holm family | Family = the four baselines of a column, stated in the captions | Table (paired) |
 
 ## F. Claim consistency
@@ -129,7 +129,8 @@ H1: the consolidation clip (design bound; it rarely binds, and removing it leave
 excess unchanged) and the anchor-start variant (calibration candidate, not chosen);
 H2: CRC-verified data labels (the decision-directed baseline: +0.739); H3: abstain state (with A4:
 locks on clean runs as implemented, reported as not working); H4: streak recovery (with denial of
-adaptation: attempted 13 times, kept once, no measurable effect); H5: drift guard (with A3*); H6:
+adaptation: attempted 13 times, kept once, no measurable effect); H5: drift guard (with A3* at 50%,
+where every attacked block is rejected, so its value against an accepted drift is not tested); H6:
 per-sub-block CRC selection (in the receiver, and as an online-DeepSIC comparator: 70% of the clean
 gain is the selection); H7: per-user gating is implemented but not evaluated in this revision.
 
