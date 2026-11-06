@@ -208,3 +208,21 @@ fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git
 [119 done, ~473 left | 3.5 h, ~14.0 h to go at this pace] t1 P1 p1_online_deepsic__wb_sir0 s19 OK 5 min  == p1_online_deepsic__wb_sir0 seed 19: ser_mean=0.3476 ser_median=0.0411 ser_pre=0.0224 ser_attack=0.8205 ser_post=0.0357
 [120 done, ~472 left | 3.6 h, ~14.0 h to go at this pace] t1 P1 clean_1a7479201b s18 OK 5 min  == clean_1a7479201b seed 18: ser_mean=0.0307 ser_median=0.0290
 [121 done, ~471 left | 3.6 h, ~13.9 h to go at this pace] t1 P1 clean_1a7479201b s19 OK 5 min  == clean_1a7479201b seed 19: ser_mean=0.0315 ser_median=0.0316
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+remote: Permission to abraheemrashid99-sys/Citradel-Rx.git denied to Abraheem13.
+fatal: unable to access 'https://github.com/abraheemrashid99-sys/Citradel-Rx.git/': The requested URL returned error: 403
+!! push failed; will retry at the next push (04:50)
+[122 done, ~470 left | 4.1 h, ~15.6 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s10 OK 34 min  == p1_meta_deepsic__wb_sir0 seed 10: ser_mean=0.3195 ser_median=0.1527 ser_pre=0.0403 ser_attack=0.6818 ser_post=0.1109
+[123 done, ~469 left | 4.1 h, ~15.5 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s11 OK 34 min  == p1_meta_deepsic__wb_sir0 seed 11: ser_mean=0.3189 ser_median=0.1625 ser_pre=0.0407 ser_attack=0.6720 ser_post=0.1358
+[124 done, ~468 left | 4.1 h, ~15.4 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s13 OK 34 min  == p1_meta_deepsic__wb_sir0 seed 13: ser_mean=0.3318 ser_median=0.1362 ser_pre=0.0186 ser_attack=0.7145 ser_post=0.0928
+[125 done, ~467 left | 4.1 h, ~15.2 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s12 OK 34 min  == p1_meta_deepsic__wb_sir0 seed 12: ser_mean=0.3172 ser_median=0.1385 ser_pre=0.0359 ser_attack=0.6788 ser_post=0.1699
+[126 done, ~466 left | 4.1 h, ~15.1 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s14 OK 33 min  == p1_meta_deepsic__wb_sir0 seed 14: ser_mean=0.3252 ser_median=0.1162 ser_pre=0.0193 ser_attack=0.7043 ser_post=0.0872
+[127 done, ~465 left | 4.1 h, ~15.0 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s15 OK 34 min  == p1_meta_deepsic__wb_sir0 seed 15: ser_mean=0.3139 ser_median=0.1365 ser_pre=0.0422 ser_attack=0.6703 ser_post=0.1023
+[128 done, ~464 left | 4.1 h, ~15.0 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s16 OK 33 min  == p1_meta_deepsic__wb_sir0 seed 16: ser_mean=0.3075 ser_median=0.1235 ser_pre=0.0407 ser_attack=0.6451 ser_post=0.1449
+[129 done, ~463 left | 4.1 h, ~14.8 h to go at this pace] t1 P1 p1_meta_deepsic__wb_sir0 s17 OK 33 min  == p1_meta_deepsic__wb_sir0 seed 17: ser_mean=0.3288 ser_median=0.1542 ser_pre=0.0395 ser_attack=0.7028 ser_post=0.1027
+[130 done, ~462 left | 4.5 h, ~16.2 h to go at this pace] t1 P1 clean_1950a64849 s10 OK 28 min  == clean_1950a64849 seed 10: ser_mean=0.0397 ser_median=0.0403

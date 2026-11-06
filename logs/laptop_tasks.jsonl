@@ -119,3 +119,12 @@
 {"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_online_deepsic__wb_sir0", "seed": 19, "ok": true, "seconds": 304.7, "finished": "2026-11-05T23:34:38.053057+00:00"}
 {"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_clean", "name": "clean_1a7479201b", "seed": 18, "ok": true, "seconds": 317.7, "finished": "2026-11-05T23:36:54.408131+00:00"}
 {"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_clean", "name": "clean_1a7479201b", "seed": 19, "ok": true, "seconds": 320.3, "finished": "2026-11-05T23:37:11.681542+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 10, "ok": true, "seconds": 2031.1, "finished": "2026-11-06T00:05:45.930894+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 11, "ok": true, "seconds": 2030.6, "finished": "2026-11-06T00:05:48.679078+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 13, "ok": true, "seconds": 2018.8, "finished": "2026-11-06T00:06:55.563231+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 12, "ok": true, "seconds": 2022.8, "finished": "2026-11-06T00:06:59.366276+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 14, "ok": true, "seconds": 1992.6, "finished": "2026-11-06T00:07:16.024256+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 15, "ok": true, "seconds": 2010.5, "finished": "2026-11-06T00:08:08.534659+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 16, "ok": true, "seconds": 2006.9, "finished": "2026-11-06T00:10:21.341407+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir0", "seed": 17, "ok": true, "seconds": 2008.4, "finished": "2026-11-06T00:10:40.123650+00:00"}
+{"shard": "laptop", "tier": 1, "group": "P1", "out": "rev_clean", "name": "clean_1950a64849", "seed": 10, "ok": true, "seconds": 1699.7, "finished": "2026-11-06T00:35:15.249287+00:00"}
