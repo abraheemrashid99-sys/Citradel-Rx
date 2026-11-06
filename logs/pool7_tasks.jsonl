@@ -2,3 +2,7 @@
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d75__phys", "seed": 10, "ok": true, "seconds": 2180.9, "finished": "2026-11-06T20:25:23.771102+00:00"}
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d150__phys", "seed": 10, "ok": true, "seconds": 2186.6, "finished": "2026-11-06T20:25:29.571644+00:00"}
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d35__phys", "seed": 12, "ok": true, "seconds": 2262.5, "finished": "2026-11-06T20:26:45.406990+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d75__phys", "seed": 12, "ok": true, "seconds": 2086.7, "finished": "2026-11-06T21:00:10.278250+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d150__phys", "seed": 12, "ok": true, "seconds": 2099.9, "finished": "2026-11-06T21:00:23.720776+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d35__phys", "seed": 14, "ok": true, "seconds": 2149.3, "finished": "2026-11-06T21:01:18.869344+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d75__phys", "seed": 14, "ok": true, "seconds": 2169.7, "finished": "2026-11-06T21:02:55.155301+00:00"}
