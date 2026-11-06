@@ -31,3 +31,10 @@ pushed results to GitHub (20:12)
 [15 done, ~87 left | 0.7 h, ~4.1 h to go at this pace] t1 D8 d8_online_deepsic_joint__wb_sir0 s11 OK 22 min  == d8_online_deepsic_joint__wb_sir0 seed 11: ser_mean=0.2558 ser_median=0.1991 ser_pre=0.0792 ser_attack=0.4053 ser_post=0.2501
 [16 done, ~86 left | 0.7 h, ~4.0 h to go at this pace] t1 D8 d8_crc_rollback_joint__wb_sir0 s10 OK 23 min  == d8_crc_rollback_joint__wb_sir0 seed 10: ser_mean=0.1735 ser_median=0.1807 ser_pre=0.0869 ser_attack=0.1718 ser_post=0.2515
 [17 done, ~85 left | 0.7 h, ~3.7 h to go at this pace] t1 D8 clean_45472e37db s10 OK 3 min  == clean_45472e37db seed 10: ser_mean=0.0805 ser_median=0.0843
+pushed results to GitHub (21:18)
+[18 done, ~84 left | 1.1 h, ~5.0 h to go at this pace] t1 D8 d8_crc_rollback_joint__wb_sir0 s12 OK 22 min  == d8_crc_rollback_joint__wb_sir0 seed 12: ser_mean=0.2012 ser_median=0.2304 ser_pre=0.0632 ser_attack=0.2715 ser_post=0.3669
+[19 done, ~83 left | 1.1 h, ~4.8 h to go at this pace] t1 D8 clean_45472e37db s12 OK 21 min  == clean_45472e37db seed 12: ser_mean=0.0739 ser_median=0.0763
+[20 done, ~82 left | 1.3 h, ~5.3 h to go at this pace] t1 B2 clean_0b811be896 s11 OK 13 min  == clean_0b811be896 seed 11: ser_mean=0.0152 ser_median=0.0115
+[21 done, ~81 left | 1.3 h, ~5.1 h to go at this pace] t1 B1 b1_citadel_M4__sir0 s11 OK 14 min  == b1_citadel_M4__sir0 seed 11: ser_mean=0.0217 ser_median=0.0143 ser_pre=0.0226 ser_attack=0.0268 ser_post=0.0129
+[22 done, ~80 left | 1.4 h, ~5.3 h to go at this pace] t1 B1 b1_citadel_M2_csi0.1__sir0 s11 OK 9 min  == b1_citadel_M2_csi0.1__sir0 seed 11: ser_mean=0.0217 ser_median=0.0141 ser_pre=0.0226 ser_attack=0.0268 ser_post=0.0129
+[23 done, ~79 left | 1.5 h, ~5.0 h to go at this pace] t1 B1 b1_citadel_M2_csi0.01__sir0 s11 OK 9 min  == b1_citadel_M2_csi0.01__sir0 seed 11: ser_mean=0.0215 ser_median=0.0149 ser_pre=0.0226 ser_attack=0.0265 ser_post=0.0127
