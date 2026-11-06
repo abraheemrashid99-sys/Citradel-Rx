@@ -284,7 +284,7 @@ class CitadelRx(DeepSICReceiver):
         for idx in refs:
             if hasattr(framer.framer, "decode"):
                 ok, cw = framer.framer.decode(framer.decided_bits_to_subblocks(idx))
-                bits = cw.transpose(1, 0, 2).reshape(U, -1)                    # (U, n_d * bps)
+                bits = framer.framer.scramble(cw.transpose(1, 0, 2).reshape(U, -1))   # (U, n_d * bps), as sent
                 cand = self.mod.bits_to_indices(bits).T                        # (n_d, U)
             else:
                 ok, cand = self._crc_pass(framer, idx), idx
