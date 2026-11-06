@@ -1073,7 +1073,33 @@ all-zero codeword has a zero CRC, so without it a detector stuck on the symbol w
 would pass every check
 (a first version of these runs had this flaw and is not reported). All receivers keep their frozen settings;
 the CRC gate uses the virtual pass fraction of Section~\ref{sec:gates}.
-% RESULTS-PENDING: coded scene prose
+
+The coded scene is where the defence fails (Table~\ref{tab:umi}), and the records show why. It is
+the first channel of this paper whose phases rotate from block to block, and the networks,
+pre-trained on the first block, do not follow it: the clean BLER of online DeepSIC rises from
+\val{d23m.onlinedeepsic.blerfirst} over the first 20 blocks to \val{d23m.onlinedeepsic.blerlast}
+over the last 20, and CRC-Rollback, which reverts every update that fails its test, ends at
+\val{d23m.crcrollback.blerlast}. LMMSE re-estimates the channel on every block and decodes every code
+block of the last 20. For Citadel-Rx this is the regime of 16-QAM (Section~\ref{sec:scen}): on clean
+blocks its fast level passes a virtual fraction \val{d23m.d75.nncln} of the checks against
+\val{d23m.d75.refcln} for the reference, so \val{d23.citadel.d75.frejk} clean blocks are rejected
+and the receiver runs on the anchor and on LMMSE through the CRC selection; its clean BLER,
+\val{d23.citadel.d75bler.clean}, is that of LMMSE (\val{d23.lmmse.d75bler.clean}).
+
+Under attack it then has nothing protected to fall back on. The attacker degrades the
+least-squares estimate on which LMMSE rests, and the reference's virtual pass fraction falls from
+\val{d23m.d35.refcln} to \val{d23m.d35.refatt}, \val{d23m.d75.refatt} and \val{d23m.d150.refatt} at
+35, 75 and 150\,m. The gates reject \val{d23.citadel.d35.rej}, \val{d23.citadel.d75.rej} and
+\val{d23.citadel.d150.rej} of the poisoned blocks, but the window BLER of Citadel-Rx,
+\val{d23.citadel.d35bler.raw}, \val{d23.citadel.d75bler.raw} and \val{d23.citadel.d150bler.raw}, lies
+with those of online DeepSIC (\val{d23.onlinedeepsic.d35bler.raw}, \val{d23.onlinedeepsic.d75bler.raw},
+\val{d23.onlinedeepsic.d150bler.raw}) and LMMSE (\val{d23.lmmse.d35bler.raw},
+\val{d23.lmmse.d75bler.raw}, \val{d23.lmmse.d150bler.raw}): no receiver here is protected. The
+principle protects a memory that is worth protecting; when the network cannot track the channel the
+memory is not, and the receiver is left with the model-based reference, which the attacker reaches.
+At a user's maximum power the attacker is also stronger than in the rest of the paper: at the
+median drop its SIR is \val{d23.d35.sirmed}\,dB at 35\,m and \val{d23.d75.sirmed}\,dB at 75\,m,
+against 0\,dB at the headline cell.
 
 \subsection{Sensitivity}\label{sec:sens}
 \begin{table}[t]
