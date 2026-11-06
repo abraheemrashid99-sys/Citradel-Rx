@@ -38,3 +38,6 @@
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_0b811be896", "seed": 11, "ok": true, "seconds": 453.6, "finished": "2026-11-05T21:08:03.017296+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25__sir0", "seed": 10, "ok": true, "seconds": 1883.8, "finished": "2026-11-05T21:23:57.927964+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25__sir0", "seed": 11, "ok": true, "seconds": 1870.2, "finished": "2026-11-05T21:24:29.110277+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_6ab41a151b", "seed": 10, "ok": true, "seconds": 449.7, "finished": "2026-11-05T21:31:27.596470+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_clean_cloud", "name": "clean_6ab41a151b", "seed": 11, "ok": true, "seconds": 445.1, "finished": "2026-11-05T21:31:54.247985+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.25_abstain__sir0", "seed": 10, "ok": true, "seconds": 2113.1, "finished": "2026-11-05T21:36:11.077737+00:00"}

@@ -43,3 +43,7 @@ pushed results to GitHub (20:40)
 [38 done, ~34 left | 2.0 h, ~1.8 h to go at this pace] t1 P3refdeg clean_0b811be896 s11 OK 8 min  == clean_0b811be896 seed 11: ser_mean=0.0152 ser_median=0.0115
 [39 done, ~33 left | 2.2 h, ~1.9 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s10 OK 31 min  == p3_a4_a0.25__sir0 seed 10: ser_mean=0.0316 ser_median=0.0163 ser_pre=0.0238 ser_attack=0.0526 ser_post=0.0122
 [40 done, ~32 left | 2.2 h, ~1.8 h to go at this pace] t1 P3refdeg p3_a4_a0.25__sir0 s11 OK 31 min  == p3_a4_a0.25__sir0 seed 11: ser_mean=0.0324 ser_median=0.0174 ser_pre=0.0226 ser_attack=0.0540 ser_post=0.0125
+pushed results to GitHub (21:25)
+[41 done, ~31 left | 2.4 h, ~1.8 h to go at this pace] t1 P3refdeg clean_6ab41a151b s10 OK 7 min  == clean_6ab41a151b seed 10: ser_mean=0.0278 ser_median=0.0187
+[42 done, ~30 left | 2.4 h, ~1.7 h to go at this pace] t1 P3refdeg clean_6ab41a151b s11 OK 7 min  == clean_6ab41a151b seed 11: ser_mean=0.0312 ser_median=0.0204
+[43 done, ~29 left | 2.4 h, ~1.6 h to go at this pace] t1 P3refdeg p3_a4_a0.25_abstain__sir0 s10 OK 35 min  == p3_a4_a0.25_abstain__sir0 seed 10: ser_mean=0.0375 ser_median=0.0213 ser_pre=0.0481 ser_attack=0.0447 ser_post=0.0192
