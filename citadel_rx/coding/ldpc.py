@@ -14,7 +14,8 @@ import torch
 
 
 class LDPCFramer:
-    def __init__(self, k: int, n: int, bits_per_symbol: int, num_iter: int = 20, llr_mag: float = 3.0):
+    def __init__(self, k: int, n: int, bits_per_symbol: int, num_iter: int = 20, llr_mag: float = 3.0,
+                 scramble: bool = False, n_id: int = 1):
         # importing Sionna seeds torch's global generator from OS entropy: keep the run's RNG state
         state = torch.get_rng_state()
         import sionna.phy
@@ -34,6 +35,20 @@ class LDPCFramer:
         self.crc_dec = CRCDecoder(self.crc)
         self.enc = LDPC5GEncoder(k, n)
         self.dec = LDPC5GDecoder(self.enc, num_iter=num_iter, hard_out=True, return_infobits=True)
+        self.scrambled, self.n_id, self._scr = scramble, n_id, {}
+
+    def scramble(self, bits: np.ndarray) -> np.ndarray:
+        """bits (n_user, n_bits) of every user's code blocks in transmission order -> XOR with the
+        NR PUSCH scrambling sequence of user u (TS 38.211 Sec. 6.3.1.1: length-31 Gold sequence of
+        Sec. 5.2.1, c_init = n_RNTI 2^15 + n_ID, n_RNTI = u + 1). Its own inverse; identity when off."""
+        if not self.scrambled:
+            return bits
+        key = bits.shape
+        if key not in self._scr:
+            from sionna.phy.nr.utils import generate_prng_seq
+            self._scr[key] = np.stack([generate_prng_seq(bits.shape[1], ((u + 1) << 15) + self.n_id)
+                                       for u in range(bits.shape[0])]).astype(np.int64)
+        return np.bitwise_xor(np.asarray(bits, dtype=np.int64), self._scr[key])
 
     def frame(self, payload: np.ndarray) -> np.ndarray:
         """payload (n_cb, n_user, k - 24) -> coded bits (n_cb, n_user, n)."""

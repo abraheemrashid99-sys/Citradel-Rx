@@ -200,6 +200,8 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         summary["sir_geometry_db"] = attacker.sir_override
     if cfg.channel.model == "umi":
         summary["umi_drop"] = getattr(channel, "umi_meta", {})   # t_block of the 38.901 drop file used
+    if getattr(cfg.frame, "coding", "crc") == "ldpc":
+        summary["ldpc_scrambled"] = bool(getattr(frames.framer, "scrambled", False))
     summary["pretrain_time_s"] = pretrain_time
     summary["pretrain_cached"] = pretrain_cached
     summary["mean_t_rx_s"] = float(np.mean([b["t_rx"] for b in blocks]))
