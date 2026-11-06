@@ -44,3 +44,8 @@
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d35__phys", "seed": 12, "ok": true, "seconds": 273.6, "finished": "2026-11-06T22:33:25.118836+00:00"}
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d75__phys", "seed": 12, "ok": true, "seconds": 279.6, "finished": "2026-11-06T22:35:05.523549+00:00"}
 {"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d150__phys", "seed": 12, "ok": true, "seconds": 280.6, "finished": "2026-11-06T22:35:13.539190+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d35__phys", "seed": 14, "ok": true, "seconds": 279.7, "finished": "2026-11-06T22:37:06.465491+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev_clean_pool7", "name": "clean_0e0253d36b", "seed": 12, "ok": true, "seconds": 164.8, "finished": "2026-11-06T22:37:58.361404+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d75__phys", "seed": 14, "ok": true, "seconds": 286.2, "finished": "2026-11-06T22:38:11.299748+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev_clean_pool7", "name": "clean_0e0253d36b", "seed": 14, "ok": true, "seconds": 162.5, "finished": "2026-11-06T22:39:49.015580+00:00"}
+{"shard": "pool7", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_lmmse_d150__phys", "seed": 14, "ok": true, "seconds": 287.5, "finished": "2026-11-06T22:39:53.061989+00:00"}
