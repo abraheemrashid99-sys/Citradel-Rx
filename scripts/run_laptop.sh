@@ -33,6 +33,21 @@ git config user.email >/dev/null || git config user.email "laptop@citadel-rx.inv
 git config user.name  >/dev/null || git config user.name  "Citadel-Rx laptop"
 git pull --no-rebase --no-edit origin "$BRANCH" || echo "   (git pull failed: continuing with the local copy)"
 echo "   code version: $(git rev-parse --short HEAD)"
+# GitHub login for the automatic pushes: the repository is public, so reading needs none, but
+# pushing does. Ask for it once now, while you are watching; it is remembered afterwards.
+if [ -z "$(git config --get credential.helper)" ]; then
+  if git credential-osxkeychain 2>&1 | grep -qi usage; then git config credential.helper osxkeychain
+  else git config credential.helper "cache --timeout=172800"; fi
+fi
+echo "   checking that this machine can push results to GitHub. If asked: your GitHub user name, then a"
+echo "   personal access token as the password (github.com > Settings > Developer settings > Personal access"
+echo "   tokens > Fine-grained, repository Citradel-Rx, Contents: Read and write)."
+if git push origin "HEAD:$BRANCH"; then
+  echo "   push access OK"
+else
+  echo "!! this machine cannot push to GitHub yet: the runs still start and their results are kept here."
+  echo "   Fix the login (run: git push origin HEAD:$BRANCH), the next automatic push then sends everything."
+fi
 
 # ---- 2. disk and Python environment ---------------------------------------------------------
 # ignore personal pip settings (a pip.conf with "user = true" breaks virtual environments)
@@ -119,6 +134,13 @@ echo "== campaign: $WORKERS parallel runs, tiers up to $TIER (keep the Mac on po
 AWAKE=""
 command -v caffeinate >/dev/null 2>&1 && AWAKE="caffeinate -ims"
 $AWAKE "$PYV" scripts/revision_fast.py --shard laptop --workers "$WORKERS" --tier "$TIER" --cache-gb "$CACHE_GB"
+
+# ---- 4b. paired displacement of the drift runs: needs the level snapshots, which stay on this Mac
+if ls results/rev_p8_drift/*.levels.npz >/dev/null 2>&1; then
+  echo "== paired displacement of the drift runs"
+  "$PYV" scripts/paired_disp.py results/rev_p8_drift --clean results/rev_clean --out docs/figures/fig_rev_p8_drift \
+    || echo "!! paired displacement failed: send this output"
+fi
 
 # ---- 5. final push ---------------------------------------------------------------------------
 "$PYV" scripts/revision_fast.py --shard laptop --push-only

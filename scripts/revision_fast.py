@@ -210,7 +210,8 @@ def test_jobs() -> List[Job]:
         jobs += J(C, 1, "P3refdeg", "rev_p3_refdeg", f"p3_jamctl_a{a:g}__sir0", T2,   # jamming only, same data power
                   rx_ov("citadel") + RND + ["attack.type=data_jam", f"attack.sir_db={-10 * math.log10(1 - a):.3f}"])
     for e, g in ((0.05, False), (0.2, False), (0.5, False), (0.5, True)):   # B5 optimised slow drift, 400 blocks (H5)
-        jobs += JT(C, 1, "P8", "rev_p8_drift", f"p8_a3star_e{e:g}{'_guard' if g else ''}__long", T2,
+        # (moved to the laptop after the cloud machine was stopped)
+        jobs += JT(L, 1, "P8", "rev_p8_drift", f"p8_a3star_e{e:g}{'_guard' if g else ''}__long", T2,
                    rx_ov("citadel") + (["citadel.drift_guard=0.05"] if g else []) +
                    ["frame.n_blocks=400", "attack.type=a3star", f"attack.a3_eps_small={e}", "attack.start_block=30",
                     "attack.end_block=330", "run.save_params=true"])
@@ -339,12 +340,21 @@ def freeze_baselines() -> dict:
 
 # ------------------------------------------------------------------------------------ git
 GIT_LOCK = threading.Lock()
+# never wait for a password: a git call without credentials fails at once instead of blocking
+GIT_ENV = dict(os.environ, GIT_TERMINAL_PROMPT="0", GCM_INTERACTIVE="never")
+
+
+def _run_git(args, timeout: int = 300, **kw):
+    try:
+        return subprocess.run(["git", *args], cwd=ROOT, env=GIT_ENV, timeout=timeout, **kw)
+    except subprocess.TimeoutExpired:
+        return subprocess.CompletedProcess(args, 124)
 
 
 def _git(*args, retries: int = 1) -> int:
     rc = 1
     for i in range(retries):
-        rc = subprocess.run(["git", *args], cwd=ROOT).returncode
+        rc = _run_git(list(args)).returncode
         if rc == 0:
             return 0
         time.sleep(2 ** (i + 1))
@@ -354,9 +364,9 @@ def _git(*args, retries: int = 1) -> int:
 def fetch_frozen_citadel() -> bool:
     """Laptop: take only configs/revision_frozen_citadel.json from GitHub (never the code)."""
     with GIT_LOCK:
-        subprocess.run(["git", "fetch", "-q", "origin", BRANCH], cwd=ROOT, capture_output=True)
+        _run_git(["fetch", "-q", "origin", BRANCH], capture_output=True)
         rel = os.path.relpath(FZ_CIT, ROOT)
-        r = subprocess.run(["git", "checkout", f"origin/{BRANCH}", "--", rel], cwd=ROOT, capture_output=True)
+        r = _run_git(["checkout", f"origin/{BRANCH}", "--", rel], capture_output=True)
     return r.returncode == 0 and os.path.exists(FZ_CIT)
 
 
@@ -372,16 +382,18 @@ def push_results(shard: str) -> None:
         files += [os.path.relpath(f, ROOT) for f in (FZ_BASE, FZ_CIT) if os.path.exists(f)]
         files += [os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(LOGS, f"{shard}*"))]
         for i in range(0, len(files), 200):
-            subprocess.run(["git", "add", "--", *files[i:i + 200]], cwd=ROOT)
-        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=ROOT).returncode != 0:
+            _run_git(["add", "--", *files[i:i + 200]])
+        if _run_git(["diff", "--cached", "--quiet"]).returncode != 0:
             n = len([f for f in files if f.startswith("results")])
-            subprocess.run(["git", "commit", "-q", "-m", f"Revision results ({shard} machine, {n} records)"], cwd=ROOT)
+            _run_git(["commit", "-q", "-m", f"Revision results ({shard} machine, {n} records)"])
         if _git("pull", "-q", "--no-rebase", "--no-edit", "origin", BRANCH, retries=4) != 0:
-            subprocess.run(["git", "merge", "--abort"], cwd=ROOT, capture_output=True)
+            _run_git(["merge", "--abort"], capture_output=True)
             print("!! git pull failed; results are committed locally and will be pushed next time", flush=True)
             return
-        ok = _git("push", "-q", "origin", f"HEAD:{BRANCH}", retries=4) == 0
-        print(("pushed results to GitHub" if ok else "!! push failed; will retry at the next push") + f" ({time.strftime('%H:%M')})",
+        ok = _git("push", "-q", "origin", f"HEAD:{BRANCH}", retries=3) == 0
+        print(("pushed results to GitHub" if ok else
+               "!! push failed (no GitHub login saved on this machine?): results stay committed here; in another terminal run "
+               f"'git push origin HEAD:{BRANCH}' once and log in, the next automatic push then works") + f" ({time.strftime('%H:%M')})",
               flush=True)
 
 
