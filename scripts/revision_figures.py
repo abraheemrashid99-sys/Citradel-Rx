@@ -93,6 +93,43 @@ def excess() -> None:
     print("fig_rev_excess:", [l for _, l in xs])
 
 
+def drift() -> None:
+    """fig_rev_drift: A3* over 400 blocks, paired displacement of the slowest level (mean over the
+    seeds) for each perturbation size, with the design bound 2 kappa_K n(W); from the stored
+    paired_disp fields (scripts/paired_disp.py on the machine that has the level snapshots)."""
+    cfgs = [("0.05", "", "5%"), ("0.2", "", "20%"), ("0.5", "", "50%"), ("0.5", "_guard", "50%, drift guard")]
+    cols = ["#56B4E9", "#0072B2", "#003F5C", "#D55E00"]
+    fig, ax = plt.subplots(1, 1, figsize=(3.45, 2.2))
+    drawn, w0 = 0, None
+    for (e, g, lab), col in zip(cfgs, cols):
+        c = rn.cell("rev_p8_drift", f"p8_a3star_e{e}{g}__long", ["rev_clean", "rev_clean_cloud"])
+        if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
+            continue
+        a0 = c["pairs"][0][0]
+        K = len(a0["paired_disp"])
+        n = min(len(a["paired_disp"][K - 1]) for a, _ in c["pairs"])
+        D = np.array([a["paired_disp"][K - 1][:n] for a, _ in c["pairs"]])
+        ax.plot(np.arange(n), D.mean(0), color=col, lw=1.0, label=f"norm {lab}")
+        ax.fill_between(np.arange(n), D.min(0), D.max(0), color=col, alpha=0.15, lw=0)
+        w0, w1 = rn.window(a0)
+        cfg = a0["config"]["citadel"]
+        CK, kap = cfg["periods"][K - 1], cfg["consol_clip"][K - 2]
+        drawn += 1
+    if not drawn:
+        print("fig_rev_drift: no paired displacement in the drift records yet")
+        plt.close(fig)
+        return
+    W = np.arange(w0, w1)
+    ax.plot(W, 2 * kap * (np.floor((W + 1) / CK) - np.floor(w0 / CK)), color="k", lw=0.9, ls=":",
+            label=r"design bound $2\kappa_K n(W)$")
+    ax.axvspan(w0, w1, color="0.92", zorder=0)
+    ax.set_xlabel("block"); ax.set_ylabel(r"$D_K$, slowest level")
+    ax.legend(loc="upper left", fontsize=6.5, ncol=1)
+    fig.subplots_adjust(left=0.15, right=0.98, top=0.97, bottom=0.2)
+    save(fig, "fig_rev_drift")
+    print(f"fig_rev_drift: {drawn} configurations")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=10)
@@ -100,6 +137,7 @@ def main():
     os.chdir(ROOT)
     trace(args.seed)
     excess()
+    drift()
 
 
 if __name__ == "__main__":
