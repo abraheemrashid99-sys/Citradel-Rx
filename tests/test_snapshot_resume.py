@@ -41,3 +41,21 @@ def test_snapshots_saved_with_record_and_damage_detected(tmp_path, monkeypatch):
         fh.write(b"\0" * 64)
     assert find_existing(str(tmp_path), "snap", 1, probe) == ""
     assert not os.path.exists(npz)
+
+
+def test_snapshot_file_missing_a_level_is_unfinished(tmp_path, monkeypatch):
+    """A write cut short at close can leave a readable file with only some of the levels."""
+    monkeypatch.delenv("CITADEL_PRETRAIN_CACHE", raising=False)
+    cfg = Config()
+    for o in TINY + [f"run.out_dir={tmp_path}"]:
+        cfg.set(o)
+    probe = copy.deepcopy(cfg)
+    probe.channel.seed = 2
+    rec = run_experiment(cfg, seed=2, save=True, verbose=False)
+    npz = rec["path"].replace(".json", ".levels.npz")
+    with np.load(npz) as z:
+        first = z["level1"]
+    np.savez_compressed(npz, level1=first)   # level2 and level3 lost
+    assert find_existing(str(tmp_path), "snap", 2, probe) == ""
+    assert not os.path.exists(npz)
+

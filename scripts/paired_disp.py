@@ -121,6 +121,11 @@ def main():
         if cfn is None:
             continue
         la, lc = load_levels(fn), load_levels(cfn)
+        K_rec = len(r.get("self_disp") or []) or len(c["citadel"]["periods"])
+        if la is not None and lc is not None and not (len(la) == len(lc) == K_rec):
+            print(f"   skipped {os.path.basename(fn)}: snapshot files hold {len(la)} and {len(lc)} levels, "
+                  f"the receiver has {K_rec} (a file written while the disk was full); re-run it")
+            la = None
         if la is None or lc is None:
             if "paired_disp" in r:   # already computed on the machine that had the snapshots
                 results.append((r, recs[cfn]))

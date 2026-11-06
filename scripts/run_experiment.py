@@ -35,9 +35,13 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
         if not os.path.exists(npz):
             return False
         try:
+            import json
             import zipfile
+            n_levels = len(json.load(open(fn)).get("self_disp") or [None])   # one entry per level
             with zipfile.ZipFile(npz) as z:
-                if z.testzip() is not None or not any(n.startswith("level1") for n in z.namelist()):
+                names = [n for n in z.namelist() if n.startswith("level")]
+                # every level must be there (a write cut short can leave a readable file with fewer)
+                if z.testzip() is not None or sorted(names) != [f"level{k + 1}.npy" for k in range(n_levels)]:
                     raise ValueError("bad snapshot file")
             return True
         except Exception:
