@@ -51,24 +51,24 @@ Corrections made before any of the affected test runs (adversarial review of the
   energy of an 8 x 32 array falls on 9 antennas. The unstretched 8 x 32 and 4 x 16 runs not yet
   made were dropped (`configs/claims.json`, "dropped").
 
-| Item | Second campaign | Where |
+| Item | Second campaign | Status |
 |---|---|---|
-| E2 seeds | 5 seeds (10-14) for every experiment that had 2-3; 10 at the headline cell | both machines |
-| B1 | full-rank physical attacker (M = 4); CSI error 0.1 and 0.01, now passed through the true channel (bug fixed: the first campaign injected the perturbation designed for G_hat) | windows |
-| B2 | A4 at 20 PGD steps (alpha = 0.25), 5 seeds | cloud |
-| B3, H4 | denial by strong poisoning (A1 at SIR 0 dB on blocks 40-89) during a channel redraw, with and without streak recovery | windows |
-| B5 | accepted drift (A3* at 5%) over 900 of 1000 blocks, paired snapshots | cloud |
-| D2 | NR code blocks (CRC-24A + 5G LDPC, Sionna PHY 2.2) replacing the CRC-8 sub-blocks | pool |
-| D3 | 38.901 UMi drop with the attacker at 35, 75, 150 m at a user's maximum power; the SIR follows from geometry | pool |
-| D4 | 4 x 16 and 8 x 32 arrays with the stretched SED profile, 5 seeds | pool6 |
-| D7 | 2000-block clean horizon (Citadel-Rx, online DeepSIC) | cloud |
-| D8 | second backbone: fully connected joint-symbol detector (Citadel-Rx, online, CRC-Rollback) | cloudz |
-| D9 | multiply-accumulates per block (`scripts/flops.py`); still no GPU measurement | - |
-| E5 | x0.75 and x1.5 for the eight settings; a two-setting grid (CRC slack x G1 slack) | windows |
-| A6 | hill-climbing estimates of G_Phi, L_theta, L_a on three channel families (`scripts/lipschitz_strong.py`) | cloud |
-| H3 | abstain, final version (residual on CRC-verified symbols, threshold from calibration); A4, A1, redraw and SNR drop | pool |
-| H5 | drift guard against the accepted 5% drift | cloud |
-| H7 | per-user gating against a single-user attack (A2) and A1 | windows |
+| E2 seeds | 5 seeds (10-14) for every experiment that had 2-3; 10 at the headline cell | done |
+| B1 | physical attacker M = 1, 2, 4; CSI error 0.1 and 0.01 through the true channel | done (Table attacks) |
+| B2 | A4 at 20 PGD steps (alpha = 0.25), 5 seeds | done (Table refdeg) |
+| B3, H4 | denial by strong poisoning during a channel redraw, with and without streak recovery | done (Table deny2) |
+| B5 | accepted drift (A3* at 5%) over 900 of 1000 blocks, paired snapshots | done (Table retention) |
+| D2 | NR LDPC code blocks with NR scrambling (Sionna 2.2); G2 on decoder-verified symbols | done (Table umi): the defence fails, mechanism reported |
+| D3 | 38.901 UMi drops with the attacker at 35, 75, 150 m at a user's maximum power | done (Table umi) |
+| D4 | 4 x 16 and 8 x 32 with the stretched SED profile, 5 seeds | done (Table scenarios) |
+| D7 | 2000-block clean horizon (Citadel-Rx, online DeepSIC) | done (Sec. VI-E) |
+| D8 | second backbone: joint-symbol detector (Citadel-Rx, online, CRC-Rollback) | done (Table joint) |
+| D9 | multiply-accumulates per block (`scripts/flops.py`); no GPU measurement | done (Sec. VI-H) |
+| E5 | x0.75 and x1.5 for the eight settings; a two-setting grid (CRC slack x G1 slack) | done (Table sensitivity) |
+| A6 | hill-climbing estimate of G_Phi, random-probe L_theta, L_a on three channel families | done (Remark 1) |
+| H3 | abstain, final version (residual on CRC-verified symbols); A4, A1, redraw, SNR drop; seeds 10-14 and fresh 15-19 | done (Tables refdeg, text): not usable, mechanism reported |
+| H5 | drift guard against the accepted 5% drift | done (Table retention) |
+| H7 | per-user gating against a single-user attack (A2) and A1 | done (Table peruser): no gain, mechanism reported |
 
 Status key: **done** = implemented and tested in the code; **run** = in `scripts/revision_campaign.py`
 (results arrive after the GPU campaign); **text** = manuscript edit, done in the final pass with the
