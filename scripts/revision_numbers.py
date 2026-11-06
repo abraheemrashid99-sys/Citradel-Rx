@@ -819,6 +819,7 @@ def campaign2() -> None:
                 ab = [sum(bool(b.get("abstain")) for b in r["blocks"][50:]) for r in recs]
                 put(f"{pre}.{tag}.abst", f"{np.mean(ab):.1f}"); put(f"{pre}.{tag}.abstmax", str(max(ab)))
                 put(f"{pre}.{tag}.abstk", f"{sum(ab)}/{50 * len(recs)}")
+                put(f"{pre}.{tag}.nall", str(sum(a_ == 50 for a_ in ab)))
                 put(f"{pre}.{tag}.after", f_ser(float(np.mean([ser(r)[50:].mean() for r in recs])))); put(f"{pre}.{tag}.n", str(len(recs)))
                 vf = lambda r, a, b: [x["abstain_verified"] for x in r["blocks"][a:b] if x.get("abstain_verified") is not None]
                 put(f"{pre}.{tag}.verbefore", f"{np.mean([np.mean(vf(r, 30, 50)) for r in recs]):.2f}")

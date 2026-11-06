@@ -810,18 +810,32 @@ reference passes \val{a4.025.refatt} of the CRCs on attacked blocks (\val{a4.025
 clean twin), close enough to the poisoned fast level (\val{a4.025.nnatt}) that only
 \val{a4.025.rejk} attacked blocks are rejected, and the excess SER is \val{a4.025.excess}, against
 \val{ab.complete.excess} for A1 on the same seeds; with three quarters on the pilots it is
-\val{a4.075.excess}. An attacker that reaches the data does far more harm by jamming it: the same
-data power as noise raises the SER by \val{a4.jam025} and \val{a4.jam075} for $\alpha=0.25$ and
-$0.75$. The abstain state,
-meant to answer A4, does not work as implemented. Its running statistics are updated only on
-accepted blocks and its variance floor is binomial over thousands of CRC checks, so the fading of
-the channel alone, which lowers the reference pass fraction from \val{abs.ref0} to
-\val{abs.reflock}, trips it at block \val{abs.lockmin}--\val{abs.lockmax}; from then on it rejects
-every block, clean or attacked (\val{abs.rejk} blocks of its clean twins rejected, clean SER
-\val{a4.025abstain.clean}). Its rejection of every A4 block and its lower excess in
-Table~\ref{tab:refdeg} are those of a receiver that no longer adapts in either run, not a defence. A
-usable abstain state needs a reference model that follows legitimate change; it is not evaluated
-here.
+\val{a4.075.excess}. More optimisation does not make it stronger: with 20 PGD steps instead of 6 the
+excess at $\alpha=0.25$ is \val{b2.a4pgd20.excess} and \val{b2.a4pgd20.rejk} attacked blocks are
+rejected. An attacker that reaches the data does far more harm by jamming it: the same data power as
+noise raises the SER by \val{a4.jam025} and \val{a4.jam075} for $\alpha=0.25$ and $0.75$.
+
+The abstain state is meant to answer A4. Its first version did not work: its running statistics
+were updated only on accepted blocks and its variance floor was binomial over thousands of CRC
+checks, so the fading of the channel alone, which lowers the reference pass fraction from
+\val{abs.ref0} to \val{abs.reflock}, tripped it at block \val{abs.lockmin}--\val{abs.lockmax}, and
+from then on it rejected every block, clean or attacked (\val{abs.rejk} blocks of its clean twins;
+the lower excess of these rows in Table~\ref{tab:refdeg} is that of a receiver that no longer adapts
+in either run). The final version (Section~\ref{sec:citadel}) does what the first could not on clean
+runs: it abstained on none of \val{h3.cleanabstk} clean blocks of seeds 10--14 and none of
+\val{h3x.cleanabstk} of the fresh seeds 15--19, and on none after a 6\,dB SNR drop. It abstains on
+every attacked block of A1 and of A4 at $\alpha=0.75$, whose energy on the pilots inflates the noise
+estimate, but on only \val{h3.a4025.abst}\% of those of A4 at $\alpha=0.25$, and it does not lower
+the excess of A4 beyond the intervals: \val{h3.a4025.excess} and \val{h3.a4075.excess} on seeds
+10--14, against \val{a4.025.excess} and \val{a4.075.excess} without it (on seeds 15--19,
+\val{h3x.a4025.excess} and \val{h3x.a4075.excess}). After a legitimate redraw it abstains on
+\val{h3.redraw.abst} of the 50 remaining blocks on average (\val{h3.redraw.n} seeds) and on all of
+them on \val{h3.redraw.nall}: when the
+CRCs of one user fail after the redraw, no symbol slot is verified for every user (the verified
+fraction falls from \val{h3.redraw.verbefore} to \val{h3.redraw.verafter}), the statistic falls back
+to the residual of the LMMSE decisions, and that residual follows their errors. The final version is
+therefore not a usable defence either; a residual on the verified symbols of each user is the next
+step.
 
 An abrupt channel redraw at block 50 is the legitimate change the gates must not block
 (Table~\ref{tab:deny}). After it Citadel-Rx rejects a fraction \val{deny.citadel.frej} of the clean
@@ -830,15 +844,33 @@ blocks and its SER over the remaining blocks is \val{deny.citadel.after}, agains
 slow the re-adaptation, a cost of the defence. After a 6\,dB SNR drop, which the receivers are not
 told about, all three are close (\val{deny.citadel.drop}, \val{deny.onlinedeepsic.drop},
 \val{deny.lmmse.drop}). The denial spoof did not achieve its aim of tripping the gates on every
-block: they rejected fractions \val{deny.citadel.rejattmin} and \val{deny.citadel.rejattmax} of the
-spoofed blocks on the two seeds. It acted instead as an accepted perturbation during the change,
+block: they rejected fractions between \val{deny.citadel.rejattmin} and \val{deny.citadel.rejattmax}
+of the spoofed blocks on the \val{deny.citadel.n} seeds. It acted instead as an accepted perturbation during the change,
 raising the SER in its window by \val{deny.citadel.excess} for Citadel-Rx,
 \val{deny.onlinedeepsic.excess} for online DeepSIC and \val{deny.lmmse.excess} for LMMSE; in the ten
 blocks after it, Citadel-Rx was back at its no-spoof SER (\val{deny.citadel.post}) and online
 DeepSIC was not (\val{deny.onlinedeepsic.post}). Streak recovery was attempted
-\val{deny.streak.attempts} times in these runs and kept once, changing \val{deny.streak.ndiff} of
-\val{deny.streak.nruns} runs; it had no measurable effect, and a denial attack that would test it,
-one that trips the gates on every block, was not found.
+\val{deny.streak.attempts} times in these runs and kept \val{deny.streak.accepted} times, changing
+\val{deny.streak.ndiff} of \val{deny.streak.nruns} runs.
+
+Denial as intended needs an attack that the gates reject on every block. Strong poisoning does that:
+A1 at SIR 0\,dB on blocks 40--89, while the channel is redrawn at block 50 (Table~\ref{tab:deny2}),
+is rejected on \val{b3.citadel.rej} of the attacked blocks, so Citadel-Rx does not adapt to the new
+channel while the attack lasts. It pays \val{b3.citadel.win} in excess SER in the window and still
+\val{b3.citadel.post} in the ten blocks after it, against \val{b3.onlinedeepsic.win} in the window
+for online DeepSIC, which adapts to the poisoned pilots, and \val{b3.lmmse.win} for LMMSE. Streak
+recovery is what this case needs: it re-fitted from the anchor on CRC-verified data
+\val{b3.citadelstreak.att} times and kept \val{b3.citadelstreak.acc} of these re-fits, lowering the
+excess to \val{b3.citadelstreak.win} in the window and \val{b3.citadelstreak.post} after it.
+
+\textit{An attack on one user.} Per-user gating is meant for an attacker who poisons the pilots of
+one user only (A2, Table~\ref{tab:peruser}). It does not help here: the excess SER is
+\val{h7.citadelperusera2.excess} with it and \val{h7.citadela2.excess} without, because the
+block-level gates G1 and G3 still see the poisoned block and reject it, so the other users are
+reverted on \val{h7.citadelperusera2.revoth} of the attacked blocks as well as the attacked user
+(\val{h7.citadelperusera2.revtgt}), and on clean blocks \val{h7.citadelperusera2.revclean} of the
+user updates are reverted. Against A1, which poisons all users, it gives
+\val{h7.citadelperusera1.excess}, against \val{h7.citadela1.excess}.
 
 \subsection{Retention Under Optimised Slow Drift}\label{sec:retention}
 \begin{table}[t]
