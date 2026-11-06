@@ -530,3 +530,11 @@ pushed results to GitHub (16:35)
 [503 done, ~1 left | 0.0 h, ~0.0 h to go at this pace] t3 P7 clean_4792c45b16 s10 OK 0 min  == clean_4792c45b16 seed 10: exists, skipped (results/rev_clean/clean_4792c45b16_s10_bb44e4b30cf7.json)
 [504 done, ~0 left | 0.5 h, ~0.0 h to go at this pace] t1 P8 p8_a3star_e0.2__long s11 OK 27 min  == p8_a3star_e0.2__long seed 11: ser_mean=0.0238 ser_median=0.0175 ser_pre=0.0232 ser_attack=0.0260 ser_post=0.0148
 == laptop finished: 504 runs, 0 failed, 0.5 h
+pushed results to GitHub (17:04)
+== paired displacement of the drift runs
+| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |
+|---|---|---|---|---|---|---|---|
+| a3star e=0.05 | 0 | [8.5, 4.5] | 2 | 8.56 | 90.00 | 11.47 | 9.29 |
+| a3star e=0.2 | 0 | [8.5, 4.5] | 2 | 13.55 | 90.00 | 20.12 | 14.61 |
+| a3star e=0.5 | 0 | [8.5, 4.5] | 2 | 22.46 | 90.00 | 56.39 | 22.10 |
+| a3star e=0.5 guard | 0 | [8.5, 4.5] | 2 | 19.04 | 90.00 | 55.16 | 18.72 |
