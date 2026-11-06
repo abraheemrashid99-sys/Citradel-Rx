@@ -159,7 +159,8 @@ def f_sig(x: float) -> str:
 
 
 def f_ci(ci) -> str:
-    return f"[{f_sig(ci[0])}, {f_sig(ci[1])}]"
+    """Interval without plus signs (a minus sign still shows): it follows a signed point estimate."""
+    return f"[{f_ser(ci[0])}, {f_ser(ci[1])}]"
 
 
 def f_rate(kn) -> str:
@@ -267,10 +268,11 @@ def p1() -> None:
         put(f"cmp.{rx}.n", str(n))
         put(f"cmp.{rx}.att", f_sig(dA))
         put(f"cmp.{rx}.cln", f_sig(dC))
-        put(f"cmp.{rx}.clnrel", f"{100 * rel:+.0f}")
+        put(f"cmp.{rx}.clnrel", f"${100 * rel:+.0f}$")
+        put(f"cmp.{rx}.clnpct", f"{abs(100 * rel):.0f}")
         put(f"cmp.{rx}.patt", f_p(qa))
         put(f"cmp.{rx}.pcln", f_p(qc))
-        rows.append(f"{RXLABEL[rx]} & {n} & {f_sig(dA)} & {f_p(qa)} & {f_sig(dC)} ({100 * rel:+.0f}\\%) & {f_p(qc)}\\\\")
+        rows.append(f"{RXLABEL[rx]} & {n} & {f_sig(dA)} & {f_p(qa)} & {f_sig(dC)} (${100 * rel:+.0f}$\\%) & {f_p(qc)}\\\\")
     write_table("p1_paired", rows)
 
 
@@ -343,7 +345,7 @@ def refdeg() -> None:
                 ex.append(float(np.mean(ser(r)[w0:w1] - ser(c)[w0:w1])))
         if ex:
             put("a4.jam" + a.replace(".", ""), f_sig(float(np.mean(ex))))
-            rows.append(f"jamming only, $1-\\alpha={1 - float(a):g}$ of the power & -- & {len(ex)} & {f_sig(float(np.mean(ex)))} & -- & --\\\\")
+            rows.append(f"jamming & ${1 - float(a):g}$ of power & {len(ex)} & {f_sig(float(np.mean(ex)))} & -- & --\\\\")
     write_table("refdeg", rows)
 
 
@@ -364,7 +366,7 @@ def deny() -> None:
         fr = [rejections(none[i], None, skip=50) for i in s]
         frk = (sum(k for k, _ in fr), sum(n for _, n in fr))
         dr = float(np.mean([ser(drop[i])[50:].mean() for i in sorted(drop)])) if drop else float("nan")
-        lab = {"citadel": "Citadel-Rx", "citadel_streak": "Citadel-Rx + streak recovery", "online_deepsic": "Online DeepSIC",
+        lab = {"citadel": "Citadel-Rx", "citadel_streak": "+ streak recovery", "online_deepsic": "Online DeepSIC",
                "lmmse": "LMMSE"}[rx]
         k = "deny." + rx.replace("_", "")
         put(k + ".after", f_ser(after)); put(k + ".excess", f_sig(ex)); put(k + ".post", f_sig(post))
