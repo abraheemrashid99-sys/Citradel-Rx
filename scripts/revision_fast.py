@@ -390,7 +390,7 @@ def helper_jobs() -> List[Job]:
             out.append(Job("helper", j.tier, j.group, CLEAN_DIR["helper"] if j.clean_twin else j.out, j.name, j.seeds, j.ov,
                            clean_twin=j.clean_twin, kind=j.kind))
     # the most expensive first, so that the slower laptop is left with the cheap remainder
-    order = {"D4": 0, "P6": 1, "P5": 2, "P2": 3, "P7": 4, "P7grid": 5}
+    order = {"D4": 0, "P2": 1, "P6": 2, "P5": 3, "P7": 4, "P7grid": 5}   # the cloud's tier 2 first
     out.sort(key=lambda j: order.get(j.group, 9))
     return out
 
@@ -567,7 +567,9 @@ def push_results(shard: str) -> None:
         if _run_git(["diff", "--cached", "--quiet"]).returncode != 0:
             n = len([f for f in files if f.startswith("results")])
             _run_git(["commit", "-q", "-m", f"Revision results ({shard} machine, {n} records)"])
-        if _git("pull", "-q", "--no-rebase", "--no-edit", "origin", BRANCH, retries=4) != 0:
+        # -X ours: if two machines ever produced the same record (a job taken over by the helper machine
+        # while its first assignee also ran it), keep this machine's; the other's clean twin stays unused
+        if _git("pull", "-q", "--no-rebase", "--no-edit", "-X", "ours", "origin", BRANCH, retries=4) != 0:
             _run_git(["merge", "--abort"], capture_output=True)
             print("!! git pull failed; results are committed locally and will be pushed next time", flush=True)
             return
@@ -588,7 +590,7 @@ class Campaign:
                                                     (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()))
         jobs = [j for j in src if j.shard == shard and j.tier <= tier]
         if campaign == 4:
-            jobs.sort(key=lambda j: {"D4": 0, "P6": 1, "P5": 2, "P2": 3, "P7": 4, "P7grid": 5}.get(j.group, 9))
+            jobs.sort(key=lambda j: {"D4": 0, "P2": 1, "P6": 2, "P5": 3, "P7": 4, "P7grid": 5}.get(j.group, 9))
         if campaign != 4:
             jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
         self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
