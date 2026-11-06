@@ -72,7 +72,10 @@ MATCH_IGNORE = ("run.out_dir", "run.device", "run.seeds", "run.name")
 RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
-CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win"}
+CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
+             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud"}   # cloudx / cloudy: second and third driver on the cloud
+FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
+FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
 T5 = [10, 11, 12, 13, 14]   # second campaign: the 2-seed experiments get seeds 12-14, the 3-seed cells 13-14
 NEW3, NEW2 = [12, 13, 14], [13, 14]
 
@@ -338,11 +341,52 @@ def rev2_jobs() -> List[Job]:
     return jobs
 
 
+def rev2x_jobs() -> List[Job]:
+    """New-feature experiments on the cloud (shards cloudx and cloudy, run next to the "cloud" driver).
+    cloudx: the calibration of the abstain threshold and the tuning of the second backbone (seeds 0-2,
+    rules in scripts/freeze_rev2.py, fixed before any test run of these features), and the coded UMi
+    scene (NR LDPC + 38.901 UMi with the attacker at 35, 75 and 150 m; Citadel-Rx and the baselines
+    keep their frozen settings). cloudy: the test runs that read configs/revision2_frozen_*.json."""
+    X, Y = "cloudx", "cloudy"
+    jobs: List[Job] = []
+    # ===== cloudx, tier 0: calibration and tuning on seeds 0-2 ================================
+    jobs += J(X, 0, "H3cal", "rev2_abstain_cal", "h3cal_ratio__clean", CAL,
+              rx_ov("citadel") + ["citadel.abstain=true", "citadel.abstain_mode=ratio", "citadel.abstain_z=1e9", "attack.type=none"])
+    for ep, lr in itertools.product([30, 100, 300], [1e-3, 5e-3]):
+        jobs += J(X, 0, "D8tune", "rev2_joint_tune", f"tune_joint_ep{ep}_lr{lr:g}", CAL,
+                  ["receiver.type=online_deepsic", "receiver.backbone=joint", f"receiver.epochs={ep}", f"receiver.lr={lr}",
+                   "attack.type=none"], kind="tune")
+    # ===== cloudx, tier 1: NR LDPC coding over 38.901 UMi channels, attacker in the scene (D2, D3) =
+    scene = ["channel.model=umi", "frame.coding=ldpc"]
+    for d in (35, 75, 150):
+        for rx in ("citadel", "online_deepsic", "crc_rollback", "lmmse"):
+            jobs += JT(X, 1, "D23", "rev2_umi_ldpc", f"d23_{rx}_d{d}__phys", T5,
+                       rx_ov(rx) + scene + RND + ["attack.type=a1", "attack.attacker_antennas=1", "attack.sir_from_geometry=true",
+                                                 "attack.budget_ref=signal", f"attack.att_dist={d}"])
+    # ===== cloudy, tier 1: test runs with the frozen abstain threshold and backbone tuning =======
+    for a in (0.25, 0.75):   # H3 against A4
+        jobs += JT(Y, 1, "H3", "rev2_abstain", f"h3_a4_a{a:g}_ratio__sir0", T5,
+                   rx_ov("citadel") + ["@ABST"] + RND + ["attack.type=a4", f"attack.a4_alpha={a}", "attack.sir_db=0", "attack.pgd_steps=6"])
+    jobs += JT(Y, 1, "H3", "rev2_abstain", "h3_a1_ratio__sir0", T5, rx_ov("citadel") + ["@ABST"] + RND + ["attack.type=a1", "attack.sir_db=0"])
+    for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
+                    ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):   # legitimate changes
+        jobs += J(Y, 1, "H3", "rev2_abstain", f"h3_ratio_{tag}__none", T5, rx_ov("citadel") + ["@ABST"] + ch + ["attack.type=none"])
+    for rx in ("citadel", "online_deepsic", "crc_rollback"):   # D8: second backbone under A1
+        jobs += JT(Y, 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
+                   ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
+                   + RND + ["attack.type=a1", "attack.sir_db=0"])
+    return jobs
+
+
 # ------------------------------------------------------------------------------------ settings
 def resolve(job: Job, seed: int, fz_cit: Optional[dict], fz_base: Optional[dict]) -> Tuple[Tuple[str, str, int], List[str]]:
     ov: List[str] = []
     for o in job.ov:
-        if o == "@CIT":
+        if o == "@ABST":
+            ov += json.load(open(FZ_ABST))["overrides"]
+        elif o == "@JOINT":
+            ov += json.load(open(FZ_JOINT))["overrides"]
+        elif o == "@CIT":
             ov += fz_cit["citadel_overrides"]
         elif o.startswith("@BASE:"):
             ov += (fz_base or {}).get(o[6:], {}).get("overrides", [])
@@ -523,7 +567,7 @@ class Campaign:
                  cache_gb: float = 0.6, campaign: int = 1):
         self.shard, self.workers, self.wait_hours, self.push_every, self.min_free_mb = shard, workers, wait_hours, push_every, min_free_mb
         self.cache_gb = cache_gb
-        src = rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()
+        src = rev2x_jobs() if campaign == 3 else (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs())
         jobs = [j for j in src if j.shard == shard and j.tier <= tier]
         jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
         self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
@@ -539,7 +583,7 @@ class Campaign:
         self.last_fetch = 0.0
         self.calibrated = False
         self._freezing = False
-        if campaign == 2:   # settings were frozen by the first campaign's rules; nothing is calibrated again
+        if campaign in (2, 3):   # settings were frozen by the first campaign's rules; nothing is calibrated again
             self.fz_cit, self.fz_base = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
             self.cal_left, self.calibrated = 0, True
         os.makedirs(LOGS, exist_ok=True)
@@ -718,8 +762,9 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud", "windows"])
-    ap.add_argument("--campaign", type=int, choices=[1, 2], default=1, help="2 = the second revision campaign")
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy"])
+    ap.add_argument("--campaign", type=int, choices=[1, 2, 3], default=1,
+                    help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy)")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
     ap.add_argument("--dry", action="store_true")
@@ -738,7 +783,7 @@ def main():
     if args.push_only:
         push_results(args.shard)
         return
-    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard == "cloud" else 0.6)
+    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith("cloud") else 0.6)
     Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb, args.campaign).run()
 
 

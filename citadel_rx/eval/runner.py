@@ -151,9 +151,12 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         blk = frames.make(b)
         y_p = channel.transmit(blk.s_pilot, st)
         y_d = channel.transmit(blk.s_data, st)
-        attacker.block_state = st                     # UMi scene: the attacker's channel of this block
-        if b == 0 and getattr(channel, "umi_sir_db", None) is not None and cfg.attack.sir_from_geometry:
-            attacker.sir_override, attacker.g_rms = channel.umi_sir_db, channel.umi_g_rms
+        if cfg.channel.model == "umi" and cfg.attack.type != "none":   # UMi scene: the attacker's channel and SIR
+            G_all, sir_geo, g_rms = channel.umi_attacker(cfg.attack.att_dist)
+            st.G = G_all[b]
+            if cfg.attack.sir_from_geometry:
+                attacker.sir_override, attacker.g_rms = sir_geo, g_rms
+        attacker.block_state = st
         attacker.observe_clean(b, y_p, blk.idx_pilot, y_d, frames)
         tb = time.time()
         y_p_adv, y_d_adv, astats = attacker.craft(b, y_p, blk.idx_pilot, y_d, receiver, noise_var,

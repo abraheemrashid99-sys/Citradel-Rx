@@ -29,8 +29,6 @@ class ChannelConfig:
     abrupt_block: int = -1            # -1 disables
     abrupt_type: str = "redraw"       # redraw | snr_drop
     abrupt_snr_drop_db: float = 6.0
-    # 3GPP 38.901 UMi drop with the attacker in the scene (audit D3; scripts/make_umi_channels.py)
-    umi_att_dist: float = 75.0        # attacker distance from the base station (m)
 
 
 @dataclass
@@ -168,6 +166,7 @@ class AttackConfig:
     attacker_antennas: int = 0        # >0: E = G X_a with G (N x M) from the channel family (rank-M physical attacker)
     attacker_csi_err: float = 0.0     # variance of the attacker's error on G (imperfect CSI)
     sir_from_geometry: bool = False   # UMi: the budget follows the attacker's position (audit D3), not sir_db
+    att_dist: float = 75.0            # UMi: attacker distance from the base station (m), one of the drop's distances
     budget_ref: str = "received"      # received (noise included) | signal (noise-free users' energy)
     # audit B2: reference degradation (joint pilot + data)
     a4_alpha: float = 0.5             # fraction of per-symbol power spent on the pilots

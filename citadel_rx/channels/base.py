@@ -100,18 +100,27 @@ class BlockFadingChannel:
 
     def _umi(self, b: int):
         if not hasattr(self, "_umi_data"):
-            fn = os.path.join(os.path.dirname(self.cost_dir), "umi",
-                              f"umi_N{self.n_ant}_U{self.n_user}_d{self.cfg.umi_att_dist:g}_s{self.cfg.seed}.npz")
+            fn = os.path.join(os.path.dirname(self.cost_dir), "umi", f"umi_N{self.n_ant}_U{self.n_user}_s{self.cfg.seed}.npz")
             if not os.path.exists(fn):
                 raise FileNotFoundError(f"{fn}: run scripts/make_umi_channels.py first")
             z = np.load(fn)
-            self._umi_data = (z["H"], z["G"])
-            self.umi_sir_db = float(z["sir_db"])
-            self.umi_g_rms = float(np.sqrt(np.mean(np.abs(z["G"]) ** 2) * z["G"].shape[1]))
-        H, G = self._umi_data
+            self._umi_data = z["H"]
+            self._umi_att = {k[3:]: z[k] for k in z.files if k.startswith("G_d")}      # distance -> (T, N, 1)
+            self._umi_sir = {k[5:]: float(z[k]) for k in z.files if k.startswith("sir_d")}
+        H = self._umi_data
         if b >= H.shape[0]:
             raise ValueError("more blocks than the UMi drop holds")
-        return H[b], G[b]
+        return H[b], None
+
+    def umi_attacker(self, dist: float):
+        """(per-block attacker channels (T, N, 1), geometric SIR in dB, rms norm of G) at this distance."""
+        if not hasattr(self, "_umi_att"):
+            self._umi(0)
+        key = f"{dist:g}"
+        if key not in self._umi_att:
+            raise ValueError(f"no attacker at {dist:g} m in this drop (have {sorted(self._umi_att)})")
+        G = self._umi_att[key]
+        return G, self._umi_sir[key], float(np.sqrt(np.mean(np.sum(np.abs(G) ** 2, axis=(1, 2)))))
 
     def state(self, b: int) -> ChannelState:
         G = None
