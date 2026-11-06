@@ -530,6 +530,9 @@ def retention() -> None:
         # P4 ran on the cloud machine, P8 on the laptop (after the cloud machine was stopped)
         c = cell(folder, name, ["rev_clean", "rev_clean_cloud"])
         put_cell(key, c)
+        if c is not None and folder == "rev_p8_drift":   # perturbation norm relative to the received pilots
+            e = float(c["pairs"][0][0]["config"]["attack"]["a3_eps_small"])
+            put(key + ".sir", f"{-20 * np.log10(e):.0f}")
         if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
             continue
         DK, des, ext, anc, mv = [], [], [], [], []

@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 
 _POLY = {
-    8: 0x9B,       # 3GPP CRC-8   x^8+x^7+x^4+x^3+x+1
+    8: 0x9B,       # gCRC8 of 3GPP TS 36.212 (LTE) Sec. 5.1.1: x^8+x^7+x^4+x^3+x+1
     11: 0x621,     # 3GPP CRC-11
     16: 0x1021,    # 3GPP CRC-16
     24: 0x864CFB,  # 3GPP CRC-24A
