@@ -1,0 +1,4 @@
+{"shard": "pool8", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d75__phys", "seed": 11, "ok": true, "seconds": 1979.7, "finished": "2026-11-06T20:17:40.328991+00:00"}
+{"shard": "pool8", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d35__phys", "seed": 11, "ok": true, "seconds": 1982.5, "finished": "2026-11-06T20:17:43.084089+00:00"}
+{"shard": "pool8", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d35__phys", "seed": 13, "ok": true, "seconds": 1982.5, "finished": "2026-11-06T20:17:43.113456+00:00"}
+{"shard": "pool8", "tier": 1, "group": "D23s", "out": "rev2_umi_ldpc_scr", "name": "d23s_citadel_d150__phys", "seed": 11, "ok": true, "seconds": 1991.7, "finished": "2026-11-06T20:17:52.280893+00:00"}
