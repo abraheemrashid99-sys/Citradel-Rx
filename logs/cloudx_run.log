@@ -6,3 +6,4 @@ pushed results to GitHub (14:41)
 [4 done, ~137 left | 0.8 h, ~26.6 h to go at this pace] t0 D8tune tune_joint_ep30_lr0.001 s0 OK 30 min  == tune_joint_ep30_lr0.001 seed 0: ser_mean=0.0847 ser_median=0.0881
 [5 done, ~136 left | 1.2 h, ~33.4 h to go at this pace] t0 D8tune tune_joint_ep30_lr0.001 s1 OK 39 min  == tune_joint_ep30_lr0.001 seed 1: ser_mean=0.0811 ser_median=0.0873
 [6 done, ~135 left | 1.5 h, ~32.9 h to go at this pace] t0 D8tune tune_joint_ep30_lr0.001 s2 OK 41 min  == tune_joint_ep30_lr0.001 seed 2: ser_mean=0.0827 ser_median=0.0867
+pushed results to GitHub (15:26)
