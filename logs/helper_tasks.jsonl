@@ -139,3 +139,6 @@
 {"shard": "helper", "tier": 2, "group": "P5", "out": "rev_p5_ablate", "name": "p5_nogate__wb_sir0", "seed": 12, "ok": true, "seconds": 570.6, "finished": "2026-11-06T19:14:15.439871+00:00"}
 {"shard": "helper", "tier": 2, "group": "P5", "out": "rev_p5_ablate", "name": "p5_nogate__wb_sir0", "seed": 13, "ok": true, "seconds": 539.5, "finished": "2026-11-06T19:15:48.091485+00:00"}
 {"shard": "helper", "tier": 2, "group": "P5", "out": "rev_clean_helper", "name": "clean_f34e0a7a0a", "seed": 12, "ok": true, "seconds": 347.6, "finished": "2026-11-06T19:17:08.455075+00:00"}
+{"shard": "helper", "tier": 2, "group": "P5", "out": "rev_p5_ablate", "name": "p5_nogate__wb_sir0", "seed": 14, "ok": true, "seconds": 547.4, "finished": "2026-11-06T19:19:08.470695+00:00"}
+{"shard": "helper", "tier": 2, "group": "P5", "out": "rev_clean_helper", "name": "clean_f34e0a7a0a", "seed": 13, "ok": true, "seconds": 344.4, "finished": "2026-11-06T19:19:59.816891+00:00"}
+{"shard": "helper", "tier": 2, "group": "P5", "out": "rev_clean_helper", "name": "clean_f34e0a7a0a", "seed": 14, "ok": true, "seconds": 353.5, "finished": "2026-11-06T19:21:41.583576+00:00"}

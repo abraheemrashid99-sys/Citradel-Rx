@@ -144,3 +144,6 @@ pushed results to GitHub (18:37)
 [139 done, ~177 left | 3.6 h, ~4.6 h to go at this pace] t2 P5 p5_nogate__wb_sir0 s12 OK 10 min  == p5_nogate__wb_sir0 seed 12: ser_mean=0.0918 ser_median=0.0280 ser_pre=0.0175 ser_attack=0.2062 ser_post=0.0108
 [140 done, ~176 left | 3.6 h, ~4.6 h to go at this pace] t2 P5 p5_nogate__wb_sir0 s13 OK 9 min  == p5_nogate__wb_sir0 seed 13: ser_mean=0.1084 ser_median=0.0189 ser_pre=0.0086 ser_attack=0.2534 ser_post=0.0127
 [141 done, ~175 left | 3.7 h, ~4.5 h to go at this pace] t2 P5 clean_f34e0a7a0a s12 OK 6 min  == clean_f34e0a7a0a seed 12: ser_mean=0.0149 ser_median=0.0116
+[142 done, ~174 left | 3.7 h, ~4.5 h to go at this pace] t2 P5 p5_nogate__wb_sir0 s14 OK 9 min  == p5_nogate__wb_sir0 seed 14: ser_mean=0.1183 ser_median=0.0193 ser_pre=0.0085 ser_attack=0.2777 ser_post=0.0129
+[143 done, ~173 left | 3.7 h, ~4.5 h to go at this pace] t2 P5 clean_f34e0a7a0a s13 OK 6 min  == clean_f34e0a7a0a seed 13: ser_mean=0.0151 ser_median=0.0128
+[144 done, ~172 left | 3.7 h, ~4.5 h to go at this pace] t2 P5 clean_f34e0a7a0a s14 OK 6 min  == clean_f34e0a7a0a seed 14: ser_mean=0.0150 ser_median=0.0118
