@@ -9,3 +9,12 @@ pushed results to GitHub (19:01)
 [6 done, ~96 left | 1.9 h, ~30.6 h to go at this pace] t1 H3v h3v_a4_a0.25__sir0 s10 OK 40 min  == h3v_a4_a0.25__sir0 seed 10: ser_mean=0.0295 ser_median=0.0165 ser_pre=0.0238 ser_attack=0.0473 ser_post=0.0123
 [7 done, ~95 left | 2.0 h, ~26.5 h to go at this pace] t1 H3v h3v_a4_a0.75__sir0 s10 OK 40 min  == h3v_a4_a0.75__sir0 seed 10: ser_mean=0.0269 ser_median=0.0163 ser_pre=0.0238 ser_attack=0.0411 ser_post=0.0120
 [8 done, ~94 left | 2.2 h, ~26.3 h to go at this pace] t1 D23 d23_citadel_d150__phys s10 OK 31 min  == d23_citadel_d150__phys seed 10: ser_mean=0.4921 ser_median=0.5531 ser_pre=0.0551 ser_attack=0.7915 ser_post=0.5003
+pushed results to GitHub (19:46)
+[9 done, ~93 left | 2.3 h, ~23.4 h to go at this pace] t1 P3adapt p3_online_strongest__sir0 s13 OK 21 min  == p3_online_strongest__sir0 seed 13: ser_mean=0.3835 ser_median=0.0415 ser_pre=0.0156 ser_attack=0.9091 ser_post=0.0379
+[10 done, ~92 left | 2.3 h, ~21.3 h to go at this pace] t1 P3adapt p3_online_strongest__sir0 s12 OK 22 min  == p3_online_strongest__sir0 seed 12: ser_mean=0.3690 ser_median=0.0570 ser_pre=0.0333 ser_attack=0.8630 ser_post=0.0542
+[11 done, ~91 left | 2.6 h, ~21.3 h to go at this pace] t1 D8 d8_online_deepsic_joint__wb_sir0 s13 OK 20 min  == d8_online_deepsic_joint__wb_sir0 seed 13: ser_mean=0.2865 ser_median=0.2355 ser_pre=0.0294 ser_attack=0.4507 ser_post=0.2178
+[12 done, ~90 left | 2.6 h, ~19.4 h to go at this pace] t1 D8 clean_15e7688cc3 s13 OK 20 min  == clean_15e7688cc3 seed 13: ser_mean=0.0830 ser_median=0.0924
+[13 done, ~89 left | 2.7 h, ~18.2 h to go at this pace] t1 D8 d8_online_deepsic_joint__wb_sir0 s12 OK 20 min  == d8_online_deepsic_joint__wb_sir0 seed 12: ser_mean=0.2429 ser_median=0.2050 ser_pre=0.0684 ser_attack=0.4142 ser_post=0.2692
+[14 done, ~88 left | 2.9 h, ~18.3 h to go at this pace] t1 D8 clean_15e7688cc3 s12 OK 20 min  == clean_15e7688cc3 seed 12: ser_mean=0.0810 ser_median=0.0841
+[15 done, ~87 left | 2.9 h, ~17.1 h to go at this pace] t1 D8 d8_crc_rollback_joint__wb_sir0 s13 OK 22 min  == d8_crc_rollback_joint__wb_sir0 seed 13: ser_mean=0.2743 ser_median=0.2945 ser_pre=0.0282 ser_attack=0.2804 ser_post=0.3371
+[16 done, ~86 left | 3.0 h, ~16.1 h to go at this pace] t1 D8 clean_45472e37db s13 OK 21 min  == clean_45472e37db seed 13: ser_mean=0.0781 ser_median=0.0829
