@@ -1,1 +1,5 @@
 == pool7: 36 runs queued (before de-duplication), 4 workers, pre-training cache cache/pretrain
+[1 done, ~35 left | 0.6 h, ~21.2 h to go at this pace] t1 D23s d23s_citadel_d35__phys s10 OK 36 min  == d23s_citadel_d35__phys seed 10: ser_mean=0.4534 ser_median=0.1222 ser_pre=0.0550 ser_attack=0.9929 ser_post=0.1275
+[2 done, ~34 left | 0.6 h, ~10.3 h to go at this pace] t1 D23s d23s_citadel_d75__phys s10 OK 36 min  == d23s_citadel_d75__phys seed 10: ser_mean=0.4461 ser_median=0.1222 ser_pre=0.0550 ser_attack=0.9744 ser_post=0.1279
+[3 done, ~33 left | 0.6 h, ~6.7 h to go at this pace] t1 D23s d23s_citadel_d150__phys s10 OK 36 min  == d23s_citadel_d150__phys seed 10: ser_mean=0.3727 ser_median=0.1023 ser_pre=0.0550 ser_attack=0.7909 ser_post=0.1279
+[4 done, ~32 left | 0.6 h, ~5.0 h to go at this pace] t1 D23s d23s_citadel_d35__phys s12 OK 38 min  == d23s_citadel_d35__phys seed 12: ser_mean=0.4633 ser_median=0.1623 ser_pre=0.1463 ser_attack=0.9880 ser_post=0.0369
