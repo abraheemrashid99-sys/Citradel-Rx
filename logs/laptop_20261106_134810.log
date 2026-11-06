@@ -362,3 +362,217 @@ pushed results to GitHub (13:49)
 [334 done, ~174 left | 0.0 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_redraw__deny s11 OK 0 min  == p3_lmmse_redraw__deny seed 11: exists, skipped (results/rev_p3_deny/p3_lmmse_redraw__deny_s11_7a325fc2380e.json)
 [335 done, ~173 left | 0.0 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_snrdrop__none s10 OK 0 min  == p3_lmmse_snrdrop__none seed 10: exists, skipped (results/rev_p3_deny/p3_lmmse_snrdrop__none_s10_9507449d3bb9.json)
 [336 done, ~170 left | 0.0 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_snrdrop__none s11 OK 0 min  == p3_lmmse_snrdrop__none seed 11: exists, skipped (results/rev_p3_deny/p3_lmmse_snrdrop__none_s11_111756751cb2.json)
+pushed results to GitHub (14:34)
+[337 done, ~169 left | 0.9 h, ~0.5 h to go at this pace] t1 P8 clean_fd8ef07d73 s10 OK 53 min  == clean_fd8ef07d73 seed 10: ser_mean=0.0141 ser_median=0.0106
+[338 done, ~166 left | 0.9 h, ~0.5 h to go at this pace] t1 P8 clean_fd8ef07d73 s11 OK 53 min  == clean_fd8ef07d73 seed 11: ser_mean=0.0145 ser_median=0.0109
+[339 done, ~165 left | 1.4 h, ~0.7 h to go at this pace] t1 P8 p8_a3star_e0.2__long s11 FAIL 81 min  
+ng of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/abraheemrashid/Documents/Citradel-Rx/scripts/run_experiment.py", line 96, in <module>
+    main()
+    ~~~~^^
+  File "/Users/abraheemrashid/Documents/Citradel-Rx/scripts/run_experiment.py", line 89, in main
+    rec = run_experiment(cfg, seed=s, save=not args.no_save, verbose=not args.quiet)
+  File "/Users/abraheemrashid/Documents/Citradel-Rx/citadel_rx/eval/runner.py", line 210, in run_experiment
+    np.savez_compressed(path.replace(".json", ".levels.npz"),
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        **{f"level{k + 1}": lv.astype(np.float16) for k, lv in enumerate(stacks)})
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 753, in savez_compressed
+    _savez(file, args, kwds, True, allow_pickle=allow_pickle)
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 785, in _savez
+    with zipf.open(fname, 'w', force_zip64=True) as fid:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/zipfile/__init__.py", line 1264, in close
+    self._fileobj.write(buf)
+    ~~~~~~~~~~~~~~~~~~~^^^^^
+OSError: [Errno 28] No space left on device
+
+!! only 103 MB of disk left: paused (free some space; it resumes by itself)
+[340 done, ~164 left | 1.4 h, ~0.7 h to go at this pace] t1 P8 p8_a3star_e0.2__long s10 FAIL 81 min  
+ot args.no_save, verbose=not args.quiet)
+  File "/Users/abraheemrashid/Documents/Citradel-Rx/citadel_rx/eval/runner.py", line 210, in run_experiment
+    np.savez_compressed(path.replace(".json", ".levels.npz"),
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        **{f"level{k + 1}": lv.astype(np.float16) for k, lv in enumerate(stacks)})
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 753, in savez_compressed
+    _savez(file, args, kwds, True, allow_pickle=allow_pickle)
+    ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/site-packages/numpy/lib/_npyio_impl.py", line 786, in _savez
+    format.write_array(fid, val,
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^
+                       allow_pickle=allow_pickle,
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+                       pickle_kwargs=pickle_kwargs)
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/site-packages/numpy/lib/_format_impl.py", line 777, in write_array
+    fp.write(chunk.tobytes('C'))
+    ~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/Users/abraheemrashid/miniconda3/lib/python3.13/zipfile/__init__.py", line 1252, in write
+    self._fileobj.write(data)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^
+OSError: [Errno 28] No space left on device
+
+[341 done, ~163 left | 1.4 h, ~0.7 h to go at this pace] t1 P8 p8_a3star_e0.05__long s11 OK 82 min  == p8_a3star_e0.05__long seed 11: ser_mean=0.0159 ser_median=0.0124 ser_pre=0.0232 ser_attack=0.0155 ser_post=0.0145
+[342 done, ~162 left | 1.4 h, ~0.7 h to go at this pace] t1 P8 p8_a3star_e0.5__long s10 OK 82 min  == p8_a3star_e0.5__long seed 10: ser_mean=0.0211 ser_median=0.0156 ser_pre=0.0234 ser_attack=0.0225 ser_post=0.0142
+[343 done, ~161 left | 1.4 h, ~0.7 h to go at this pace] t2 P2 p2_lmmse__wb_sir0 s10 OK 0 min  == p2_lmmse__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_lmmse__wb_sir0_s10_d93a6a89e140.json)
+[344 done, ~160 left | 1.4 h, ~0.7 h to go at this pace] t1 P8 p8_a3star_e0.5__long s11 OK 82 min  == p8_a3star_e0.5__long seed 11: ser_mean=0.0220 ser_median=0.0163 ser_pre=0.0232 ser_attack=0.0236 ser_post=0.0146
+[345 done, ~159 left | 1.4 h, ~0.6 h to go at this pace] t1 P8 p8_a3star_e0.05__long s10 OK 82 min  == p8_a3star_e0.05__long seed 10: ser_mean=0.0156 ser_median=0.0122 ser_pre=0.0234 ser_attack=0.0152 ser_post=0.0142
+[346 done, ~158 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_lmmse__wb_sir0 s11 OK 0 min  == p2_lmmse__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_lmmse__wb_sir0_s11_b6b712d2f70f.json)
+[347 done, ~157 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_30a04e9bbd s10 OK 0 min  == clean_30a04e9bbd seed 10: exists, skipped (results/rev_clean/clean_30a04e9bbd_s10_7e6231bd70f3.json)
+[348 done, ~156 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_30a04e9bbd s11 OK 0 min  == clean_30a04e9bbd seed 11: exists, skipped (results/rev_clean/clean_30a04e9bbd_s11_1dfd0bbbb4f7.json)
+[349 done, ~155 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_lmmse_robust__wb_sir0 s10 OK 0 min  == p2_lmmse_robust__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_lmmse_robust__wb_sir0_s10_c34018a8c2ec.json)
+[350 done, ~154 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_lmmse_robust__wb_sir0 s11 OK 0 min  == p2_lmmse_robust__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_lmmse_robust__wb_sir0_s11_70f9af9c51ec.json)
+[351 done, ~153 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_93e652296c s10 OK 0 min  == clean_93e652296c seed 10: exists, skipped (results/rev_clean/clean_93e652296c_s10_71e6501d397f.json)
+[352 done, ~152 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_93e652296c s11 OK 0 min  == clean_93e652296c seed 11: exists, skipped (results/rev_clean/clean_93e652296c_s11_c83ba9393575.json)
+[353 done, ~151 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_rollback_allgates__wb_sir0 s10 OK 0 min  == p2_rollback_allgates__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_rollback_allgates__wb_sir0_s10_0e3208ae9c27.json)
+[354 done, ~150 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_rollback_allgates__wb_sir0 s11 OK 0 min  == p2_rollback_allgates__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_rollback_allgates__wb_sir0_s11_3e46fe6e5803.json)
+[355 done, ~149 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_a9812efe04 s10 OK 0 min  == clean_a9812efe04 seed 10: exists, skipped (results/rev_clean/clean_a9812efe04_s10_44abab48e055.json)
+[356 done, ~148 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_a9812efe04 s11 OK 0 min  == clean_a9812efe04 seed 11: exists, skipped (results/rev_clean/clean_a9812efe04_s11_5779aa09a4bb.json)
+[357 done, ~147 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_l2sp_deepsic__wb_sir0 s11 OK 0 min  == p2_l2sp_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_l2sp_deepsic__wb_sir0_s11_926b46d84865.json)
+[358 done, ~146 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_l2sp_deepsic__wb_sir0 s10 OK 0 min  == p2_l2sp_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_l2sp_deepsic__wb_sir0_s10_51fe46641e68.json)
+[359 done, ~145 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_fb035082bd s10 OK 0 min  == clean_fb035082bd seed 10: exists, skipped (results/rev_clean/clean_fb035082bd_s10_faed2af9cfa5.json)
+[360 done, ~144 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 clean_fb035082bd s11 OK 0 min  == clean_fb035082bd seed 11: exists, skipped (results/rev_clean/clean_fb035082bd_s11_248d4de99814.json)
+[361 done, ~143 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_ema_deepsic__wb_sir0 s10 OK 0 min  == p2_ema_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_ema_deepsic__wb_sir0_s10_9887fed9e03f.json)
+[362 done, ~142 left | 1.4 h, ~0.6 h to go at this pace] t2 P2 p2_ema_deepsic__wb_sir0 s11 OK 0 min  == p2_ema_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_ema_deepsic__wb_sir0_s11_6ad8293666de.json)
+[363 done, ~141 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_60ceb6316a s11 OK 0 min  == clean_60ceb6316a seed 11: exists, skipped (results/rev_clean/clean_60ceb6316a_s11_76f43809a46b.json)
+[364 done, ~140 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_60ceb6316a s10 OK 0 min  == clean_60ceb6316a seed 10: exists, skipped (results/rev_clean/clean_60ceb6316a_s10_e4f6bd1aa67c.json)
+[365 done, ~139 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_ewc_deepsic__wb_sir0 s10 OK 0 min  == p2_ewc_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_ewc_deepsic__wb_sir0_s10_eb7dcff7af96.json)
+[366 done, ~138 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_ewc_deepsic__wb_sir0 s11 OK 0 min  == p2_ewc_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_ewc_deepsic__wb_sir0_s11_cc06a3477e53.json)
+[367 done, ~137 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_5a80f1c9d3 s10 OK 0 min  == clean_5a80f1c9d3 seed 10: exists, skipped (results/rev_clean/clean_5a80f1c9d3_s10_3ceb762eba96.json)
+[368 done, ~136 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_5a80f1c9d3 s11 OK 0 min  == clean_5a80f1c9d3 seed 11: exists, skipped (results/rev_clean/clean_5a80f1c9d3_s11_1018e26dd379.json)
+[369 done, ~135 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_dd_deepsic__wb_sir0 s10 OK 0 min  == p2_dd_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_dd_deepsic__wb_sir0_s10_9d28ff356d21.json)
+[370 done, ~134 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_dd_deepsic__wb_sir0 s11 OK 0 min  == p2_dd_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_dd_deepsic__wb_sir0_s11_2e511e21260a.json)
+[371 done, ~133 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_39d8c42d79 s10 OK 0 min  == clean_39d8c42d79 seed 10: exists, skipped (results/rev_clean/clean_39d8c42d79_s10_fd26f18bfe99.json)
+[372 done, ~132 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_39d8c42d79 s11 OK 0 min  == clean_39d8c42d79 seed 11: exists, skipped (results/rev_clean/clean_39d8c42d79_s11_57d82d834c62.json)
+[373 done, ~131 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_cotta_deepsic__wb_sir0 s10 OK 0 min  == p2_cotta_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_cotta_deepsic__wb_sir0_s10_53458355d9f9.json)
+[374 done, ~130 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_cotta_deepsic__wb_sir0 s11 OK 0 min  == p2_cotta_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_cotta_deepsic__wb_sir0_s11_94e858433cac.json)
+[375 done, ~129 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_c482e97766 s10 OK 0 min  == clean_c482e97766 seed 10: exists, skipped (results/rev_clean/clean_c482e97766_s10_921a255b94cd.json)
+[376 done, ~128 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_c482e97766 s11 OK 0 min  == clean_c482e97766 seed 11: exists, skipped (results/rev_clean/clean_c482e97766_s11_d66cc65c4369.json)
+[377 done, ~127 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_eata_deepsic__wb_sir0 s10 OK 0 min  == p2_eata_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_eata_deepsic__wb_sir0_s10_840a92097f27.json)
+[378 done, ~126 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_eata_deepsic__wb_sir0 s11 OK 0 min  == p2_eata_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_eata_deepsic__wb_sir0_s11_c604b737fc9e.json)
+[379 done, ~125 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_95ec1bbb2f s10 OK 0 min  == clean_95ec1bbb2f seed 10: exists, skipped (results/rev_clean/clean_95ec1bbb2f_s10_75cd9f56e8f7.json)
+[380 done, ~124 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 clean_95ec1bbb2f s11 OK 0 min  == clean_95ec1bbb2f seed 11: exists, skipped (results/rev_clean/clean_95ec1bbb2f_s11_2f7cdce1d4bc.json)
+[381 done, ~123 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s10 OK 0 min  == p2_drift_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_drift_deepsic__wb_sir0_s10_80eab3e8c409.json)
+[382 done, ~122 left | 1.4 h, ~0.5 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s11 OK 0 min  == p2_drift_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_drift_deepsic__wb_sir0_s11_d59cb5cf8f9f.json)
+[383 done, ~121 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_b8ff337c0d s10 OK 0 min  == clean_b8ff337c0d seed 10: exists, skipped (results/rev_clean/clean_b8ff337c0d_s10_25fec6541aef.json)
+[384 done, ~120 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_b8ff337c0d s11 OK 0 min  == clean_b8ff337c0d seed 11: exists, skipped (results/rev_clean/clean_b8ff337c0d_s11_9f759627d0ad.json)
+[385 done, ~119 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_titans_single__wb_sir0 s10 OK 0 min  == p2_titans_single__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_titans_single__wb_sir0_s10_57e46e2595e4.json)
+[386 done, ~118 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_titans_single__wb_sir0 s11 OK 0 min  == p2_titans_single__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_titans_single__wb_sir0_s11_7b542ef3caed.json)
+[387 done, ~117 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_00fb50fde3 s10 OK 0 min  == clean_00fb50fde3 seed 10: exists, skipped (results/rev_clean/clean_00fb50fde3_s10_8573727a2025.json)
+[388 done, ~116 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_00fb50fde3 s11 OK 0 min  == clean_00fb50fde3 seed 11: exists, skipped (results/rev_clean/clean_00fb50fde3_s11_2e1712b9d833.json)
+[389 done, ~115 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_medbn_deepsic__wb_sir0 s10 OK 0 min  == p2_medbn_deepsic__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_medbn_deepsic__wb_sir0_s10_f68f3261a979.json)
+[390 done, ~114 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_medbn_deepsic__wb_sir0 s11 OK 0 min  == p2_medbn_deepsic__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_medbn_deepsic__wb_sir0_s11_8186c254104f.json)
+[391 done, ~113 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_f10dadcb3c s10 OK 0 min  == clean_f10dadcb3c seed 10: exists, skipped (results/rev_clean/clean_f10dadcb3c_s10_0a252300a012.json)
+[392 done, ~112 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_f10dadcb3c s11 OK 0 min  == clean_f10dadcb3c seed 11: exists, skipped (results/rev_clean/clean_f10dadcb3c_s11_70691b365c28.json)
+[393 done, ~111 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w0.001__wb_sir0 s10 OK 0 min  == p2_l2sp_w0.001__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_l2sp_w0.001__wb_sir0_s10_2c943d62c253.json)
+[394 done, ~110 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w0.001__wb_sir0 s11 OK 0 min  == p2_l2sp_w0.001__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_l2sp_w0.001__wb_sir0_s11_4796a2b25303.json)
+[395 done, ~109 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_bbb1535edf s10 OK 0 min  == clean_bbb1535edf seed 10: exists, skipped (results/rev_clean/clean_bbb1535edf_s10_6a834a516e68.json)
+[396 done, ~108 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_bbb1535edf s11 OK 0 min  == clean_bbb1535edf seed 11: exists, skipped (results/rev_clean/clean_bbb1535edf_s11_594ee9660ce3.json)
+[397 done, ~107 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w0.1__wb_sir0 s10 OK 0 min  == p2_l2sp_w0.1__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_l2sp_w0.1__wb_sir0_s10_9d14083bbdc5.json)
+[398 done, ~106 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w0.1__wb_sir0 s11 OK 0 min  == p2_l2sp_w0.1__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_l2sp_w0.1__wb_sir0_s11_d19385025674.json)
+[399 done, ~105 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_9e8db2af8c s10 OK 0 min  == clean_9e8db2af8c seed 10: exists, skipped (results/rev_clean/clean_9e8db2af8c_s10_dc76daa3307c.json)
+[400 done, ~104 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_9e8db2af8c s11 OK 0 min  == clean_9e8db2af8c seed 11: exists, skipped (results/rev_clean/clean_9e8db2af8c_s11_7b8565ad83b3.json)
+[401 done, ~103 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w1__wb_sir0 s10 OK 0 min  == p2_l2sp_w1__wb_sir0 seed 10: exists, skipped (results/rev_p2/p2_l2sp_w1__wb_sir0_s10_627f5ca13e85.json)
+[402 done, ~102 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 p2_l2sp_w1__wb_sir0 s11 OK 0 min  == p2_l2sp_w1__wb_sir0 seed 11: exists, skipped (results/rev_p2/p2_l2sp_w1__wb_sir0_s11_d802fa3be1bc.json)
+[403 done, ~101 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_bfd0917661 s10 OK 0 min  == clean_bfd0917661 seed 10: exists, skipped (results/rev_clean/clean_bfd0917661_s10_5938c5156fb9.json)
+[404 done, ~100 left | 1.4 h, ~0.4 h to go at this pace] t2 P2 clean_bfd0917661 s11 OK 0 min  == clean_bfd0917661 seed 11: exists, skipped (results/rev_clean/clean_bfd0917661_s11_3647bbf0dc35.json)
+[405 done, ~99 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd1000_np32__sir0 s10 OK 0 min  == p6_citadel_nd1000_np32__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd1000_np32__sir0_s10_f294c1d24a6d.json)
+[406 done, ~98 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd1000_np32__sir0 s11 OK 0 min  == p6_citadel_nd1000_np32__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd1000_np32__sir0_s11_28ed174dd28e.json)
+[407 done, ~97 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_2605bf6631 s10 OK 0 min  == clean_2605bf6631 seed 10: exists, skipped (results/rev_clean/clean_2605bf6631_s10_786187baa42c.json)
+[408 done, ~96 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_2605bf6631 s11 OK 0 min  == clean_2605bf6631 seed 11: exists, skipped (results/rev_clean/clean_2605bf6631_s11_b502a7f4ecde.json)
+[409 done, ~95 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd1000_np32__sir0 s10 OK 0 min  == p6_online_deepsic_nd1000_np32__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd1000_np32__sir0_s10_d5228740f32
+[410 done, ~94 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd1000_np32__sir0 s11 OK 0 min  == p6_online_deepsic_nd1000_np32__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd1000_np32__sir0_s11_2bd7b3863fc
+[411 done, ~93 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_cff6e2a3f3 s10 OK 0 min  == clean_cff6e2a3f3 seed 10: exists, skipped (results/rev_clean/clean_cff6e2a3f3_s10_5849cd400d18.json)
+[412 done, ~92 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_cff6e2a3f3 s11 OK 0 min  == clean_cff6e2a3f3 seed 11: exists, skipped (results/rev_clean/clean_cff6e2a3f3_s11_052aa6e35716.json)
+[413 done, ~91 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd1000_np100__sir0 s10 OK 0 min  == p6_citadel_nd1000_np100__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd1000_np100__sir0_s10_be2ed72068b5.json)
+[414 done, ~90 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd1000_np100__sir0 s11 OK 0 min  == p6_citadel_nd1000_np100__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd1000_np100__sir0_s11_f514e8c21441.json)
+[415 done, ~89 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_fee514af6e s10 OK 0 min  == clean_fee514af6e seed 10: exists, skipped (results/rev_clean/clean_fee514af6e_s10_a0bb72f36449.json)
+[416 done, ~88 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_fee514af6e s11 OK 0 min  == clean_fee514af6e seed 11: exists, skipped (results/rev_clean/clean_fee514af6e_s11_e8372213fc1e.json)
+[417 done, ~87 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd1000_np100__sir0 s10 OK 0 min  == p6_online_deepsic_nd1000_np100__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd1000_np100__sir0_s10_0bd78778f
+[418 done, ~86 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd1000_np100__sir0 s11 OK 0 min  == p6_online_deepsic_nd1000_np100__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd1000_np100__sir0_s11_b2a705f8a
+[419 done, ~85 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_e6068aee6f s10 OK 0 min  == clean_e6068aee6f seed 10: exists, skipped (results/rev_clean/clean_e6068aee6f_s10_081e9c3b0ee1.json)
+[420 done, ~84 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_e6068aee6f s11 OK 0 min  == clean_e6068aee6f seed 11: exists, skipped (results/rev_clean/clean_e6068aee6f_s11_c108b4c18a47.json)
+[421 done, ~83 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd5000_np32__sir0 s10 OK 0 min  == p6_citadel_nd5000_np32__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd5000_np32__sir0_s10_908070a9f91a.json)
+[422 done, ~82 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_citadel_nd5000_np32__sir0 s11 OK 0 min  == p6_citadel_nd5000_np32__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd5000_np32__sir0_s11_521ba02cd884.json)
+[423 done, ~81 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_a306131d30 s10 OK 0 min  == clean_a306131d30 seed 10: exists, skipped (results/rev_clean/clean_a306131d30_s10_aad36ad2a4ad.json)
+[424 done, ~80 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_a306131d30 s11 OK 0 min  == clean_a306131d30 seed 11: exists, skipped (results/rev_clean/clean_a306131d30_s11_2a6e92a9bdb8.json)
+[425 done, ~79 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd5000_np32__sir0 s10 OK 0 min  == p6_online_deepsic_nd5000_np32__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd5000_np32__sir0_s10_898b5752345
+[426 done, ~78 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 p6_online_deepsic_nd5000_np32__sir0 s11 OK 0 min  == p6_online_deepsic_nd5000_np32__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd5000_np32__sir0_s11_b240ec5737e
+[427 done, ~77 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_32db5c3c02 s10 OK 0 min  == clean_32db5c3c02 seed 10: exists, skipped (results/rev_clean/clean_32db5c3c02_s10_566b524bc902.json)
+[428 done, ~76 left | 1.4 h, ~0.3 h to go at this pace] t2 P6 clean_32db5c3c02 s11 OK 0 min  == clean_32db5c3c02 seed 11: exists, skipped (results/rev_clean/clean_32db5c3c02_s11_9f517ec4624c.json)
+[429 done, ~75 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_nd5000_np100__sir0 s10 OK 0 min  == p6_citadel_nd5000_np100__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd5000_np100__sir0_s10_29ca4bcc2574.json)
+[430 done, ~74 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_nd5000_np100__sir0 s11 OK 0 min  == p6_citadel_nd5000_np100__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_citadel_nd5000_np100__sir0_s11_1c5b764f4105.json)
+[431 done, ~73 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_2a546499e8 s10 OK 0 min  == clean_2a546499e8 seed 10: exists, skipped (results/rev_clean/clean_2a546499e8_s10_9994456c5eb0.json)
+[432 done, ~72 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_2a546499e8 s11 OK 0 min  == clean_2a546499e8 seed 11: exists, skipped (results/rev_clean/clean_2a546499e8_s11_6b1d97721d0b.json)
+[433 done, ~71 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_nd5000_np100__sir0 s10 OK 0 min  == p6_online_deepsic_nd5000_np100__sir0 seed 10: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd5000_np100__sir0_s10_731bdf657
+[434 done, ~70 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_nd5000_np100__sir0 s11 OK 0 min  == p6_online_deepsic_nd5000_np100__sir0 seed 11: exists, skipped (results/rev_p6_blocklen/p6_online_deepsic_nd5000_np100__sir0_s11_4226073c4
+[435 done, ~69 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_39a6ddee08 s10 OK 0 min  == clean_39a6ddee08 seed 10: exists, skipped (results/rev_clean/clean_39a6ddee08_s10_f8a82830d9e3.json)
+[436 done, ~68 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_39a6ddee08 s11 OK 0 min  == clean_39a6ddee08 seed 11: exists, skipped (results/rev_clean/clean_39a6ddee08_s11_68beb248b92e.json)
+[437 done, ~67 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_4x16__sir0 s10 OK 0 min  == p6_citadel_4x16__sir0 seed 10: exists, skipped (results/rev_p6_arrays/p6_citadel_4x16__sir0_s10_bca8f4238470.json)
+[438 done, ~66 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_4x16__sir0 s11 OK 0 min  == p6_citadel_4x16__sir0 seed 11: exists, skipped (results/rev_p6_arrays/p6_citadel_4x16__sir0_s11_8a6e3ae954c9.json)
+[439 done, ~65 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_d112e36fb7 s10 OK 0 min  == clean_d112e36fb7 seed 10: exists, skipped (results/rev_clean/clean_d112e36fb7_s10_0b49c4a76e83.json)
+[440 done, ~64 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_d112e36fb7 s11 OK 0 min  == clean_d112e36fb7 seed 11: exists, skipped (results/rev_clean/clean_d112e36fb7_s11_57cd999bee61.json)
+[441 done, ~63 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_qam16__sir0 s10 OK 0 min  == p6_citadel_qam16__sir0 seed 10: exists, skipped (results/rev_p6_qam16/p6_citadel_qam16__sir0_s10_d05640634985.json)
+[442 done, ~62 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_citadel_qam16__sir0 s11 OK 0 min  == p6_citadel_qam16__sir0 seed 11: exists, skipped (results/rev_p6_qam16/p6_citadel_qam16__sir0_s11_f600fac0f9fc.json)
+[443 done, ~61 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_355ae747d9 s10 OK 0 min  == clean_355ae747d9 seed 10: exists, skipped (results/rev_clean/clean_355ae747d9_s10_15effa157ac3.json)
+[444 done, ~60 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_355ae747d9 s11 OK 0 min  == clean_355ae747d9 seed 11: exists, skipped (results/rev_clean/clean_355ae747d9_s11_691759308828.json)
+[445 done, ~59 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_4x16__sir0 s10 OK 0 min  == p6_online_deepsic_4x16__sir0 seed 10: exists, skipped (results/rev_p6_arrays/p6_online_deepsic_4x16__sir0_s10_221500309d78.json)
+[446 done, ~58 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_4x16__sir0 s11 OK 0 min  == p6_online_deepsic_4x16__sir0 seed 11: exists, skipped (results/rev_p6_arrays/p6_online_deepsic_4x16__sir0_s11_78ccea72fe4d.json)
+[447 done, ~57 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_ce65268207 s10 OK 0 min  == clean_ce65268207 seed 10: exists, skipped (results/rev_clean/clean_ce65268207_s10_c48ba54c5563.json)
+[448 done, ~56 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_ce65268207 s11 OK 0 min  == clean_ce65268207 seed 11: exists, skipped (results/rev_clean/clean_ce65268207_s11_88ee7d294767.json)
+[449 done, ~55 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_qam16__sir0 s10 OK 0 min  == p6_online_deepsic_qam16__sir0 seed 10: exists, skipped (results/rev_p6_qam16/p6_online_deepsic_qam16__sir0_s10_25c93f12cb36.json)
+[450 done, ~54 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_online_deepsic_qam16__sir0 s11 OK 0 min  == p6_online_deepsic_qam16__sir0 seed 11: exists, skipped (results/rev_p6_qam16/p6_online_deepsic_qam16__sir0_s11_24db3db00c40.json)
+[451 done, ~53 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_eef1cb1ee3 s10 OK 0 min  == clean_eef1cb1ee3 seed 10: exists, skipped (results/rev_clean/clean_eef1cb1ee3_s10_5a2fae9fe772.json)
+[452 done, ~52 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_eef1cb1ee3 s11 OK 0 min  == clean_eef1cb1ee3 seed 11: exists, skipped (results/rev_clean/clean_eef1cb1ee3_s11_3200691a8e74.json)
+[453 done, ~51 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_lmmse_4x16__sir0 s10 OK 0 min  == p6_lmmse_4x16__sir0 seed 10: exists, skipped (results/rev_p6_arrays/p6_lmmse_4x16__sir0_s10_74dd2beaf8e0.json)
+[454 done, ~50 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 p6_lmmse_4x16__sir0 s11 OK 0 min  == p6_lmmse_4x16__sir0 seed 11: exists, skipped (results/rev_p6_arrays/p6_lmmse_4x16__sir0_s11_e69c12912392.json)
+[455 done, ~49 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_2ce8d97305 s10 OK 0 min  == clean_2ce8d97305 seed 10: exists, skipped (results/rev_clean/clean_2ce8d97305_s10_a39203556034.json)
+[456 done, ~48 left | 1.4 h, ~0.2 h to go at this pace] t2 P6 clean_2ce8d97305 s11 OK 0 min  == clean_2ce8d97305 seed 11: exists, skipped (results/rev_clean/clean_2ce8d97305_s11_514990d5aa55.json)
+[457 done, ~47 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_lmmse_qam16__sir0 s10 OK 0 min  == p6_lmmse_qam16__sir0 seed 10: exists, skipped (results/rev_p6_qam16/p6_lmmse_qam16__sir0_s10_055d72dd7443.json)
+[458 done, ~46 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_lmmse_qam16__sir0 s11 OK 0 min  == p6_lmmse_qam16__sir0 seed 11: exists, skipped (results/rev_p6_qam16/p6_lmmse_qam16__sir0_s11_440d62c0b134.json)
+[459 done, ~45 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_c619e9dcc9 s10 OK 0 min  == clean_c619e9dcc9 seed 10: exists, skipped (results/rev_clean/clean_c619e9dcc9_s10_9a4d2c3699cf.json)
+[460 done, ~44 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_c619e9dcc9 s11 OK 0 min  == clean_c619e9dcc9 seed 11: exists, skipped (results/rev_clean/clean_c619e9dcc9_s11_45e55a7134c2.json)
+[461 done, ~43 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_citadel_steps30__sir0 s10 OK 0 min  == p6_citadel_steps30__sir0 seed 10: exists, skipped (results/rev_p6_deploy/p6_citadel_steps30__sir0_s10_1dbf112fb617.json)
+[462 done, ~42 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_citadel_steps30__sir0 s11 OK 0 min  == p6_citadel_steps30__sir0 seed 11: exists, skipped (results/rev_p6_deploy/p6_citadel_steps30__sir0_s11_1429eff878d2.json)
+[463 done, ~41 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_08b7db1775 s10 OK 0 min  == clean_08b7db1775 seed 10: exists, skipped (results/rev_clean/clean_08b7db1775_s10_f3643ad8fc93.json)
+[464 done, ~40 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_08b7db1775 s11 OK 0 min  == clean_08b7db1775 seed 11: exists, skipped (results/rev_clean/clean_08b7db1775_s11_29db163847f7.json)
+[465 done, ~39 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_citadel_last_layer__sir0 s10 OK 0 min  == p6_citadel_last_layer__sir0 seed 10: exists, skipped (results/rev_p6_deploy/p6_citadel_last_layer__sir0_s10_61f334b298a9.json)
+[466 done, ~38 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 p6_citadel_last_layer__sir0 s11 OK 0 min  == p6_citadel_last_layer__sir0 seed 11: exists, skipped (results/rev_p6_deploy/p6_citadel_last_layer__sir0_s11_d558e4fc5734.json)
+[467 done, ~37 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_4e1fda2296 s10 OK 0 min  == clean_4e1fda2296 seed 10: exists, skipped (results/rev_clean/clean_4e1fda2296_s10_28a63836555e.json)
+[468 done, ~36 left | 1.4 h, ~0.1 h to go at this pace] t2 P6 clean_4e1fda2296 s11 OK 0 min  == clean_4e1fda2296 seed 11: exists, skipped (results/rev_clean/clean_4e1fda2296_s11_9d73afbe8b25.json)
+[469 done, ~35 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_g1_slack_x0.5__wb_sir0 s10 OK 0 min  == p7_g1_slack_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_g1_slack_x0.5__wb_sir0_s10_a8443c0e9573.json)
+[470 done, ~34 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_a01c720c67 s10 OK 0 min  == clean_a01c720c67 seed 10: exists, skipped (results/rev_clean/clean_a01c720c67_s10_36690fadf0bc.json)
+[471 done, ~33 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_g1_slack_x2__wb_sir0 s10 OK 0 min  == p7_g1_slack_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_g1_slack_x2__wb_sir0_s10_5a76bedd5704.json)
+[472 done, ~32 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_8b357899b5 s10 OK 0 min  == clean_8b357899b5 seed 10: exists, skipped (results/rev_clean/clean_8b357899b5_s10_5aaf2b2c38c7.json)
+[473 done, ~31 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_g3_slack_x0.5__wb_sir0 s10 OK 0 min  == p7_g3_slack_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_g3_slack_x0.5__wb_sir0_s10_52f787617d6c.json)
+[474 done, ~30 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_862bcf7c84 s10 OK 0 min  == clean_862bcf7c84 seed 10: exists, skipped (results/rev_clean/clean_862bcf7c84_s10_f61127a13032.json)
+[475 done, ~29 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_g3_slack_x2__wb_sir0 s10 OK 0 min  == p7_g3_slack_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_g3_slack_x2__wb_sir0_s10_452ea87f5656.json)
+[476 done, ~28 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_f0ad0e6ca6 s10 OK 0 min  == clean_f0ad0e6ca6 seed 10: exists, skipped (results/rev_clean/clean_f0ad0e6ca6_s10_189a1c1c5cc7.json)
+[477 done, ~27 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_tighten_x0.5__wb_sir0 s10 OK 0 min  == p7_tighten_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_tighten_x0.5__wb_sir0_s10_5d852cfc9343.json)
+[478 done, ~26 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_5addce4e72 s10 OK 0 min  == clean_5addce4e72 seed 10: exists, skipped (results/rev_clean/clean_5addce4e72_s10_8a38bd218ac7.json)
+[479 done, ~25 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_tighten_x2__wb_sir0 s10 OK 0 min  == p7_tighten_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_tighten_x2__wb_sir0_s10_f45d588b305b.json)
+[480 done, ~24 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_56b6917d56 s10 OK 0 min  == clean_56b6917d56 seed 10: exists, skipped (results/rev_clean/clean_56b6917d56_s10_2f298bca8c0a.json)
+[481 done, ~23 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_soft_width_x0.5__wb_sir0 s10 OK 0 min  == p7_soft_width_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_soft_width_x0.5__wb_sir0_s10_43e67e3c5c44.json)
+[482 done, ~22 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_161aef3e76 s10 OK 0 min  == clean_161aef3e76 seed 10: exists, skipped (results/rev_clean/clean_161aef3e76_s10_dc8025a67b3d.json)
+[483 done, ~21 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_soft_width_x2__wb_sir0 s10 OK 0 min  == p7_soft_width_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_soft_width_x2__wb_sir0_s10_327d05a86f6a.json)
+[484 done, ~20 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_4d6b53aa69 s10 OK 0 min  == clean_4d6b53aa69 seed 10: exists, skipped (results/rev_clean/clean_4d6b53aa69_s10_e610eec11d4b.json)
+[485 done, ~19 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 p7_prox_lambda_x0.5__wb_sir0 s10 OK 0 min  == p7_prox_lambda_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_prox_lambda_x0.5__wb_sir0_s10_3d59310fa293.json)
+[486 done, ~18 left | 1.4 h, ~0.1 h to go at this pace] t3 P7 clean_9b5fef0343 s10 OK 0 min  == clean_9b5fef0343 seed 10: exists, skipped (results/rev_clean/clean_9b5fef0343_s10_ffd5e43a6a68.json)
+[487 done, ~17 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_prox_lambda_x2__wb_sir0 s10 OK 0 min  == p7_prox_lambda_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_prox_lambda_x2__wb_sir0_s10_f19bfc750187.json)
+[488 done, ~16 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_e8b4ea3ad7 s10 OK 0 min  == clean_e8b4ea3ad7 seed 10: exists, skipped (results/rev_clean/clean_e8b4ea3ad7_s10_e3b1fc011a59.json)
+[489 done, ~15 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_delta_x0.5__wb_sir0 s10 OK 0 min  == p7_delta_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_delta_x0.5__wb_sir0_s10_6f13ecc0fc3d.json)
+[490 done, ~14 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_d6420aae04 s10 OK 0 min  == clean_d6420aae04 seed 10: exists, skipped (results/rev_clean/clean_d6420aae04_s10_2e13d28b7d4b.json)
+[491 done, ~13 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_delta_x2__wb_sir0 s10 OK 0 min  == p7_delta_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_delta_x2__wb_sir0_s10_9e7bc1edfdf7.json)
+[492 done, ~12 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_5efbac776d s10 OK 0 min  == clean_5efbac776d seed 10: exists, skipped (results/rev_clean/clean_5efbac776d_s10_6c15b55c6daf.json)
+[493 done, ~11 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_crc_rel_x0.5__wb_sir0 s10 OK 0 min  == p7_crc_rel_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_crc_rel_x0.5__wb_sir0_s10_f28d7544f364.json)
+[494 done, ~10 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_2a7d8df41d s10 OK 0 min  == clean_2a7d8df41d seed 10: exists, skipped (results/rev_clean/clean_2a7d8df41d_s10_28f04b2fcb4f.json)
+[495 done, ~9 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_crc_rel_x2__wb_sir0 s10 OK 0 min  == p7_crc_rel_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_crc_rel_x2__wb_sir0_s10_c31257e92ea8.json)
+[496 done, ~8 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_a5f0beb358 s10 OK 0 min  == clean_a5f0beb358 seed 10: exists, skipped (results/rev_clean/clean_a5f0beb358_s10_ccc50abd555a.json)
+[497 done, ~7 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_eta3_x0.5__wb_sir0 s10 OK 0 min  == p7_eta3_x0.5__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_eta3_x0.5__wb_sir0_s10_143b325892b8.json)
+[498 done, ~6 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_8dad5f666e s10 OK 0 min  == clean_8dad5f666e seed 10: exists, skipped (results/rev_clean/clean_8dad5f666e_s10_7777e4727d21.json)
+[499 done, ~5 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 p7_eta3_x2__wb_sir0 s10 OK 0 min  == p7_eta3_x2__wb_sir0 seed 10: exists, skipped (results/rev_p7_sens/p7_eta3_x2__wb_sir0_s10_32782bb40b6c.json)
+[500 done, ~4 left | 1.4 h, ~0.0 h to go at this pace] t3 P7 clean_4792c45b16 s10 OK 0 min  == clean_4792c45b16 seed 10: exists, skipped (results/rev_clean/clean_4792c45b16_s10_bb44e4b30cf7.json)
