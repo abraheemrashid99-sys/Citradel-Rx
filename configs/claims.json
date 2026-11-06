@@ -2104,6 +2104,70 @@
      13
     ]
    }
+  },
+  "pool9": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "h3v_a4_a0.25__sir0": [
+     15,
+     17,
+     19
+    ],
+    "h3v_a4_a0.75__sir0": [
+     15,
+     17,
+     19
+    ],
+    "clean_2cb3064d71": [
+     15,
+     17,
+     19
+    ],
+    "h3v_a1__sir0": [
+     15,
+     17,
+     19
+    ],
+    "h3v_redraw__none": [
+     15,
+     17,
+     19
+    ],
+    "h3v_snrdrop__none": [
+     15,
+     17,
+     19
+    ]
+   }
+  },
+  "pool10": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "h3v_a4_a0.25__sir0": [
+     16,
+     18
+    ],
+    "h3v_a4_a0.75__sir0": [
+     16,
+     18
+    ],
+    "clean_2cb3064d71": [
+     16,
+     18
+    ],
+    "h3v_a1__sir0": [
+     16,
+     18
+    ],
+    "h3v_redraw__none": [
+     16,
+     18
+    ],
+    "h3v_snrdrop__none": [
+     16,
+     18
+    ]
+   }
   }
  },
  "dropped_note": "tune_joint_ep300_*: dropped before any test run of the second backbone (compute). d4_*_8x32, p6_*_4x16 and their clean twins: the unstretched SED profile illuminates only about U+3 antennas; replaced by the stretched profile (d4s_*, p6s_*, channel.sed_stretch=true) before their analysis; d23_* and their clean twins: coded scene without NR scrambling, in which the all-zero codeword passes the CRC-24A check; replaced by d23s_* (frame.ldpc_scramble=true)"
