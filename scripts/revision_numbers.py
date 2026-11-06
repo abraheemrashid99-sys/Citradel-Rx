@@ -129,12 +129,13 @@ def rejections(r: dict, attacked: Optional[bool], skip: int = 5) -> Tuple[int, i
 
 
 # ------------------------------------------------------------------------------------ one cell
-def cell(folder: str, name: str, clean: List[str], metric: str = "ser") -> Optional[dict]:
-    """Attacked configuration `name` in `folder`, paired with its clean twins (same seed, settings, machine)."""
+def cell(folder: str, name: str, clean: List[str], metric: str = "ser", seeds=None) -> Optional[dict]:
+    """Attacked configuration `name` in `folder`, paired with its clean twins (same seed, settings, machine);
+    `seeds`: only these test seeds."""
     tw = twins(clean)
     prs = []
     for r in load(folder):
-        if r["name"] == name and r["config"]["attack"]["type"] != "none":
+        if r["name"] == name and r["config"]["attack"]["type"] != "none" and (seeds is None or r["seed"] in seeds):
             c = twin_of(tw, r)
             if c is not None:
                 prs.append((r, c))
@@ -375,11 +376,13 @@ def refdeg() -> None:
     for a in ("0.25", "0.75"):
         variants = [("rev_p3_refdeg", f"p3_a4_a{a}__sir0", "--", "a4." + a.replace(".", "")),
                     ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain, 1st", "a4." + a.replace(".", "") + "abstain"),
-                    ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain", None)]
+                    ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain", None),
+                    ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain, 15--19", None)]
         if a == "0.25":
             variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
         for folder, name, state, key in variants:
-            c = cell(folder, name, CLEAN_ALL)
+            sd = set(range(15, 20)) if state.endswith("15--19") else (set(range(10, 15)) if state == "abstain" else None)
+            c = cell(folder, name, CLEAN_ALL, seeds=sd)
             if key:
                 put_cell(key, c)
             if c is not None:
@@ -795,23 +798,33 @@ def campaign2() -> None:
         f = json.load(open(fz))
         put("h3.z", f"{f['chosen_z']:g}"); put("h3.calrate", f"{100 * f['clean_abstention_rate'][str(f['chosen_z'])]:.1f}")
         put("h3.calmax", f"{f['max_abs_dev']:.1f}"); put("h3.calblocks", str(f["n_blocks"]))
-    for a in ("0.25", "0.75"):
-        c = cell("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", CLEAN_ALL)
-        put_cell("h3.a4" + a.replace(".", ""), c)
-        if c is not None:   # blocks abstained inside and outside the attack window
+    # seeds 10-14 and, separately, 15-19 (never seen before the final version was fixed)
+    for pre, sd in (("h3", set(range(10, 15))), ("h3x", set(range(15, 20)))):
+        for a in ("0.25", "0.75"):
+            c = cell("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", CLEAN_ALL, seeds=sd)
+            put_cell(f"{pre}.a4" + a.replace(".", ""), c)
+            if c is not None:   # blocks abstained inside the attack window
+                ins = [bool(b.get("abstain")) for p in c["pairs"] for b in p[0]["blocks"][window(p[0])[0]:window(p[0])[1]]]
+                put(f"{pre}.a4" + a.replace(".", "") + ".abst", f"{100 * np.mean(ins):.0f}")
+        c = cell("rev2_abstain_v3", "h3v_a1__sir0", CLEAN_ALL, seeds=sd)
+        put_cell(f"{pre}.a1", c)
+        if c is not None:
             ins = [bool(b.get("abstain")) for p in c["pairs"] for b in p[0]["blocks"][window(p[0])[0]:window(p[0])[1]]]
-            put("h3.a4" + a.replace(".", "") + ".abst", f"{100 * np.mean(ins):.0f}")
-    c = cell("rev2_abstain_v3", "h3v_a1__sir0", CLEAN_ALL)
-    put_cell("h3.a1", c)
-    if c is not None:
-        cl = [bool(b.get("abstain")) for _, cln in c["pairs"] for b in cln["blocks"][5:]]
-        put("h3.cleanabst", f"{100 * np.mean(cl):.1f}"); put("h3.cleanabstk", f"{sum(cl)}/{len(cl)}")
-    for tag in ("redraw", "snrdrop"):   # legitimate changes: blocks abstained after the change, SER after it
-        recs = [r for r in load("rev2_abstain_v3") if r["name"] == f"h3v_{tag}__none"]
-        if recs:
-            ab = [sum(bool(b.get("abstain")) for b in r["blocks"][50:]) for r in recs]
-            put(f"h3.{tag}.abst", f"{np.mean(ab):.1f}"); put(f"h3.{tag}.abstmax", str(max(ab)))
-            put(f"h3.{tag}.after", f_ser(float(np.mean([ser(r)[50:].mean() for r in recs])))); put(f"h3.{tag}.n", str(len(recs)))
+            put(f"{pre}.a1.abst", f"{100 * np.mean(ins):.0f}")
+            cl = [bool(b.get("abstain")) for _, cln in c["pairs"] for b in cln["blocks"][5:]]
+            put(f"{pre}.cleanabst", f"{100 * np.mean(cl):.1f}"); put(f"{pre}.cleanabstk", f"{sum(cl)}/{len(cl)}")
+        for tag in ("redraw", "snrdrop"):   # legitimate changes: blocks abstained after the change, SER after it
+            recs = [r for r in load("rev2_abstain_v3") if r["name"] == f"h3v_{tag}__none" and r["seed"] in sd]
+            if recs:
+                ab = [sum(bool(b.get("abstain")) for b in r["blocks"][50:]) for r in recs]
+                put(f"{pre}.{tag}.abst", f"{np.mean(ab):.1f}"); put(f"{pre}.{tag}.abstmax", str(max(ab)))
+                put(f"{pre}.{tag}.abstk", f"{sum(ab)}/{50 * len(recs)}")
+                put(f"{pre}.{tag}.nall", str(sum(a_ == 50 for a_ in ab)))
+                put(f"{pre}.{tag}.after", f_ser(float(np.mean([ser(r)[50:].mean() for r in recs])))); put(f"{pre}.{tag}.n", str(len(recs)))
+                vf = lambda r, a, b: [x["abstain_verified"] for x in r["blocks"][a:b] if x.get("abstain_verified") is not None]
+                put(f"{pre}.{tag}.verbefore", f"{np.mean([np.mean(vf(r, 30, 50)) for r in recs]):.2f}")
+                put(f"{pre}.{tag}.verafter", f"{np.mean([np.mean(vf(r, 50, 100) or [0.0]) for r in recs]):.2f}")
+                put(f"{pre}.{tag}.nzero", str(sum(np.mean(vf(r, 50, 100) or [0.0]) < 0.05 for r in recs)))
     # B3/H4 as intended: strong poisoning (A1 at SIR 0 dB) on blocks 40-89 while the channel is redrawn at block 50
     rows, recs = [], load("rev2_deny_a1")
     lab = {"citadel": "Citadel-Rx", "citadel_streak": "+ streak recovery", "online_deepsic": "Online DeepSIC", "lmmse": "LMMSE"}
