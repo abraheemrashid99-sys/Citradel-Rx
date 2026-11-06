@@ -134,3 +134,5 @@
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75_abstain__sir0", "seed": 10, "ok": true, "seconds": 1821.5, "finished": "2026-11-06T09:25:12.073922+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75__sir0", "seed": 11, "ok": true, "seconds": 1862.3, "finished": "2026-11-06T09:25:48.734315+00:00"}
 {"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.75__sir0", "seed": 10, "ok": true, "seconds": 439.1, "finished": "2026-11-06T09:26:45.888521+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_jamctl_a0.75__sir0", "seed": 11, "ok": true, "seconds": 444.6, "finished": "2026-11-06T09:32:36.636054+00:00"}
+{"shard": "cloud", "tier": 1, "group": "P3refdeg", "out": "rev_p3_refdeg", "name": "p3_a4_a0.75_abstain__sir0", "seed": 11, "ok": true, "seconds": 1792.7, "finished": "2026-11-06T09:48:11.064547+00:00"}
