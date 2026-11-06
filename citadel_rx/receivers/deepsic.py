@@ -221,3 +221,68 @@ class DeepSICCore:
         """Reference SER: fraction of symbol *vectors* with at least one user wrong."""
         hard = probs.argmax(-1)
         return float((hard != idx).any(dim=1).float().mean().item())
+
+
+class JointCore(DeepSICCore):
+    """Second backbone (audit D8): a fully connected detector that classifies the joint symbol vector
+    of all users from the received vector, with no interference cancellation (the "FullyCon" class of
+    data-driven detectors [Samuel et al. 2019; O'Shea and Hoydis 2017]). It has the DeepSICCore
+    interface with one stage and one network whose classes are the order^U joint symbols, so every
+    receiver, gate, consolidation rule and attack runs on it unchanged; detect() returns the per-user
+    marginal posteriors. Joint symbol index: user 0 is the most significant digit."""
+
+    def __init__(self, n_user: int, n_ant: int, order: int, is_complex: bool, hidden: int, device: torch.device):
+        super().__init__(1, n_ant, order ** n_user, is_complex, 1, 1, device)
+        self.U_real, self.M = n_user, order
+        self.hidden = hidden
+        self.F_in = self.F_rx                       # no other users' posteriors as inputs
+        self.others = torch.zeros((1, 0), dtype=torch.long, device=device)
+        w = order ** torch.arange(n_user - 1, -1, -1, device=device)
+        self.place = w                               # digit weights
+        digits = (torch.arange(self.order, device=device)[:, None] // w[None, :]) % order    # (classes, U)
+        self.marg = F.one_hot(digits, order).float()                                           # (classes, U, M)
+
+    def joint(self, idx: torch.Tensor) -> torch.Tensor:
+        """per-user indices (n, U) -> joint index (n, 1)"""
+        return (idx.long() * self.place[None, :]).sum(dim=1, keepdim=True)
+
+    def build_input(self, y_feat: torch.Tensor, probs_prev: torch.Tensor) -> torch.Tensor:
+        return y_feat.unsqueeze(0)                                                             # (1, n, F_rx)
+
+    def detect(self, p: ParamDict, y_feat: torch.Tensor, iterations: Optional[int] = None) -> torch.Tensor:
+        logits = self.module_forward(p, 0, self.build_input(y_feat, None))[0]                 # (n, classes)
+        return torch.einsum("nc,cum->num", torch.softmax(logits, dim=-1), self.marg)           # (n, U, M)
+
+    def stage_inputs(self, p: ParamDict, y_feat: torch.Tensor, idx: torch.Tensor, q: int,
+                     probs_prev: Optional[torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
+        return self.build_input(y_feat, None), None
+
+    def sequential_adapt(self, p, y_feat, idx, train_stage):
+        return train_stage(p, 0, self.build_input(y_feat, None), self.joint(idx))
+
+    def functional_adapt(self, p: ParamDict, y_feat: torch.Tensor, idx: torch.Tensor, lr: float, steps: int,
+                         keys: Optional[List[str]] = None, create_graph: bool = True) -> ParamDict:
+        keys = keys or list(p.keys())
+        p = dict(p)
+        for k in keys:
+            if not p[k].requires_grad:
+                p[k] = p[k].detach().requires_grad_(True)
+        X, tgt = self.build_input(y_feat, None), self.joint(idx)
+        stage_keys = [k for k in self.keys_for(0) if k in keys]
+        for _ in range(steps):
+            loss = self.stage_loss(p, 0, X, tgt)
+            grads = torch.autograd.grad(loss, [p[k] for k in stage_keys], create_graph=create_graph)
+            p = dict(p)
+            for k, g in zip(stage_keys, grads):
+                p[k] = p[k] - lr * g
+        return p
+
+    def stage_loss(self, p: ParamDict, q: int, X: torch.Tensor, idx: torch.Tensor, reduction: str = "mean") -> torch.Tensor:
+        if idx.shape[-1] != 1:            # per-user labels given: map to the joint symbol
+            idx = self.joint(idx)
+        return super().stage_loss(p, q, X, idx, reduction)
+
+    def detect_loss(self, p: ParamDict, y_feat: torch.Tensor, idx: torch.Tensor) -> torch.Tensor:
+        probs = self.detect(p, y_feat)
+        logp = torch.log(probs.clamp_min(1e-12))
+        return F.nll_loss(logp.reshape(-1, self.M), idx.reshape(-1))

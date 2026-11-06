@@ -37,6 +37,7 @@ class ChannelState:
     H: np.ndarray            # (n_ant, n_user)
     noise_var: float         # per real dimension total (reference convention)
     rho: float               # block-to-block correlation (prior for G3)
+    G: Optional[np.ndarray] = None   # (n_ant, 1) attacker channel of the block (UMi scene, audit D3)
 
 
 class BlockFadingChannel:
@@ -97,9 +98,27 @@ class BlockFadingChannel:
         self._H_prev = H
         return H
 
+    def _umi(self, b: int):
+        if not hasattr(self, "_umi_data"):
+            fn = os.path.join(os.path.dirname(self.cost_dir), "umi",
+                              f"umi_N{self.n_ant}_U{self.n_user}_d{self.cfg.umi_att_dist:g}_s{self.cfg.seed}.npz")
+            if not os.path.exists(fn):
+                raise FileNotFoundError(f"{fn}: run scripts/make_umi_channels.py first")
+            z = np.load(fn)
+            self._umi_data = (z["H"], z["G"])
+            self.umi_sir_db = float(z["sir_db"])
+            self.umi_g_rms = float(np.sqrt(np.mean(np.abs(z["G"]) ** 2) * z["G"].shape[1]))
+        H, G = self._umi_data
+        if b >= H.shape[0]:
+            raise ValueError("more blocks than the UMi drop holds")
+        return H[b], G[b]
+
     def state(self, b: int) -> ChannelState:
+        G = None
         if self.cfg.model == "synthetic":
             H = self._synthetic(b)
+        elif self.cfg.model == "umi":
+            H, G = self._umi(b)
         elif self.cfg.model == "cost2100":
             H = self._cost2100(b)
         else:
@@ -116,7 +135,7 @@ class BlockFadingChannel:
             elif self.cfg.abrupt_type == "snr_drop":
                 snr = snr - self.cfg.abrupt_snr_drop_db
         noise_var = 10 ** (-0.1 * snr)
-        return ChannelState(H=H, noise_var=noise_var, rho=self.rho)
+        return ChannelState(H=H, noise_var=noise_var, rho=self.rho, G=G)
 
     # ---- transmission -------------------------------------------------
     def transmit(self, s: np.ndarray, st: ChannelState, rng: Optional[np.random.Generator] = None) -> np.ndarray:

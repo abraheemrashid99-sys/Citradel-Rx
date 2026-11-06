@@ -25,7 +25,11 @@ class FrameGenerator:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self.mod = Modulation(cfg.frame.modulation)
-        self.framer = CRCFramer(cfg.frame.crc_bits, cfg.frame.crc_subblock_symbols, self.mod.bits_per_symbol)
+        if getattr(cfg.frame, "coding", "crc") == "ldpc":
+            from .coding.ldpc import LDPCFramer
+            self.framer = LDPCFramer(cfg.frame.ldpc_k, cfg.frame.ldpc_n, self.mod.bits_per_symbol)
+        else:
+            self.framer = CRCFramer(cfg.frame.crc_bits, cfg.frame.crc_subblock_symbols, self.mod.bits_per_symbol)
         self.n_user = cfg.channel.n_user
         self.n_sub = self.framer.n_subblocks(cfg.frame.data_bits)
         if self.n_sub == 0:

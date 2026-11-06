@@ -274,6 +274,32 @@ class CitadelRx(DeepSICReceiver):
             bad |= r_mm > st["res"] + z * np.sqrt(max(st["res_var"] or 0.0, (0.05 * st["res"]) ** 2))
         return bool(bad)
 
+    def _abstain_ratio(self, t: float, ema: float = 0.9):
+        """H3, second version. t = log(data residual of the LMMSE decisions / noise power estimated
+        on the pilots). Both follow the noise level and the channel, so t stays near its running level
+        under fading, SNR changes and channel redraws; an attacker's energy on the data raises it and
+        energy on the pilots lowers it. Abstain when |t - level| > z max(sd, 0.1), with level and sd
+        tracked on every block that is not abstained; after `abstain_refresh` consecutive abstentions
+        the level is re-based, so the state cannot lock the receiver (the first version did)."""
+        st, z = self.ref_stats, self.cc.abstain_z
+        if st.get("t") is None or self.block_count < 3:
+            if st.get("t") is None:
+                st["t"], st["t_var"] = t, 0.0
+            else:
+                st["t_var"] = ema * st["t_var"] + (1 - ema) * (t - st["t"]) ** 2
+                st["t"] = ema * st["t"] + (1 - ema) * t
+            return False, 0.0
+        dev = (t - st["t"]) / max(float(np.sqrt(st["t_var"])), 0.1)
+        if abs(dev) > z:
+            st["n_abst"] = st.get("n_abst", 0) + 1
+            if st["n_abst"] >= self.cc.abstain_refresh:   # a lasting change: re-base
+                st["t"], st["t_var"], st["n_abst"] = t, 0.0, 0
+            return True, float(dev)
+        st["n_abst"] = 0
+        st["t_var"] = ema * st["t_var"] + (1 - ema) * (t - st["t"]) ** 2
+        st["t"] = ema * st["t"] + (1 - ema) * t
+        return False, float(dev)
+
     def _update_ref_stats(self, pass_ref: Optional[float], r_mm: Optional[float], ema: float = 0.9) -> None:
         st = self.ref_stats
         for key, v in (("pass", pass_ref), ("res", r_mm)):
@@ -362,7 +388,13 @@ class CitadelRx(DeepSICReceiver):
                     pass_mm = max(pass_mm, float(ok_slow.mean()))
             innov = fused["innov_norm"] if "g3" in self.gate.gates else None
             r_mm = model_residual(y_d, idx_mm, H, self.mod) if cc.abstain else None
-            if cc.abstain and self.gate.n_accepted >= 3:
+            if cc.abstain and cc.abstain_mode == "ratio" and r_mm is not None and nv is not None:
+                # data residual of the reference over the pilot-estimated noise power: both follow the
+                # noise and the fading, an attacker's energy on the data or on the pilots moves one of them
+                t = float(np.log(max(r_mm, 1e-12) / max(float(nv), 1e-12)))
+                abstain, dev = self._abstain_ratio(t)
+                stats["abstain_t"], stats["abstain_dev"] = t, dev
+            elif cc.abstain and self.gate.n_accepted >= 3:
                 abstain = self._abstain_check(pass_mm, r_mm, ok_nn.size if ok_nn is not None else 1)
             g2_block = None if cc.per_user_gate else pass_nn
             verdict = self.gate.evaluate(g1, g2_block, pass_mm if g2_block is not None else None, innov, r)
@@ -378,7 +410,8 @@ class CitadelRx(DeepSICReceiver):
                 accepted = self.gate.update_clean(verdict, g1, pass_nn, pass_mm)
                 if accepted:  # a rejected block must not raise the reference it is tested against
                     self.tracker.commit(fused["innov"])
-                    self._update_ref_stats(pass_mm, r_mm)
+                    if cc.abstain_mode != "ratio":
+                        self._update_ref_stats(pass_mm, r_mm)
             reject = reject or gamma < 0.5
             stats.update({f"gate_{k}": v for k, v in verdict.stats.items()})
             stats.update({f"verdict_{k}": v for k, v in verdict.verdicts.items()})

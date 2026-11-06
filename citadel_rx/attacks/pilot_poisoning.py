@@ -93,6 +93,9 @@ class Attacker:
             self.end = self.start + (self.ac.end_block - self.ac.start_block)
         self.G: Optional[np.ndarray] = None
         self.G_hat: Optional[np.ndarray] = None
+        self.block_state = None          # set by the runner every block (UMi scene: st.G)
+        self.sir_override: Optional[float] = None
+        self.g_rms: Optional[float] = None
         self.q_mean: Optional[np.ndarray] = None
         self.q_last: Optional[np.ndarray] = None
         self.q_base: Optional[float] = None
@@ -116,10 +119,13 @@ class Attacker:
     def budget(self, y_clean: np.ndarray, small: bool = False, signal: Optional[np.ndarray] = None) -> float:
         if self.ac.eps is not None and not small:
             return float(self.ac.eps)
-        sir = self.ac.sir_db
+        sir = self.ac.sir_db if self.sir_override is None else self.sir_override
         ref = signal if (self.ac.budget_ref == "signal" and signal is not None) else y_clean
         energy = float(np.sum(np.abs(ref) ** 2))
         eps = np.sqrt(energy * 10 ** (-sir / 10))
+        st = self.block_state
+        if self.sir_override is not None and st is not None and getattr(st, "G", None) is not None and self.g_rms:
+            eps *= float(np.linalg.norm(st.G)) / self.g_rms     # the attacker's own fading in this block
         if small:
             eps = float(self.ac.a3_eps_small) * np.sqrt(energy)
         return float(eps)
@@ -175,12 +181,29 @@ class Attacker:
 
     # ---- rank-1 projection ----------------------------------------------------------
     def _ensure_G(self, n_ant: int) -> None:
+        st = self.block_state
+        if st is not None and getattr(st, "G", None) is not None:   # UMi scene: the block's true channel
+            self.G = self.G_hat = st.G
+            if self.ac.attacker_csi_err > 0:
+                z = self.rng.standard_normal(st.G.shape) + 1j * self.rng.standard_normal(st.G.shape)
+                self.G_hat = st.G + np.sqrt(self.ac.attacker_csi_err / 2) * z * np.linalg.norm(st.G) / np.sqrt(st.G.size)
+            return
         if self.G is None:
             grng = np.random.default_rng(self.cfg.channel.seed + 31337)
             M = self.ac.attacker_antennas
             self.G = grng.standard_normal((n_ant, M)) / np.sqrt(n_ant)
             self.G_hat = self.G + np.sqrt(self.ac.attacker_csi_err) * grng.standard_normal(self.G.shape) / np.sqrt(n_ant) \
                 if self.ac.attacker_csi_err > 0 else self.G.copy()
+
+    def _through_true_channel(self, E: np.ndarray) -> np.ndarray:
+        """B1 with CSI error: the attacker designs its transmit signal X_a = pinv(G_hat) E for the channel
+        it believes in; what reaches the receiver is G X_a (the first revision injected E itself, so the
+        CSI error had no effect beyond the choice of subspace)."""
+        if self.ac.attacker_antennas <= 0 or self.ac.attacker_csi_err <= 0 or self.G is None or self.G_hat is None:
+            return E
+        Gh = self.G_hat
+        T = self.G @ np.linalg.solve(Gh.conj().T @ Gh, Gh.conj().T)        # (N, N): E -> G pinv(G_hat) E
+        return E @ T.T
 
     def _project_structure(self, E: torch.Tensor, is_complex: bool) -> torch.Tensor:
         if self.ac.attacker_antennas > 0:
@@ -189,7 +212,7 @@ class Attacker:
             n = E.shape[1] // (2 if is_complex else 1)
             self._ensure_G(n)
             Gh = self.G_hat
-            P = Gh @ np.linalg.solve(Gh.T @ Gh, Gh.T)                      # (N, N) real projector
+            P = Gh @ np.linalg.solve(Gh.conj().T @ Gh, Gh.conj().T)        # (N, N) projector on span(G_hat)
             e = unfeat(E, is_complex)
             return feat(e @ P.T, E.device)
         if self.ac.attacker_channel != "rank1":
@@ -347,7 +370,7 @@ class Attacker:
             E = d / np.linalg.norm(d) * eps
             if self.ac.attacker_antennas > 0:
                 E = unfeat(self._project_structure(feat(E, self.device), is_complex), is_complex)
-                E = E / max(np.linalg.norm(E), 1e-12) * eps
+                E = self._through_true_channel(E / max(np.linalg.norm(E), 1e-12) * eps)
             stats.update(eps=eps, e_norm=float(np.linalg.norm(E)), knowledge_used="query")
             return y_p + E, y_d, stats
 
@@ -424,7 +447,7 @@ class Attacker:
                         Ed = Ed + grads[1] / grads[1].norm().clamp_min(1e-12) * (self.ac.pgd_alpha * eps_d)
                         nd = Ed.norm()
                         Ed = (Ed * (eps_d / nd) if nd > eps_d else Ed).detach().requires_grad_(True)
-        E_np = unfeat(best_E, is_complex)
+        E_np = self._through_true_channel(unfeat(best_E, is_complex))
         stats.update(eps=eps, obj=float(best_obj), e_norm=float(np.linalg.norm(E_np)))
         y_p_adv = y_p + E_np
         y_d_adv = y_d

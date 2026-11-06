@@ -17,7 +17,7 @@ import yaml
 
 @dataclass
 class ChannelConfig:
-    model: str = "synthetic"          # synthetic | cost2100
+    model: str = "synthetic"          # synthetic | cost2100 | umi
     n_user: int = 4
     n_ant: int = 4
     linear: bool = True               # False -> tanh(0.5 y) PA nonlinearity
@@ -29,6 +29,8 @@ class ChannelConfig:
     abrupt_block: int = -1            # -1 disables
     abrupt_type: str = "redraw"       # redraw | snr_drop
     abrupt_snr_drop_db: float = 6.0
+    # 3GPP 38.901 UMi drop with the attacker in the scene (audit D3; scripts/make_umi_channels.py)
+    umi_att_dist: float = 75.0        # attacker distance from the base station (m)
 
 
 @dataclass
@@ -40,6 +42,11 @@ class FrameConfig:
     # CRC framing of the data part (used by gate G2 and the BLER metric)
     crc_bits: int = 8                 # 0 disables CRC framing
     crc_subblock_symbols: int = 32    # symbols per CRC-protected sub-block
+    # NR channel coding of the data (audit D2): "crc" = CRC-8 sub-blocks; "ldpc" = code blocks with
+    # CRC-24A and 5G LDPC (base graph 2), decoded from the symbol decisions
+    coding: str = "crc"
+    ldpc_k: int = 520                 # information bits per code block, CRC-24A included
+    ldpc_n: int = 1000                # coded bits per code block
 
 
 @dataclass
@@ -48,6 +55,8 @@ class ReceiverConfig:
                                       # titans_single | medbn_deepsic | citadel
     iterations: int = 3               # DeepSIC SIC iterations Q
     hidden_base: int = 64
+    backbone: str = "deepsic"         # deepsic | joint (fully connected joint-symbol detector, audit D8)
+    joint_hidden: int = 512           # hidden width of the joint backbone
     lr: float = 5e-3
     epochs: int = 300                 # online epochs per block (reference: 300)
     optimizer: str = "adam"
@@ -123,6 +132,12 @@ class CitadelConfig:
     #                                   sum gamma, so every consolidation is a convex combination (Lemma 1)
     abstain: bool = False             # reference-degradation abstain state (H3)
     abstain_z: float = 4.0
+    # "legacy": pass fraction or residual of the reference against statistics of accepted blocks (the
+    # first revision; it locks on clean runs). "ratio": log(data residual of the reference / pilot
+    # noise estimate) against its level tracked on every non-abstained block, re-based after
+    # abstain_refresh consecutive abstentions so that a lasting change cannot lock the receiver
+    abstain_mode: str = "legacy"
+    abstain_refresh: int = 20
     streak_k: int = 0                 # >0: recovery after this many consecutive rejections (H4)
     drift_guard: float = 0.0          # pull of the slowest level toward the pre-trained weights per consolidation (H5)
     crc_select: bool = False          # per sub-block CRC selection among fast, anchor and LMMSE decisions (H6)
@@ -152,6 +167,7 @@ class AttackConfig:
     # audit B1/B8: physical attacker and budget reference
     attacker_antennas: int = 0        # >0: E = G X_a with G (N x M) from the channel family (rank-M physical attacker)
     attacker_csi_err: float = 0.0     # variance of the attacker's error on G (imperfect CSI)
+    sir_from_geometry: bool = False   # UMi: the budget follows the attacker's position (audit D3), not sir_db
     budget_ref: str = "received"      # received (noise included) | signal (noise-free users' energy)
     # audit B2: reference degradation (joint pilot + data)
     a4_alpha: float = 0.5             # fraction of per-symbol power spent on the pilots

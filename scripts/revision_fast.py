@@ -270,12 +270,14 @@ def rev2_jobs() -> List[Job]:
     jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_strongest__sir0", NEW3, rx_ov("citadel") + RND + a1(0) + lite)
     jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_citadel_unroll50__sir0", NEW3, rx_ov("citadel") + RND + a1(0) + ["attack.unroll_steps=50"])
     jobs += JT(W, 1, "P3adapt", "rev_p3_adaptive", "p3_online_strongest__sir0", NEW3, rx_ov("online_deepsic") + RND + a1(0) + lite[1:])
-    phys = {"M1": ["attack.attacker_antennas=1"], "M2": ["attack.attacker_antennas=2"],
-            "M2_csi0.1": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.1"]}
+    phys = {"M1": ["attack.attacker_antennas=1"], "M2": ["attack.attacker_antennas=2"]}
     for tag, pov in phys.items():   # E2 for B1
         for rx in ("citadel", "online_deepsic"):
             jobs += JT(W, 1, "P3phys", "rev_p3_phys", f"p3_{rx}_{tag}__sir0", NEW3, rx_ov(rx) + RND + a1(0) + pov)
-    for tag, pov in {"M4": ["attack.attacker_antennas=4"],   # B1 completed: full-rank physical attacker, accurate CSI
+    # B1 completed: full-rank physical attacker; CSI error now applied through the true channel (the
+    # first campaign's CSI-error runs injected the perturbation designed for G_hat, see the attack code)
+    for tag, pov in {"M4": ["attack.attacker_antennas=4"],
+                     "M2_csi0.1": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.1"],
                      "M2_csi0.01": ["attack.attacker_antennas=2", "attack.attacker_csi_err=0.01"]}.items():
         for rx in ("citadel", "online_deepsic"):
             jobs += JT(W, 1, "B1", "rev2_phys", f"b1_{rx}_{tag}__sir0", T5, rx_ov(rx) + RND + a1(0) + pov)

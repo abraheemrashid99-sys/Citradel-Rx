@@ -75,8 +75,12 @@ class DeepSICReceiver(Receiver):
     def __init__(self, cfg: Config, device: torch.device):
         super().__init__(cfg, device)
         rc = cfg.receiver
-        self.core = DeepSICCore(self.n_user, self.n_ant, self.mod.order, self.mod.is_complex,
-                                rc.iterations, rc.hidden_base, device)
+        if rc.backbone == "joint":
+            from .deepsic import JointCore
+            self.core = JointCore(self.n_user, self.n_ant, self.mod.order, self.mod.is_complex, rc.joint_hidden, device)
+        else:
+            self.core = DeepSICCore(self.n_user, self.n_ant, self.mod.order, self.mod.is_complex,
+                                    rc.iterations, rc.hidden_base, device)
         g = torch.Generator(device="cpu").manual_seed(cfg.channel.seed)
         self.params: ParamDict = self.core.init_params(generator=g if device.type == "cpu" else None)
         self.lr = rc.lr
