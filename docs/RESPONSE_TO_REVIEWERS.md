@@ -14,6 +14,31 @@ revision uses the normalised gated mean (Eq. (consol), `citadel.consol_mean=norm
 `tests/test_consolidation.py`); every revision result uses it, and the first-version rule remains
 selectable so the old records keep their meaning.
 
+What the evaluation itself changed in the manuscript (all from the test-seed records, computed by
+`scripts/revision_numbers.py`; nothing was re-tuned after the test runs):
+
+* The mechanism of the CRC-Rollback failure is now measured, not argued: its only reference, LMMSE
+  on the least-squares estimate from the poisoned pilots, passes 0.19 of the CRCs on attacked
+  blocks against 0.71 on the clean twin, so the first attacked block is accepted on 10 of 10 seeds;
+  after the window it rejects every block and stays at +0.35 excess SER. Citadel-Rx's reference
+  (the anchor detector on the slow memory) passes 0.76 vs 0.78. The abstract and introduction now
+  state this (Sec. VI-B).
+* Most of the clean-SER gain over online DeepSIC (70%) comes from the per-sub-block CRC
+  selection, not from the memory; this is stated where the gain is reported.
+* The abstain state (H3) does not work as implemented: its statistics are updated on accepted
+  blocks only, the channel's fading trips it at block 4-5, and it then rejects every block (191 of
+  200 clean blocks). It is reported as a negative result, not as a defence.
+* The denial-of-adaptation spoof (B3) did not trip the gates (4% and 32% of its blocks rejected);
+  it is reported as an accepted perturbation during an abrupt change. Streak recovery (H4) was
+  attempted 13 times and kept once, with no measurable effect.
+* Citadel-Rx fails at 16-QAM (D5): the network passes 0.12 of the CRCs on clean blocks, LMMSE 0.93,
+  so the relative gates reject 97% of clean blocks and the receiver is worse than online DeepSIC
+  and LMMSE. This is reported in the results, the discussion and the abstract.
+* Corrections of fact: d = 67 632 adaptable parameters for 4x4 QPSK (the submitted text said
+  15 628); the consolidation clip rarely binds on clean runs (5 of 150 consolidations) rather than
+  never; the A3* budget is a perturbation norm of 5/20/50% of the received pilots (SIR 26/14/6 dB),
+  not an energy fraction.
+
 ## A. Theory
 
 | Item | Change | Where |
@@ -33,10 +58,10 @@ selectable so the old records keep their meaning.
 | Item | Change | Where |
 |---|---|---|
 | B1 unconstrained perturbation | Rank-M physical attacker E = G X with M = 1, 2 and CSI error 0.1 at M = 2; full-rank kept as the worst case; SIR mapped to distance under the UMi path-loss exponent | Sec. II-B, Table (attacks) |
-| B2 joint pilot + data | Attacker A4: fraction alpha of the energy on the pilots and 1 - alpha on all data sub-blocks, optimised jointly behind the soft gates, alpha = 0.25 and 0.75, with and without the abstain state; jamming controls with the same data power | Table (refdeg) |
-| B3 denial of adaptation | Fixed channel-estimate spoof on blocks 40-89 combined with an abrupt channel redraw at block 50; with and without streak recovery; online DeepSIC and LMMSE references | Table (deny) |
+| B2 joint pilot + data | Attacker A4: fraction alpha of the energy on the pilots and 1 - alpha on all data sub-blocks, optimised jointly behind the soft gates, alpha = 0.25 and 0.75, with and without the abstain state; jamming controls with the same data power. A4 is the most effective attack on Citadel-Rx (rejection 0.575, excess +0.042 at alpha = 0.25, against +0.014 for A1 on the same seeds); the abstain state locks on clean runs and is reported as not working | Table (refdeg), Sec. VI-D |
+| B3 denial of adaptation | Fixed channel-estimate spoof on blocks 40-89 combined with an abrupt channel redraw at block 50; with and without streak recovery; online DeepSIC and LMMSE references. The spoof tripped the gates on only 4% / 32% of its blocks, so it acted as an accepted perturbation: excess +0.106 (online DeepSIC +0.198), back to the no-spoof SER within ten blocks (online DeepSIC not). A spoof that trips the gates on every block was not found | Table (deny), Sec. VI-D |
 | B4 adaptive strength | Unroll 10 and 50, PGD 100 with 5 restarts, BPDA soft-gate output objective with the exact thresholds and running statistics, EOT; combined attack also against online DeepSIC | Table (attacks) |
-| B5 optimal slow drift | A3*: 300 attacked blocks of a 400-block run, drift toward a spoofed basin with the soft-gate term, energies 5, 20 and 50%, drift guard at 50%; paired snapshots | Sec. VI-E |
+| B5 optimal slow drift | A3*: 300 attacked blocks of a 400-block run, drift toward a spoofed basin with the soft-gate term, perturbation norm 5, 20 and 50% of the received pilots (SIR 26, 14, 6 dB), drift guard at 50%; paired snapshots | Sec. VI-E, Table (retention) |
 | B6 transfer too narrow | Grey-box attacker with a Citadel-Rx surrogate; query attacker on NACK feedback | Table (attacks) |
 | B7 knowledge vague | Knowledge table; synchronisation and pilot knowledge stated | Table (knowledge) |
 | B8 budget includes noise | Both budgets defined; the signal-referenced one evaluated | Eq. (budget), Table (attacks) |
@@ -48,7 +73,7 @@ selectable so the old records keep their meaning.
 | C1 CRC + rollback | CRC-Rollback and rollback with all gates; the K = 1 ablation now reverts and falls back (it previously did neither, a bug) | Sec. VI-B, Tables (headline, ablations) |
 | C2 regularised online | L2-SP (4 weights), EWC (Fisher from pre-training), EMA teacher | Table (baselines) |
 | C3 CRC-verified DD | CRC-verified decision-directed training | Table (baselines) |
-| C4 TTA defences | EATA-style and CoTTA-style receivers | Table (baselines) |
+| C4 TTA defences | EATA-style and CoTTA-style receivers. The EATA entropy filter never fired (largest mean data entropy 0.37 nats against 0.55): the poisoned receiver is confidently wrong, so EATA-style equals EWC | Table (baselines) |
 | C5 under-tuned baselines | Epochs x learning rate x weight decay grid on calibration seeds, rule fixed in advance; every online-based receiver uses the tuned setting | Sec. V |
 | C6 MedBN mislabelled | Renamed "median-of-means gradient" | Sec. V |
 | C7 robust LMMSE | Huber-robust LMMSE | Table (baselines) |
@@ -61,11 +86,11 @@ selectable so the old records keep their meaning.
 | D2 NR link level + LDPC | Not done: a validated Sionna NR slot with LDPC is several days of work; stated as the main limitation | Sec. VII |
 | D3 attacker in the scene | SIR translated to distance analytically; a scene simulation is not done (with D2) | Sec. II-B, Sec. VII |
 | D4 N > U | 4 x 16 | Table (scenarios) |
-| D5 higher order | 16-QAM at 20 dB | Table (scenarios) |
+| D5 higher order | 16-QAM at 20 dB: Citadel-Rx fails (clean SER 0.120 vs 0.052 online DeepSIC, 0.0094 LMMSE; 97% clean false rejection) and the failure is analysed | Table (scenarios), Sec. VI-H, VII |
 | D6 abrupt change | Redraw and 6 dB SNR drop at block 50, no attack | Table (deny) |
 | D7 long horizon | The 2000-block clean horizon was dropped from the reduced campaign; the 400-block A3* runs are the longest | Sec. VII |
 | D8 second backbone | Not done; the claim that the levels and gates "apply unchanged" is deleted | Sec. VII, VIII |
-| D9 compute | 30-step and last-layer variants; per-block time on one laptop core; no GPU measurement (the GPU machine was unavailable) | Table (scenarios) |
+| D9 compute | 30-step and last-layer variants; wall time per block of single-threaded runs (Citadel-Rx 3.0 s, online DeepSIC 0.56 s, Meta-DeepSIC 16.3 s, LMMSE 0.03 s; 30 steps 1.9 s, last layer 2.6 s); no GPU measurement (the GPU machine was unavailable) | Table (scenarios), Sec. VI-H |
 
 ## E. Statistics and protocol
 
@@ -100,11 +125,13 @@ F12 uses the suggested wording; F13 is deleted; F14 is replaced by the seed-leve
 
 ## H. Method upgrades
 
-H1: the consolidation clip (design bound) and the anchor-start variant (calibration candidate);
-H2: CRC-verified data labels (the decision-directed baseline); H3: abstain state (with A4);
-H4: streak recovery (with denial of adaptation); H5: drift guard (with A3*); H6: per-sub-block CRC
-selection (in the receiver, and as an online-DeepSIC comparator that separates its gain from the
-memory); H7: per-user gating is implemented but not evaluated in this revision.
+H1: the consolidation clip (design bound; it rarely binds, and removing it leaves the measured
+excess unchanged) and the anchor-start variant (calibration candidate, not chosen);
+H2: CRC-verified data labels (the decision-directed baseline: +0.739); H3: abstain state (with A4:
+locks on clean runs as implemented, reported as not working); H4: streak recovery (with denial of
+adaptation: attempted 13 times, kept once, no measurable effect); H5: drift guard (with A3*); H6:
+per-sub-block CRC selection (in the receiver, and as an online-DeepSIC comparator: 70% of the clean
+gain is the selection); H7: per-user gating is implemented but not evaluated in this revision.
 
 ## I. Writing and reproducibility
 

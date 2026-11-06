@@ -1,5 +1,22 @@
 # Revision plan: every item of the reviewer audit
 
+## Status after the campaign (6 Nov 2026)
+
+All runs of the reduced campaign below finished: 52 on the cloud machine and the laptop's share,
+0 failed (records in `results/rev_*`, logs in `logs/`). Every number of the revised manuscript is
+computed from these records by `python scripts/revision_numbers.py`; the paper is built with
+`make paper`. Items whose outcome differs from the plan:
+
+* H3 abstain: implemented and run, but it locks on clean runs (statistics updated on accepted
+  blocks only); reported as not working.
+* H4 streak recovery and B3 denial: the denial spoof did not trip the gates, and streak recovery
+  had no measurable effect; reported as such.
+* D5 16-QAM: Citadel-Rx fails (the network is worse than LMMSE, the gates reject 97% of clean
+  blocks); reported and analysed.
+* D2, D3, D7, D8: not done (stated in Sec. VII of the paper).
+
+The status column of the tables below is the plan as written before the campaign.
+
 Status key: **done** = implemented and tested in the code; **run** = in `scripts/revision_campaign.py`
 (results arrive after the GPU campaign); **text** = manuscript edit, done in the final pass with the
 campaign's numbers; **deferred** = stated as a limitation, with the reason.

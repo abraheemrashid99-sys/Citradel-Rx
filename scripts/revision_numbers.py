@@ -159,7 +159,8 @@ def f_sig(x: float) -> str:
 
 
 def f_ci(ci) -> str:
-    return f"[{f_sig(ci[0])}, {f_sig(ci[1])}]"
+    """Interval without plus signs (a minus sign still shows): it follows a signed point estimate."""
+    return f"[{f_ser(ci[0])}, {f_ser(ci[1])}]"
 
 
 def f_rate(kn) -> str:
@@ -267,10 +268,11 @@ def p1() -> None:
         put(f"cmp.{rx}.n", str(n))
         put(f"cmp.{rx}.att", f_sig(dA))
         put(f"cmp.{rx}.cln", f_sig(dC))
-        put(f"cmp.{rx}.clnrel", f"{100 * rel:+.0f}")
+        put(f"cmp.{rx}.clnrel", f"${100 * rel:+.0f}$")
+        put(f"cmp.{rx}.clnpct", f"{abs(100 * rel):.0f}")
         put(f"cmp.{rx}.patt", f_p(qa))
         put(f"cmp.{rx}.pcln", f_p(qc))
-        rows.append(f"{RXLABEL[rx]} & {n} & {f_sig(dA)} & {f_p(qa)} & {f_sig(dC)} ({100 * rel:+.0f}\\%) & {f_p(qc)}\\\\")
+        rows.append(f"{RXLABEL[rx]} & {n} & {f_sig(dA)} & {f_p(qa)} & {f_sig(dC)} (${100 * rel:+.0f}$\\%) & {f_p(qc)}\\\\")
     write_table("p1_paired", rows)
 
 
@@ -343,7 +345,7 @@ def refdeg() -> None:
                 ex.append(float(np.mean(ser(r)[w0:w1] - ser(c)[w0:w1])))
         if ex:
             put("a4.jam" + a.replace(".", ""), f_sig(float(np.mean(ex))))
-            rows.append(f"jamming only, $1-\\alpha={1 - float(a):g}$ of the power & -- & {len(ex)} & {f_sig(float(np.mean(ex)))} & -- & --\\\\")
+            rows.append(f"jamming & ${1 - float(a):g}$ of power & {len(ex)} & {f_sig(float(np.mean(ex)))} & -- & --\\\\")
     write_table("refdeg", rows)
 
 
@@ -364,7 +366,7 @@ def deny() -> None:
         fr = [rejections(none[i], None, skip=50) for i in s]
         frk = (sum(k for k, _ in fr), sum(n for _, n in fr))
         dr = float(np.mean([ser(drop[i])[50:].mean() for i in sorted(drop)])) if drop else float("nan")
-        lab = {"citadel": "Citadel-Rx", "citadel_streak": "Citadel-Rx + streak recovery", "online_deepsic": "Online DeepSIC",
+        lab = {"citadel": "Citadel-Rx", "citadel_streak": "+ streak recovery", "online_deepsic": "Online DeepSIC",
                "lmmse": "LMMSE"}[rx]
         k = "deny." + rx.replace("_", "")
         put(k + ".after", f_ser(after)); put(k + ".excess", f_sig(ex)); put(k + ".post", f_sig(post))
@@ -528,6 +530,9 @@ def retention() -> None:
         # P4 ran on the cloud machine, P8 on the laptop (after the cloud machine was stopped)
         c = cell(folder, name, ["rev_clean", "rev_clean_cloud"])
         put_cell(key, c)
+        if c is not None and folder == "rev_p8_drift":   # perturbation norm relative to the received pilots
+            e = float(c["pairs"][0][0]["config"]["attack"]["a3_eps_small"])
+            put(key + ".sir", f"{-20 * np.log10(e):.0f}")
         if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
             continue
         DK, des, ext, anc, mv = [], [], [], [], []
@@ -668,6 +673,41 @@ def extras() -> None:
             put("a4." + a.replace(".", "") + ".nnatt", f"{np.mean([b['pass_nn'] for x, _ in ca['pairs'] for b in x['blocks'] if b.get('attacked')]):.2f}")
 
 
+def g1_mismatch() -> None:
+    """A8: the normalised G1 statistic on clean blocks of the tanh (nonlinear) channel, from the
+    first-version runs on seeds 0-2 at SNR 4-16 dB (results/e2nl)."""
+    per = {}
+    for r in load("e2nl"):
+        c = r["config"]
+        if c["receiver"]["type"] != "citadel" or c["attack"]["type"] != "none" or c["channel"].get("linear", True):
+            continue
+        g = [b["gate_g1"] for b in r["blocks"] if b["block"] >= 5 and b.get("gate_g1") is not None]
+        per.setdefault(int(round(c["channel"]["snr_db"])), []).extend(g)
+    if 10 in per:
+        g = np.array(per[10])
+        put("g1nl.mean", f"{g.mean():.3f}"); put("g1nl.p99", f"{np.percentile(g, 99):.3f}")
+        put("g1nl.max", f"{g.max():.3f}"); put("g1nl.n", str(g.size))
+    if per:
+        put("g1nl.allmax", f"{max(max(v) for v in per.values()):.3f}")
+        put("g1nl.snrmin", str(min(per))); put("g1nl.snrmax", str(max(per)))
+
+
+def lipschitz() -> None:
+    """A6: finite-difference probes of the fast learner (scripts/certificate_check.py), largest
+    L_theta + L_a per proximal weight; docs/certificate_constants.json is the default lambda = 0.5."""
+    sums = {}
+    p0 = os.path.join(ROOT, "docs", "certificate_constants.json")
+    p1 = os.path.join(ROOT, "docs", "certificate_constants_lambda.json")
+    if os.path.exists(p0):
+        d = json.load(open(p0)); sums[0.5] = d["L_theta_max"] + d["L_a_max"]
+    if os.path.exists(p1):
+        for lam, d in json.load(open(p1)).items():
+            sums[float(lam)] = d["L_theta_max"] + d["L_a_max"]
+    if sums:
+        put("lip.summin", f"{min(sums.values()):.2f}"); put("lip.summax", f"{max(sums.values()):.2f}")
+        put("lip.lammin", f"{min(sums):g}"); put("lip.lammax", f"{max(sums):g}")
+
+
 def campaign_size() -> None:
     n = 0
     for d in glob.glob(os.path.join(RES, "rev_*")):
@@ -678,7 +718,7 @@ def campaign_size() -> None:
 def main() -> None:
     for name in NCOLS:   # every table file exists, so the paper always compiles
         write_table(name, [])
-    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras()
+    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras(); g1_mismatch(); lipschitz()
     campaign_size()
     lines = ["% generated by scripts/revision_numbers.py -- do not edit",
              "\\makeatletter"]
