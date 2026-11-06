@@ -366,8 +366,8 @@ def refdeg() -> None:
     rows = []
     for a in ("0.25", "0.75"):
         variants = [("rev_p3_refdeg", f"p3_a4_a{a}__sir0", "--", "a4." + a.replace(".", "")),
-                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain v1", "a4." + a.replace(".", "") + "abstain"),
-                    ("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", "abstain v2", None)]
+                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain, 1st", "a4." + a.replace(".", "") + "abstain"),
+                    ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain", None)]
         if a == "0.25":
             variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
         for folder, name, state, key in variants:
