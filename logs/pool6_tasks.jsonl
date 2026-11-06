@@ -47,3 +47,14 @@
 {"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_lmmse_8x32s__sir0", "seed": 10, "ok": true, "seconds": 764.4, "finished": "2026-11-06T20:25:23.889342+00:00"}
 {"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev_clean_pool6", "name": "clean_dc8fe6c9d7", "seed": 12, "ok": true, "seconds": 91.4, "finished": "2026-11-06T20:25:34.739423+00:00"}
 {"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev_clean_pool6", "name": "clean_22f325a6b3", "seed": 12, "ok": true, "seconds": 46.5, "finished": "2026-11-06T20:26:21.209540+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev2_arrays_stretch", "name": "p6s_lmmse_4x16s__sir0", "seed": 12, "ok": true, "seconds": 285.2, "finished": "2026-11-06T20:30:09.098072+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_lmmse_8x32s__sir0", "seed": 11, "ok": true, "seconds": 721.0, "finished": "2026-11-06T20:30:41.928722+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev_clean_pool6", "name": "clean_dc8fe6c9d7", "seed": 13, "ok": true, "seconds": 93.2, "finished": "2026-11-06T20:31:42.253940+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev_clean_pool6", "name": "clean_22f325a6b3", "seed": 13, "ok": true, "seconds": 46.1, "finished": "2026-11-06T20:32:28.360861+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_lmmse_8x32s__sir0", "seed": 12, "ok": true, "seconds": 731.8, "finished": "2026-11-06T20:33:40.776775+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev_clean_pool6", "name": "clean_dc8fe6c9d7", "seed": 14, "ok": true, "seconds": 93.1, "finished": "2026-11-06T20:35:13.907538+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev2_arrays_stretch", "name": "p6s_lmmse_4x16s__sir0", "seed": 13, "ok": true, "seconds": 284.1, "finished": "2026-11-06T20:35:26.017903+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev_clean_pool6", "name": "clean_22f325a6b3", "seed": 14, "ok": true, "seconds": 47.3, "finished": "2026-11-06T20:36:13.277850+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_lmmse_8x32s__sir0", "seed": 13, "ok": true, "seconds": 749.8, "finished": "2026-11-06T20:38:51.029552+00:00"}
+{"shard": "pool6", "tier": 1, "group": "P6s", "out": "rev2_arrays_stretch", "name": "p6s_lmmse_4x16s__sir0", "seed": 14, "ok": true, "seconds": 283.8, "finished": "2026-11-06T20:39:57.759882+00:00"}
+{"shard": "pool6", "tier": 1, "group": "D4s", "out": "rev2_arrays_stretch", "name": "d4s_lmmse_8x32s__sir0", "seed": 14, "ok": true, "seconds": 761.4, "finished": "2026-11-06T20:45:09.750474+00:00"}
