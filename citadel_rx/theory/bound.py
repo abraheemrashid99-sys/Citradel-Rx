@@ -113,3 +113,40 @@ def estimate_adaptation_lipschitz(rx, yf: torch.Tensor, idx: torch.Tensor, eta: 
             da = {k: anchor0[k] + scale * d[k] for k in keys}
             La = max(La, float((phi(base, yf, da) - p0).norm() / (scale * dn)))
     return G, L, La
+
+
+def estimate_input_gain_ascent(rx, yf: torch.Tensor, idx: torch.Tensor, eta: float, n_probe: int = 20,
+                               ascent: int = 10, radius_in: float = 0.05, step: float = 0.5, seed: int = 0):
+    """Stronger estimate of G_Phi (audit A6): from each of `n_probe` random directions, a
+    finite-difference hill climb of `ascent` steps searches for the input direction of largest
+    gain of the block adaptation map. Returns all per-probe maxima so callers can report the
+    maximum and an upper quantile. Still a lower bound of the true supremum, but a much tighter
+    one than independent random probes."""
+    g = torch.Generator(device="cpu").manual_seed(seed)
+    keys = rx.A
+    base = {k: v.detach().clone() for k, v in rx.params.items()}
+    flat = lambda p: torch.cat([p[k].reshape(-1) for k in keys])
+    anchor0 = rx._anchor() if hasattr(rx, "_anchor") else None
+
+    def phi(y):
+        rx.params = {k: v.detach().clone() for k, v in base.items()}
+        out = rx.core.sequential_adapt(rx.params, y, idx, lambda p, q, X, t: rx._fast_stage(p, q, X, t, eta, anchor0))
+        rx.params = {k: v.detach().clone() for k, v in base.items()}
+        return flat(out)
+
+    p0 = phi(yf)
+    r = radius_in * yf.norm()
+    gains = []
+    for _ in range(n_probe):
+        d = torch.randn(yf.shape, generator=g).to(yf.device)
+        d = d / d.norm()
+        best = float((phi(yf + r * d) - p0).norm() / r)
+        for _ in range(ascent):
+            z = torch.randn(yf.shape, generator=g).to(yf.device)
+            cand = d + step * z / z.norm()
+            cand = cand / cand.norm()
+            val = float((phi(yf + r * cand) - p0).norm() / r)
+            if val > best:
+                best, d = val, cand
+        gains.append(best)
+    return gains

@@ -32,6 +32,26 @@ def ls_channel_estimate(y_p: np.ndarray, s_p: np.ndarray, noise_var: float) -> n
     return H.T
 
 
+def robust_channel_estimate(y_p: np.ndarray, s_p: np.ndarray, noise_var: float, kind: str,
+                            iters: int = 5, trim: float = 0.2) -> np.ndarray:
+    """Robust LS (audit C7): Huber IRLS or trimmed LS on the per-pilot-symbol residual norms."""
+    H = ls_channel_estimate(y_p, s_p, noise_var)
+    for _ in range(iters):
+        r = np.linalg.norm(y_p - s_p @ H.T, axis=1)                       # (n_p,)
+        scale = 1.4826 * np.median(r) + 1e-12
+        if kind == "huber":
+            c = 1.345 * scale
+            w = np.where(r <= c, 1.0, c / np.maximum(r, 1e-12))
+        elif kind == "trim":
+            w = (r <= np.quantile(r, 1 - trim)).astype(float)
+        else:
+            raise ValueError(kind)
+        Sw = s_p * w[:, None]
+        G = Sw.conj().T @ s_p + noise_var * np.eye(s_p.shape[1])
+        H = np.linalg.solve(G, Sw.conj().T @ y_p).T
+    return H
+
+
 def estimate_noise_var(y_p: np.ndarray, s_p: np.ndarray, H: np.ndarray) -> float:
     r = y_p - s_p @ H.T
     return float(np.mean(np.abs(r) ** 2))
@@ -118,7 +138,9 @@ class LMMSEReceiver(Receiver):
 
     def process_block(self, b, y_p, idx_p, y_d, aux=None) -> BlockOutput:
         s_p = self.mod.modulate_indices(idx_p)
-        H = ls_channel_estimate(y_p, s_p, self.noise_var)
+        kind = self.cfg.receiver.robust_ls
+        H = ls_channel_estimate(y_p, s_p, self.noise_var) if kind == "none" else \
+            robust_channel_estimate(y_p, s_p, self.noise_var, kind)
         nv = estimate_noise_var(y_p, s_p, H)
         probs = lmmse_soft_symbols(y_d, H, nv, self.mod)
         pt = torch.as_tensor(probs, dtype=torch.float32, device=self.device)

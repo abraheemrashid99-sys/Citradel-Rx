@@ -36,8 +36,10 @@ def save_record(record: Dict[str, Any], out_dir: str, name: str) -> str:
     record["saved_at"] = _dt.datetime.now(_dt.timezone.utc).isoformat()
     record["git_commit"] = git_commit()
     path = os.path.join(out_dir, f"{name}.json")
-    with open(path, "w") as f:
+    tmp = path + ".part"   # write then rename, so an interrupted run never leaves a truncated record
+    with open(tmp, "w") as f:
         json.dump(record, f, indent=1, default=_default)
+    os.replace(tmp, path)
     return path
 
 

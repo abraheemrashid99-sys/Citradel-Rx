@@ -26,15 +26,46 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
     a config option was added) the same non-default settings."""
     import glob
     import json
+    def complete(fn: str) -> bool:
+        # a run that saves level snapshots is finished only when its snapshot file exists and reads
+        # back (the machine may have stopped, or the disk filled, while the snapshots were written)
+        if not probe.run.save_params:
+            return True
+        npz = fn.replace(".json", ".levels.npz")
+        if not os.path.exists(npz):
+            return False
+        try:
+            import json
+            import zipfile
+            n_levels = len(json.load(open(fn)).get("self_disp") or [None])   # one entry per level
+            with zipfile.ZipFile(npz) as z:
+                names = [n for n in z.namelist() if n.startswith("level")]
+                # every level must be there (a write cut short can leave a readable file with fewer)
+                if z.testzip() is not None or sorted(names) != [f"level{k + 1}.npy" for k in range(n_levels)]:
+                    raise ValueError("bad snapshot file")
+            return True
+        except Exception:
+            print(f"   (snapshot file {os.path.basename(npz)} is damaged: removed, the run is redone)")
+            try:
+                os.remove(npz)
+            except OSError:
+                pass
+            return False
+
     exact = os.path.join(out_dir, f"{name}_s{seed}_{probe.hash()}.json")
     if os.path.exists(exact):
-        return exact
+        try:
+            json.load(open(exact))
+            if complete(exact):
+                return exact
+        except Exception:   # truncated record from an interrupted run: run it again
+            pass
     for fn in glob.glob(os.path.join(out_dir, f"{name}_s{seed}_*.json")):
         try:
             rec = json.load(open(fn))
         except Exception:
             continue
-        if rec.get("seed") == seed and probe.matches_record(rec.get("config", {})):
+        if rec.get("seed") == seed and probe.matches_record(rec.get("config", {})) and complete(fn):
             return fn
     return ""
 

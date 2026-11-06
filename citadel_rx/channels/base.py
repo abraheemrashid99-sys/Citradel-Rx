@@ -48,6 +48,7 @@ class BlockFadingChannel:
         self.rng = np.random.default_rng(cfg.seed + 1000)
         self.cost_dir = cost_dir or _COST_DIR
         self._H_prev: Optional[np.ndarray] = None
+        self._abrupt_H: Optional[np.ndarray] = None
         self.H_mean = self._sed_mean()
         self.rho = 1.0
         if cfg.fading == "jakes":
@@ -103,7 +104,18 @@ class BlockFadingChannel:
             H = self._cost2100(b)
         else:
             raise ValueError(f"unknown channel model {self.cfg.model}")
-        noise_var = 10 ** (-0.1 * self.cfg.snr_db)
+        snr = self.cfg.snr_db
+        ab = getattr(self.cfg, "abrupt_block", -1)
+        if ab is not None and ab >= 0 and b >= ab:
+            # audit D6/B3: an abrupt change the receiver must follow (with no attack present)
+            if self.cfg.abrupt_type == "redraw":
+                if self._abrupt_H is None:
+                    arng = np.random.default_rng(self.cfg.seed + 5150)
+                    self._abrupt_H = self.H_mean * (0.5 + arng.random(self.H_mean.shape))
+                H = H + (self._abrupt_H - self.H_mean)
+            elif self.cfg.abrupt_type == "snr_drop":
+                snr = snr - self.cfg.abrupt_snr_drop_db
+        noise_var = 10 ** (-0.1 * snr)
         return ChannelState(H=H, noise_var=noise_var, rho=self.rho)
 
     # ---- transmission -------------------------------------------------

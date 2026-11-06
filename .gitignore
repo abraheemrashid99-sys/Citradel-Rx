@@ -6,3 +6,9 @@ __pycache__/
 results/**/*.log
 *.npz
 .DS_Store
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/build.log
+results/**/*.part
+cache/
