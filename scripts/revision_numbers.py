@@ -202,6 +202,8 @@ def put_cell(prefix: str, c: Optional[dict]) -> None:
     put(prefix + ".minp", f_p(c["min_p"]))
     put(prefix + ".clean", f_ser(c["clean_all"]))
     put(prefix + ".decor", str(c["decor"]))
+    put(prefix + ".smin", f_sig(min(c["seed_means"]))); put(prefix + ".smax", f_sig(max(c["seed_means"])))
+    put(prefix + ".spos", str(sum(x > 0 for x in c["seed_means"])))
 
 
 NCOLS = {"p1": 9, "p1_paired": 6, "attacks": 6, "refdeg": 6, "deny": 7, "baselines": 5, "ablations": 6, "scenarios": 7,
@@ -235,6 +237,9 @@ def p1() -> None:
                                [f"{f_sig(c0['excess'])} {f_ci(c0['ci'])}"] +
                                [(f_sig(c["excess"]) if c else "--") for c in ex[2:]] +
                                [f_rate(c0["rej"]), f_rate(c0["frej"])]) + r"\\")
+    jam = [cells[(rx, "jam")] for rx in P1RX if cells[(rx, "jam")] is not None]
+    if jam:
+        put("p1.jam.exmin", f_sig(min(c["excess"] for c in jam))); put("p1.jam.exmax", f_sig(max(c["excess"] for c in jam)))
     write_table("p1", rows)
     # paired comparisons at the headline cell and on the clean twins (same seeds, same channel draws)
     ref = cells[("citadel", "wb_sir0")]
@@ -301,7 +306,7 @@ def adaptive() -> None:
             ("p3_citadel_query__sir0", "Query (NACK feedback)", "Citadel-Rx"), ("p3_online_deepsic_query__sir0", "Query (NACK feedback)", "Online DeepSIC"),
             ("p3_citadel_sigbudget__sir0", "Signal-referenced budget", "Citadel-Rx"),
             ("p3_online_deepsic_sigbudget__sir0", "Signal-referenced budget", "Online DeepSIC")]
-    rows = []
+    rows, rng = [], {}
     for name, l1, l2 in spec:
         folder = "rev_p3_adaptive" if any(t in name for t in ("unroll", "softgate", "strongest", "pgd")) else \
             ("rev_p3_phys" if "_M" in name else "rev_p3_know")
@@ -309,6 +314,12 @@ def adaptive() -> None:
         put_cell("atk." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p3_", "")), c)
         if c is not None:
             rows.append(f"{l1} & {l2} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])} & {f_rate(c['rej'])}\\\\")
+            grp = ("cit" if "citadel" in name else "onl") + ("10" if name.endswith("sir10") else "0")
+            rng.setdefault(grp, []).append(c)
+    for grp, cs in rng.items():   # ranges quoted in the text
+        put(f"atk.{grp}.exmin", f_sig(min(c["excess"] for c in cs))); put(f"atk.{grp}.exmax", f_sig(max(c["excess"] for c in cs)))
+        put(f"atk.{grp}.rejmin", f_rate(min((c["rej"] for c in cs), key=lambda kn: kn[0] / max(1, kn[1]))))
+        put(f"atk.{grp}.n", str(len(cs)))
     write_table("attacks", rows)
 
 
@@ -369,6 +380,9 @@ def deny() -> None:
     if common:
         put("deny.streak.ndiff", str(sum(bool(np.any(np.abs(plain[c] - strk[c]) > 1e-12)) for c in common)))
         put("deny.streak.nruns", str(len(common)))
+    srec = [r for r in recs if r["name"].startswith("p3_citadel_streak_")]
+    put("deny.streak.attempts", str(sum("recovery_pass" in b for r in srec for b in r["blocks"])))
+    put("deny.streak.accepted", str(sum(bool(b.get("recovered")) for r in srec for b in r["blocks"])))
     write_table("deny", rows)
 
 
@@ -381,6 +395,11 @@ def baselines() -> None:
         put_cell("p2." + rx.replace("_", ""), c)
         if c is not None:
             rows.append(f"{RXLABEL[rx]} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])}\\\\")
+    exs = [cell("rev_p2", f"p2_{rx}__wb_sir0", ["rev_clean"]) for rx in names]
+    exs = [c for c in exs if c is not None]
+    if exs:
+        put("p2.exmin", f_sig(min(c["excess"] for c in exs))); put("p2.exmax", f_sig(max(c["excess"] for c in exs)))
+        put("p2.n", str(len(exs)))
     for w in ("0.001", "0.1", "1"):
         c = cell("rev_p2", f"p2_l2sp_w{w}__wb_sir0", ["rev_clean"])
         put_cell("p2.l2spw" + w.replace(".", ""), c)
@@ -426,17 +445,24 @@ def scenarios() -> None:
         spec.append(("rev_p6_qam16", f"p6_{rx}_qam16__sir0", "16-QAM, 20 dB", RXLABEL[rx]))
     spec += [("rev_p6_deploy", "p6_citadel_steps30__sir0", "30 fast steps", "Citadel-Rx"),
              ("rev_p6_deploy", "p6_citadel_last_layer__sir0", "last layer adaptable", "Citadel-Rx")]
+    bl = {}
     for folder, name, l1, l2 in spec:
         c = cell(folder, name, ["rev_clean"])
         put_cell("sc." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p6_", "").split("__")[0]), c)
+        if c is not None and folder == "rev_p6_blocklen":
+            bl.setdefault("cit" if "citadel" in name else "onl", []).append(c)
         if c is not None:
             mt = np.mean([np.mean([b["t_rx"] for b in a["blocks"]]) for a, _ in c["pairs"]])
             rows.append(f"{l1} & {l2} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & "
                         f"{f_rate(c['rej']) if l2 == 'Citadel-Rx' else '--'} & {mt:.1f}\\\\")
+    for g, cs in bl.items():
+        put(f"sc.bl.{g}exmin", f_sig(min(c["excess"] for c in cs))); put(f"sc.bl.{g}exmax", f_sig(max(c["excess"] for c in cs)))
+        put(f"sc.bl.{g}rejmin", f_rate(min((c["rej"] for c in cs), key=lambda kn: kn[0] / max(1, kn[1]))))
     write_table("scenarios", rows)
 
 
 def sensitivity() -> None:
+    allc = []
     pars = [("g1_slack", "G1 slack $\\tau_1-1$"), ("g3_slack", "G3 slack $\\tau_3-1$"), ("tighten", "tightening $1-$floor"),
             ("soft_width", "soft-step width"), ("prox_lambda", "proximal weight $\\lambda$"), ("delta", "delta decay $\\delta$"),
             ("crc_rel", "CRC relative slack $\\rho$"), ("eta3", "level-3 rate $\\eta^{(3)}$")]
@@ -449,6 +475,12 @@ def sensitivity() -> None:
         for c in cs:
             parts += ["--"] * 3 if c is None else [f_ser(c["clean_all"]), f_sig(c["excess"]), f_rate(c["frej"])]
         rows.append(f"{l} & " + " & ".join(parts) + "\\\\")
+        allc += [(c, l) for c in cs if c is not None]
+    if allc:
+        put("sens.exmin", f_sig(min(c["excess"] for c, _ in allc))); put("sens.exmax", f_sig(max(c["excess"] for c, _ in allc)))
+        put("sens.cleanmin", f_ser(min(c["clean_all"] for c, _ in allc))); put("sens.cleanmax", f_ser(max(c["clean_all"] for c, _ in allc)))
+        cmax, lmax = max(allc, key=lambda cl: cl[0]["frej"][0] / max(1, cl[0]["frej"][1]))
+        put("sens.frejmax", f_rate(cmax["frej"])); put("sens.n", str(len(allc)))
     write_table("sensitivity", rows)
 
 
@@ -562,7 +594,7 @@ def extras() -> None:
         for g in ("g1", "g2", "g3"):   # share of the poisoned blocks each gate rejects on its own
             put(f"gate.{g}", f"{100 * np.mean([b['verdict_' + g] < 0.5 for b in att]):.0f}")
         put("gate.lmmseatt", f"{np.mean([b['pass_lmmse'] for b in att]):.2f}")
-        put("gate.lmmsecln", f"{np.mean([b['pass_lmmse'] for _, cl in c['pairs'] for b in cl['blocks'][5:]]):.2f}")
+        put("gate.lmmsecln", f"{np.mean([b['pass_lmmse'] for a, cl in c['pairs'] for b in cl['blocks'][window(a)[0]:window(a)[1]]]):.2f}")
 
         def clipped(recs):
             k = n = 0
@@ -613,6 +645,20 @@ def extras() -> None:
         cb = [b for _, cl in cq["pairs"] for b in cl["blocks"][5:]]
         put("qam.passnn", f"{np.mean([b['pass_nn'] for b in cb]):.2f}"); put("qam.passref", f"{np.mean([b['pass_mm'] for b in cb]):.2f}")
         put("qam.frej", f"{100 * np.mean([b['gamma'] < 0.5 for b in cb]):.0f}")
+    # the abstain state on clean runs: the block from which it rejects, and the reference at that point
+    ab = [r for r in load("rev_clean_cloud") if r["config"]["citadel"].get("abstain")]
+    if ab:
+        firsts, refs0, refsl, nrej, nall = [], [], [], 0, 0
+        for r in ab:
+            g = [b.get("gamma") for b in r["blocks"]]
+            fr = next((i for i, x in enumerate(g) if x is not None and x < 0.5), None)
+            if fr is not None:
+                firsts.append(fr); refs0.append(r["blocks"][0]["pass_mm"]); refsl.append(r["blocks"][fr]["pass_mm"])
+            nrej += sum(x is not None and x < 0.5 for x in g); nall += len(g)
+        if firsts:
+            put("abs.lockmin", str(min(firsts))); put("abs.lockmax", str(max(firsts)))
+            put("abs.ref0", f"{np.mean(refs0):.3f}"); put("abs.reflock", f"{np.mean(refsl):.3f}")
+        put("abs.rejk", f"{nrej}/{nall}")
     # A4: the reference the gates compare against, attacked blocks against the clean twin
     for a in ("0.25", "0.75"):
         ca = cell("rev_p3_refdeg", f"p3_a4_a{a}__sir0", ["rev_clean_cloud"])
@@ -641,6 +687,7 @@ def main() -> None:
     lines.append("\\makeatother")
     open(OUT_NUM, "w").write("\n".join(lines) + "\n")
     tex = open(os.path.join(ROOT, "paper", "main.tex")).read() if os.path.exists(os.path.join(ROOT, "paper", "main.tex")) else ""
+    tex = "\n".join(l.split("%")[0] if not l.lstrip().startswith("%") else "" for l in tex.splitlines())
     used = sorted(set(re.findall(r"\\val\{([^}]+)\}", tex)))
     missing = [k for k in used if k not in V]
     print(f"{len(V)} numbers written to {os.path.relpath(OUT_NUM, ROOT)}; tables in {os.path.relpath(OUT_TAB, ROOT)}")

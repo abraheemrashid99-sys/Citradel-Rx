@@ -144,11 +144,13 @@ def main():
     import matplotlib.pyplot as plt
     groups = {}
     for r, cr in results:
-        key = (r["config"]["attack"]["type"], r["config"]["attack"]["sir_db"], tuple(r["config"]["citadel"]["consol_clip"]))
+        at = r["config"]["attack"]
+        key = (at["type"], at["sir_db"], tuple(r["config"]["citadel"]["consol_clip"]),
+               at.get("a3_eps_small") if at["type"] == "a3star" else None, r["config"]["citadel"].get("drift_guard", 0.0))
         groups.setdefault(key, []).append((r, cr))
     rows = ["| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |",
             "|---|---|---|---|---|---|---|---|"]
-    for (atk, sir, clip), grp in sorted(groups.items()):
+    for (atk, sir, clip, eps, guard), grp in sorted(groups.items(), key=lambda kv: str(kv[0])):
         r0 = grp[0][0]
         c = r0["config"]
         K = len(r0["paired_disp"])
@@ -178,9 +180,10 @@ def main():
         ax.set_xlabel("block"); ax.set_ylabel(r"paired displacement $\|\theta_{\rm adv}-\theta_{\rm clean}\|$")
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, fontsize=6.5)
         fig.subplots_adjust(left=0.17, right=0.98, top=0.97, bottom=0.42)
-        tag = f"{atk}_sir{sir:g}" + ("_clip" if design is not None else "")
+        tag = f"{atk}_sir{sir:g}" + (f"_e{eps:g}" if eps is not None else "") + ("_guard" if guard else "") + \
+            ("_clip" if design is not None else "")
         save(fig, os.path.basename(args.out) + "_" + tag)
-        rows.append(f"| {atk} | {sir:g} | {list(clip) or '-'} | {len(grp)} | {D[:, K - 1, w0:w1].max():.2f} | "
+        rows.append(f"| {atk}{f' e={eps:g}' if eps is not None else ''}{' guard' if guard else ''} | {sir:g} | {list(clip) or '-'} | {len(grp)} | {D[:, K - 1, w0:w1].max():.2f} | "
                     f"{(design.max() if design is not None else float('nan')):.2f} | {ext.max():.2f} | {A[:, w0:w1].max():.2f} |")
     print("\n".join(rows))
     md = os.path.join("docs", f"PAIRED_DISP_{os.path.basename(os.path.normpath(args.folder))}.md")
