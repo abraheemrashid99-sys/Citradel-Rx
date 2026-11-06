@@ -133,7 +133,9 @@ class CitadelConfig:
     # "legacy": pass fraction or residual of the reference against statistics of accepted blocks (the
     # first revision; it locks on clean runs). "ratio": log(data residual of the reference / pilot
     # noise estimate) against its level tracked on every non-abstained block, re-based after
-    # abstain_refresh consecutive abstentions so that a lasting change cannot lock the receiver
+    # abstain_refresh consecutive abstentions so that a lasting change cannot lock the receiver.
+    # "verified": the same with the residual taken only on CRC-verified symbols (decision errors of a
+    # worse-conditioned channel do not move it; the second version abstained after legitimate redraws)
     abstain_mode: str = "legacy"
     abstain_refresh: int = 20
     streak_k: int = 0                 # >0: recovery after this many consecutive rejections (H4)

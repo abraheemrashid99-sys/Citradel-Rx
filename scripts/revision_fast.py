@@ -74,18 +74,28 @@ ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_all
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
              "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud",   # more drivers on the cloud
-             "helper": "rev_clean_helper"}   # a second cloud machine
+             "helper": "rev_clean_helper",   # a second cloud machine
+             **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 9)}}   # campaign 5: further cloud machines, one folder each
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
 FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
+FZ_ABSTV = os.path.join(ROOT, "configs", "revision2_frozen_abstain_verified.json")
+POOL_ASSIGN = os.path.join(ROOT, "configs", "pool_assign.json")
+FROZEN_FILE = {"abst": FZ_ABST, "abstv": FZ_ABSTV, "joint": FZ_JOINT}
 T5 = [10, 11, 12, 13, 14]   # second campaign: the 2-seed experiments get seeds 12-14, the 3-seed cells 13-14
 NEW3, NEW2 = [12, 13, 14], [13, 14]
 
 
 # ------------------------------------------------------------------------------------ jobs
 class Job:
-    def __init__(self, shard, tier, group, out, name, seeds, ov, clean_twin=False, kind="test"):
+    def __init__(self, shard, tier, group, out, name, seeds, ov, clean_twin=False, kind="test", parent=None):
         self.shard, self.tier, self.group, self.out, self.name = shard, tier, group, out, name
         self.seeds, self.ov, self.clean_twin, self.kind = seeds, ov, clean_twin, kind
+        self.parent = parent   # clean twin: the attacked job it belongs to
+
+    @property
+    def lid(self) -> str:
+        """Logical id (the twin's own name is a hash of its resolved settings)."""
+        return f"twin:{self.parent}" if self.clean_twin else self.name
 
     @property
     def needs(self) -> set:
@@ -95,6 +105,8 @@ class Job:
                 n.add("cit")
             elif o.startswith("@BASE:"):
                 n.add("base")
+            elif o in ("@ABST", "@ABSTV", "@JOINT"):
+                n.add(o[1:].lower())
         return n
 
 
@@ -115,7 +127,8 @@ def J(shard, tier, group, out, name, seeds, ov, kind="test") -> List[Job]:
 def JT(shard, tier, group, out, name, seeds, ov) -> List[Job]:
     """Attacked job + its matched clean job (same settings, attack.* removed, same machine).
     The clean job is named by a hash of its resolved settings, so it is run once and shared."""
-    return J(shard, tier, group, out, name, seeds, ov) + [Job(shard, tier, group, CLEAN_DIR[shard], None, seeds, ov, clean_twin=True)]
+    return J(shard, tier, group, out, name, seeds, ov) + [Job(shard, tier, group, CLEAN_DIR[shard], None, seeds, ov, clean_twin=True,
+                                                              parent=name)]
 
 
 def calibration_jobs() -> List[Job]:
@@ -353,6 +366,9 @@ def rev2x_jobs() -> List[Job]:
     # ===== cloudx, tier 0: calibration and tuning on seeds 0-2 ================================
     jobs += J(X, 0, "H3cal", "rev2_abstain_cal", "h3cal_ratio__clean", CAL,
               rx_ov("citadel") + ["citadel.abstain=true", "citadel.abstain_mode=ratio", "citadel.abstain_z=1e9", "attack.type=none"])
+    # abstain v3 (residual on CRC-verified symbols): calibrated by the same rule (scripts/freeze_rev2.py)
+    jobs += J(X, 0, "H3cal", "rev2_abstain_cal", "h3cal_verified__clean", CAL,
+              rx_ov("citadel") + ["citadel.abstain=true", "citadel.abstain_mode=verified", "citadel.abstain_z=1e9", "attack.type=none"])
     for ep, lr in itertools.product([30, 100, 300], [1e-3, 5e-3]):
         jobs += J(X, 0, "D8tune", "rev2_joint_tune", f"tune_joint_ep{ep}_lr{lr:g}", CAL,
                   ["receiver.type=online_deepsic", "receiver.backbone=joint", f"receiver.epochs={ep}", f"receiver.lr={lr}",
@@ -372,6 +388,14 @@ def rev2x_jobs() -> List[Job]:
     for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
                     ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):   # legitimate changes
         jobs += J(Y, 1, "H3", "rev2_abstain", f"h3_ratio_{tag}__none", T5, rx_ov("citadel") + ["@ABST"] + ch + ["attack.type=none"])
+    # abstain v3: the test runs of the second version, repeated with the third (shard cloudy, run by the pool)
+    for a in (0.25, 0.75):
+        jobs += JT(Y, 1, "H3v", "rev2_abstain_v3", f"h3v_a4_a{a:g}__sir0", T5,
+                   rx_ov("citadel") + ["@ABSTV"] + RND + ["attack.type=a4", f"attack.a4_alpha={a}", "attack.sir_db=0", "attack.pgd_steps=6"])
+    jobs += JT(Y, 1, "H3v", "rev2_abstain_v3", "h3v_a1__sir0", T5, rx_ov("citadel") + ["@ABSTV"] + RND + ["attack.type=a1", "attack.sir_db=0"])
+    for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
+                    ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):
+        jobs += J(Y, 1, "H3v", "rev2_abstain_v3", f"h3v_{tag}__none", T5, rx_ov("citadel") + ["@ABSTV"] + ch + ["attack.type=none"])
     for rx in ("citadel", "online_deepsic", "crc_rollback"):   # D8: second backbone under A1 (shard cloudz)
         jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
@@ -395,12 +419,30 @@ def helper_jobs() -> List[Job]:
     return out
 
 
+def pool_jobs(shard: str) -> List[Tuple["Job", int]]:
+    """Campaign 5: the runs configs/pool_assign.json gives this pool machine (written by
+    scripts/assign_pool.py, which also claims them in configs/claims.json so that the machines that
+    had them skip them), in the order assigned (longest first)."""
+    want = [tuple(x) for x in json.load(open(POOL_ASSIGN))["assign"].get(shard, [])]
+    by_lid = {}
+    for j in rev2_jobs() + rev2x_jobs():
+        by_lid.setdefault(j.lid, j)
+    out = []
+    for lid, s in want:
+        j = by_lid[lid]
+        out.append((Job(shard, j.tier, j.group, CLEAN_DIR[shard] if j.clean_twin else j.out, j.name, [s], j.ov,
+                        clean_twin=j.clean_twin, kind=j.kind, parent=j.parent), s))
+    return out
+
+
 # ------------------------------------------------------------------------------------ settings
 def resolve(job: Job, seed: int, fz_cit: Optional[dict], fz_base: Optional[dict]) -> Tuple[Tuple[str, str, int], List[str]]:
     ov: List[str] = []
     for o in job.ov:
         if o == "@ABST":
             ov += json.load(open(FZ_ABST))["overrides"]
+        elif o == "@ABSTV":
+            ov += json.load(open(FZ_ABSTV))["overrides"]
         elif o == "@JOINT":
             ov += json.load(open(FZ_JOINT))["overrides"]
         elif o == "@CIT":
@@ -554,13 +596,13 @@ def fetch_frozen_citadel() -> bool:
 def push_results(shard: str) -> None:
     with GIT_LOCK:
         files = []
-        for fn in glob.glob(os.path.join(ROOT, "results", "rev_*", "*.json")):
+        for fn in glob.glob(os.path.join(ROOT, "results", "rev*_*", "*.json")):   # rev_* and rev2_*
             try:
                 json.load(open(fn))   # only complete records
                 files.append(os.path.relpath(fn, ROOT))
             except Exception:
                 pass
-        files += [os.path.relpath(f, ROOT) for f in (FZ_BASE, FZ_CIT) if os.path.exists(f)]
+        files += [os.path.relpath(f, ROOT) for f in (FZ_BASE, FZ_CIT, FZ_ABST, FZ_ABSTV, FZ_JOINT) if os.path.exists(f)]
         files += [os.path.relpath(f, ROOT) for f in glob.glob(os.path.join(LOGS, f"{shard}*"))]
         for i in range(0, len(files), 200):
             _run_git(["add", "--", *files[i:i + 200]])
@@ -586,14 +628,18 @@ class Campaign:
                  cache_gb: float = 0.6, campaign: int = 1):
         self.shard, self.workers, self.wait_hours, self.push_every, self.min_free_mb = shard, workers, wait_hours, push_every, min_free_mb
         self.cache_gb = cache_gb
-        src = helper_jobs() if campaign == 4 else (rev2x_jobs() if campaign == 3 else
-                                                    (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()))
-        jobs = [j for j in src if j.shard == shard and j.tier <= tier]
-        if campaign == 4:
-            jobs.sort(key=lambda j: {"D4": 0, "P2": 1, "P6": 2, "P5": 3, "P7": 4, "P7grid": 5}.get(j.group, 9))
-        if campaign != 4:
-            jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
-        self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
+        self.campaign = campaign
+        if campaign == 5:
+            self.queue: List[Tuple[Job, int]] = pool_jobs(shard)
+        else:
+            src = helper_jobs() if campaign == 4 else (rev2x_jobs() if campaign == 3 else
+                                                        (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()))
+            jobs = [j for j in src if j.shard == shard and j.tier <= tier]
+            if campaign == 4:
+                jobs.sort(key=lambda j: {"D4": 0, "P2": 1, "P6": 2, "P5": 3, "P7": 4, "P7grid": 5}.get(j.group, 9))
+            if campaign != 4:
+                jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
+            self.queue = [(j, s) for j in jobs for s in j.seeds]
         self.cal_kind = "cal" if shard == "cloud" else "tune"
         self.cal_left = sum(1 for j, _ in self.queue if j.kind == self.cal_kind)
         self.fz_cit = json.load(open(FZ_CIT)) if os.path.exists(FZ_CIT) else None
@@ -606,7 +652,7 @@ class Campaign:
         self.last_fetch = 0.0
         self.calibrated = False
         self._freezing = False
-        if campaign in (2, 3, 4):   # settings were frozen by the first campaign's rules; nothing is calibrated again
+        if campaign in (2, 3, 4, 5):   # settings were frozen by the first campaign's rules; nothing is calibrated again
             self.fz_cit, self.fz_base = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
             self.cal_left, self.calibrated = 0, True
         os.makedirs(LOGS, exist_ok=True)
@@ -617,7 +663,8 @@ class Campaign:
             return False
         if "base" in job.needs and self.fz_base is None:
             return False
-        return True
+        # the second campaign's frozen feature settings (abstain, second backbone) arrive from GitHub
+        return all(os.path.exists(FROZEN_FILE[n]) for n in job.needs & set(FROZEN_FILE))
 
     def _next(self):
         """Highest-priority runnable task; ('wait', None) when only blocked tasks remain; None when finished."""
@@ -711,6 +758,14 @@ class Campaign:
                 self.tasklog.flush()
 
     def _maybe_fetch(self) -> None:
+        if self.campaign == 5:   # pool: take only the frozen feature settings from GitHub, every 5 minutes
+            if time.time() - self.last_fetch >= 300:
+                self.last_fetch = time.time()
+                with GIT_LOCK:
+                    _run_git(["fetch", "-q", "origin", BRANCH], capture_output=True)
+                    for f in FROZEN_FILE.values():
+                        _run_git(["checkout", f"origin/{BRANCH}", "--", os.path.relpath(f, ROOT)], capture_output=True)
+            return
         if self.shard != "laptop" or self.fz_cit is not None:
             return
         if self.t_wait0 is None:
@@ -746,6 +801,13 @@ class Campaign:
         for t in ths:
             t.join()
         stop.set()
+        if self.campaign == 5:   # paired displacement on this machine, which holds the level snapshots
+            snap = sorted({j.out for j, _ in pool_jobs(self.shard) if "run.save_params=true" in j.ov and not j.clean_twin})
+            for folder in snap:
+                r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "paired_disp.py"), os.path.join("results", folder),
+                                    "--clean", os.path.join("results", CLEAN_DIR[self.shard]),
+                                    "--out", os.path.join(LOGS, f"{self.shard}_paired_{folder}")], cwd=ROOT, capture_output=True, text=True)
+                print(f"paired displacement {folder}: rc {r.returncode}\n{r.stdout[-3000:]}{r.stderr[-1500:]}", flush=True)
         print(f"== {self.shard} finished: {self.done} runs, {self.failed} failed, {(time.time() - self.t0) / 3600:.1f} h", flush=True)
         push_results(self.shard)
 
@@ -785,9 +847,11 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper"])
-    ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4], default=1,
-                    help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy)")
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper"] +
+                    [f"pool{i}" for i in range(1, 9)])
+    ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4, 5], default=1,
+                    help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy), "
+                         "4 = the helper machine, 5 = the pool machines (configs/pool_assign.json)")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
     ap.add_argument("--dry", action="store_true")
@@ -806,7 +870,7 @@ def main():
     if args.push_only:
         push_results(args.shard)
         return
-    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith("cloud") or args.shard == "helper" else 0.6)
+    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith(("cloud", "pool")) or args.shard == "helper" else 0.6)
     Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb, args.campaign).run()
 
 

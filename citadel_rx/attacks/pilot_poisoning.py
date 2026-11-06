@@ -124,8 +124,10 @@ class Attacker:
         energy = float(np.sum(np.abs(ref) ** 2))
         eps = np.sqrt(energy * 10 ** (-sir / 10))
         st = self.block_state
-        if self.sir_override is not None and st is not None and getattr(st, "G", None) is not None and self.g_rms:
-            eps *= float(np.linalg.norm(st.G)) / self.g_rms     # the attacker's own fading in this block
+        if self.sir_override is not None and st is not None and getattr(st, "G", None) is not None:
+            # UMi scene: unit-energy symbols at a user's maximum power through the attacker's own channel
+            # (G is in the users' power-control units), so the SIR of each block follows the physics
+            eps = float(np.sqrt(y_clean.shape[0]) * np.linalg.norm(st.G))
         if small:
             eps = float(self.ac.a3_eps_small) * np.sqrt(energy)
         return float(eps)

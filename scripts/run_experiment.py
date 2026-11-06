@@ -71,8 +71,9 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
 
 
 def claimed_elsewhere(name: str, seed: int) -> str:
-    """configs/claims.json lists runs that another machine has taken over (the helper cloud machine of
-    the second campaign); until its expiry, the other machines skip them, then run whatever is missing."""
+    """configs/claims.json lists runs that other machines have taken over (the helper cloud machine and
+    the pool machines of the second campaign); until a claim expires, the other machines skip those
+    runs, then run whatever is still missing. "dropped" runs are left out of the plan for everyone."""
     import datetime as dt
     import json
     me = os.environ.get("CITADEL_MACHINE", "")
@@ -83,11 +84,16 @@ def claimed_elsewhere(name: str, seed: int) -> str:
         c = json.load(open(fn))
         if seed in c.get("dropped", {}).get(name, []):
             return "nobody (dropped from the plan)"
-        if me == c["owner"] or dt.datetime.now(dt.timezone.utc) >= dt.datetime.fromisoformat(c["until"]):
-            return ""
-        if seed in c.get("dropped", {}).get(name, []):
-            return "nobody (dropped from the plan)"
-        return c["owner"] if seed in c["runs"].get(name, []) else ""
+        owners = dict(c.get("owners", {}))
+        if c.get("owner"):
+            owners.setdefault(c["owner"], {"until": c["until"], "runs": c.get("runs", {})})
+        now = dt.datetime.now(dt.timezone.utc)
+        for who, o in owners.items():
+            if who == me or now >= dt.datetime.fromisoformat(o["until"]):
+                continue
+            if seed in o.get("runs", {}).get(name, []):
+                return who
+        return ""
     except Exception:
         return ""
 

@@ -274,10 +274,70 @@ class CitadelRx(DeepSICReceiver):
             bad |= r_mm > st["res"] + z * np.sqrt(max(st["res_var"] or 0.0, (0.05 * st["res"]) ** 2))
         return bool(bad)
 
+    def _ref_symbols(self, framer, refs):
+        """Per (sub-block or code block, user): the verified data symbol indices from the reference
+        detections and a verified mask. CRC framing: the first reference whose CRC passes; LDPC: the
+        re-encoded codeword of the first reference that decodes."""
+        L, n_sub, U = framer.framer.L, framer.n_sub, self.n_user
+        sym = np.zeros((n_sub * L, U), dtype=np.int64)
+        ok_all = np.zeros((n_sub, U), dtype=bool)
+        for idx in refs:
+            if hasattr(framer.framer, "decode"):
+                ok, cw = framer.framer.decode(framer.decided_bits_to_subblocks(idx))
+                bits = cw.transpose(1, 0, 2).reshape(U, -1)                    # (U, n_d * bps)
+                cand = self.mod.bits_to_indices(bits).T                        # (n_d, U)
+            else:
+                ok, cand = self._crc_pass(framer, idx), idx
+            new = ok & ~ok_all
+            if new.any():
+                m = np.repeat(new, L, axis=0)                                  # (n_d, U)
+                sym[m] = cand[m]
+            ok_all |= ok
+        return sym, ok_all
+
+    def _coded_virtual_pass(self, framer, idx_nn, refs):
+        """LDPC (audit D2): a code block's CRC after decoding tolerates raw symbol errors, so its pass
+        rate is not the (1-p)^L of the G2 design rule. On the code blocks that decode under a reference,
+        the transmitted symbols are known; each detector's raw SER on them, written as the pass rate
+        (1 - SER)^L of a virtual L-symbol sub-block (L of the design rule), lets the gate tolerate
+        SER_ref + delta exactly as with CRC sub-blocks. Returns ((F_nn, per user), (F_ref, per user),
+        verified fraction), or None if nothing decodes."""
+        sym, ok = self._ref_symbols(framer, refs)
+        if not ok.any():
+            return None
+        L, Lg = framer.framer.L, self.cfg.frame.crc_subblock_symbols
+        m = np.repeat(ok, L, axis=0)                                           # (n_d, U) verified symbols
+
+        def vpass(idx):
+            err = (idx != sym) & m
+            n_u = np.maximum(m.sum(axis=0), 1)
+            ser_u = err.sum(axis=0) / n_u
+            ser = err.sum() / max(m.sum(), 1)
+            return float((1 - ser) ** Lg), (1 - ser_u) ** Lg
+
+        f_nn = vpass(idx_nn)
+        refs_v = [vpass(i) for i in refs]
+        f_ref = max(refs_v, key=lambda x: x[0])
+        pu_ref = np.max(np.stack([x[1] for x in refs_v]), axis=0)
+        return f_nn, (f_ref[0], pu_ref), float(ok.mean())
+
+    def _verified_residual(self, framer, y_d, H, refs):
+        """Mean squared residual of the linear model on the symbol slots whose decisions are verified
+        for every user (abstain v3); None when fewer than 5% of the slots are verified."""
+        from ..gates.physics import model_residual
+        sym, ok = self._ref_symbols(framer, refs)
+        slots = np.repeat(ok, framer.framer.L, axis=0).all(axis=1)
+        frac = float(slots.mean())
+        if frac < 0.05:
+            return None, frac
+        return model_residual(y_d[slots], sym[slots], H, self.mod), frac
+
     def _abstain_ratio(self, t: float, ema: float = 0.9):
-        """H3, second version. t = log(data residual of the LMMSE decisions / noise power estimated
-        on the pilots). Both follow the noise level and the channel, so t stays near its running level
-        under fading, SNR changes and channel redraws; an attacker's energy on the data raises it and
+        """H3, second and third versions. t = log(data residual of the reference / noise power estimated
+        on the pilots). Both follow the noise level, so t stays near its running level under SNR changes;
+        with the residual of hard LMMSE decisions (second version) t also follows the reference's
+        decision errors and a redraw to a worse-conditioned channel moves it, with the residual on
+        CRC-verified symbols (third version) it does not. An attacker's energy on the data raises it and
         energy on the pilots lowers it. Abstain when |t - level| > z max(sd, 0.1), with level and sd
         tracked on every block that is not abstained; after `abstain_refresh` consecutive abstentions
         the level is re-based, so the state cannot lock the receiver (the first version did)."""
@@ -376,6 +436,8 @@ class CitadelRx(DeepSICReceiver):
             g1 = g1_residual(y_d, idx_hat, idx_mm, H, self.mod, idx_slow) if "g1" in self.gate.gates else None
             pass_nn = pass_mm = None
             ok_nn = ok_mm = ok_slow = None
+            pu_nn = pu_ref = None                       # per-user pass rates for H7
+            coded = has_crc and hasattr(framer.framer, "decode")
             if "g2" in self.gate.gates and has_crc:
                 ok_nn, ok_mm = self._crc_pass(framer, idx_hat), self._crc_pass(framer, idx_mm)
                 pass_nn, pass_mm = float(ok_nn.mean()), float(ok_mm.mean())
@@ -386,9 +448,23 @@ class CitadelRx(DeepSICReceiver):
                     ok_slow = self._crc_pass(framer, idx_slow)
                     stats["pass_slow"] = float(ok_slow.mean())
                     pass_mm = max(pass_mm, float(ok_slow.mean()))
+                pu_nn = ok_nn.mean(axis=0)
+                pu_ref = np.maximum(ok_mm.mean(axis=0), ok_slow.mean(axis=0) if ok_slow is not None else 0.0)
+                if coded:
+                    v = self._coded_virtual_pass(framer, idx_hat, [c for c in (idx_mm, idx_slow) if c is not None])
+                    if v is not None:   # LDPC: raw SER on decoder-verified symbols as a virtual CRC-sub-block pass rate
+                        (pass_nn, pu_nn), (pass_mm, pu_ref), n_ver = v
+                        stats.update(vpass_nn=pass_nn, vpass_ref=pass_mm, verified_frac=n_ver)
             innov = fused["innov_norm"] if "g3" in self.gate.gates else None
             r_mm = model_residual(y_d, idx_mm, H, self.mod) if cc.abstain else None
-            if cc.abstain and cc.abstain_mode == "ratio" and r_mm is not None and nv is not None:
+            if cc.abstain and cc.abstain_mode == "verified" and nv is not None and has_crc:
+                # abstain v3: the residual of the reference on symbols whose decisions are verified by the
+                # CRC (decision errors excluded), over the noise power estimated on the pilots
+                r_v, frac = self._verified_residual(framer, y_d, H, [c for c in (idx_mm, idx_slow) if c is not None])
+                t = float(np.log(max(r_v if r_v is not None else r_mm, 1e-12) / max(float(nv), 1e-12)))
+                abstain, dev = self._abstain_ratio(t)
+                stats["abstain_t"], stats["abstain_dev"], stats["abstain_verified"] = t, dev, frac
+            elif cc.abstain and cc.abstain_mode == "ratio" and r_mm is not None and nv is not None:
                 # data residual of the reference over the pilot-estimated noise power: both follow the
                 # noise and the fading, an attacker's energy on the data or on the pilots moves one of them
                 t = float(np.log(max(r_mm, 1e-12) / max(float(nv), 1e-12)))
@@ -399,9 +475,8 @@ class CitadelRx(DeepSICReceiver):
             g2_block = None if cc.per_user_gate else pass_nn
             verdict = self.gate.evaluate(g1, g2_block, pass_mm if g2_block is not None else None, innov, r)
             gamma = verdict.gamma
-            if cc.per_user_gate and ok_nn is not None:
-                ref_u = np.maximum(ok_mm.mean(axis=0), ok_slow.mean(axis=0) if ok_slow is not None else 0.0)
-                v_u = self.gate.g2_user_verdicts(ok_nn.mean(axis=0), ref_u, ok_nn.shape[0], r)
+            if cc.per_user_gate and pu_nn is not None:
+                v_u = self.gate.g2_user_verdicts(pu_nn, pu_ref, ok_nn.shape[0], r)
                 stats["verdict_g2_user"] = [float(v) for v in v_u]
             if abstain:
                 gamma, reject = 0.0, True
