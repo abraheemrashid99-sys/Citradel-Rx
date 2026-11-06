@@ -2268,6 +2268,130 @@
     "twin:d23s_lmmse_d35__phys",
     13
    ]
+  ],
+  "pool9": [
+   [
+    "h3v_a4_a0.25__sir0",
+    15
+   ],
+   [
+    "h3v_a4_a0.75__sir0",
+    15
+   ],
+   [
+    "h3v_a4_a0.25__sir0",
+    17
+   ],
+   [
+    "h3v_a4_a0.75__sir0",
+    17
+   ],
+   [
+    "h3v_a4_a0.25__sir0",
+    19
+   ],
+   [
+    "h3v_a4_a0.75__sir0",
+    19
+   ],
+   [
+    "twin:h3v_a4_a0.25__sir0",
+    15
+   ],
+   [
+    "h3v_a1__sir0",
+    15
+   ],
+   [
+    "h3v_redraw__none",
+    15
+   ],
+   [
+    "h3v_snrdrop__none",
+    15
+   ],
+   [
+    "twin:h3v_a4_a0.25__sir0",
+    17
+   ],
+   [
+    "h3v_a1__sir0",
+    17
+   ],
+   [
+    "h3v_redraw__none",
+    17
+   ],
+   [
+    "h3v_snrdrop__none",
+    17
+   ],
+   [
+    "twin:h3v_a4_a0.25__sir0",
+    19
+   ],
+   [
+    "h3v_a1__sir0",
+    19
+   ],
+   [
+    "h3v_redraw__none",
+    19
+   ],
+   [
+    "h3v_snrdrop__none",
+    19
+   ]
+  ],
+  "pool10": [
+   [
+    "h3v_a4_a0.25__sir0",
+    16
+   ],
+   [
+    "h3v_a4_a0.75__sir0",
+    16
+   ],
+   [
+    "h3v_a4_a0.25__sir0",
+    18
+   ],
+   [
+    "h3v_a4_a0.75__sir0",
+    18
+   ],
+   [
+    "twin:h3v_a4_a0.25__sir0",
+    16
+   ],
+   [
+    "h3v_a1__sir0",
+    16
+   ],
+   [
+    "h3v_redraw__none",
+    16
+   ],
+   [
+    "h3v_snrdrop__none",
+    16
+   ],
+   [
+    "twin:h3v_a4_a0.25__sir0",
+    18
+   ],
+   [
+    "h3v_a1__sir0",
+    18
+   ],
+   [
+    "h3v_redraw__none",
+    18
+   ],
+   [
+    "h3v_snrdrop__none",
+    18
+   ]
   ]
  },
  "estimated_core_minutes": {
@@ -2278,6 +2402,8 @@
   "pool5": 1744,
   "pool6": 660,
   "pool7": 519,
-  "pool8": 510
+  "pool8": 510,
+  "pool9": 462,
+  "pool10": 308
  }
 }

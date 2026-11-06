@@ -75,7 +75,7 @@ ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_all
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
              "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud", "cloudw": "rev_clean_cloud",   # more drivers on the cloud
              "helper": "rev_clean_helper",   # a second cloud machine
-             **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 9)},   # campaign 5: further cloud machines, one folder each
+             **{f"pool{i}": f"rev_clean_pool{i}" for i in range(1, 13)},   # campaign 5: further cloud machines, one folder each
              "local": "rev_clean_local"}   # campaign 6: the whole second campaign on one machine
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
 FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
@@ -406,6 +406,16 @@ def rev2x_jobs() -> List[Job]:
     for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
                     ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):
         jobs += J(Y, 1, "H3v", "rev2_abstain_v3", f"h3v_{tag}__none", T5, rx_ov("citadel") + ["@ABSTV"] + ch + ["attack.type=none"])
+    # the same tests on seeds 15-19: the verified statistic was adopted after the second version's first test
+    # runs (seeds 10-12) had been seen, so these seeds, untouched by any choice, are reported on their own too
+    T15 = [15, 16, 17, 18, 19]
+    for a in (0.25, 0.75):
+        jobs += JT(Y, 1, "H3vx", "rev2_abstain_v3", f"h3v_a4_a{a:g}__sir0", T15,
+                   rx_ov("citadel") + ["@ABSTV"] + RND + ["attack.type=a4", f"attack.a4_alpha={a}", "attack.sir_db=0", "attack.pgd_steps=6"])
+    jobs += JT(Y, 1, "H3vx", "rev2_abstain_v3", "h3v_a1__sir0", T15, rx_ov("citadel") + ["@ABSTV"] + RND + ["attack.type=a1", "attack.sir_db=0"])
+    for tag, ch in (("redraw", ["channel.abrupt_block=50", "channel.abrupt_type=redraw"]),
+                    ("snrdrop", ["channel.abrupt_block=50", "channel.abrupt_type=snr_drop"])):
+        jobs += J(Y, 1, "H3vx", "rev2_abstain_v3", f"h3v_{tag}__none", T15, rx_ov("citadel") + ["@ABSTV"] + ch + ["attack.type=none"])
     for rx in ("citadel", "online_deepsic", "crc_rollback"):   # D8: second backbone under A1 (shard cloudz)
         jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
@@ -870,7 +880,7 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper", "local"] +
-                    [f"pool{i}" for i in range(1, 9)])
+                    [f"pool{i}" for i in range(1, 13)])
     ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4, 5, 6], default=1,
                     help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy), "
                          "4 = the helper machine, 5 = the pool machines (configs/pool_assign.json), "

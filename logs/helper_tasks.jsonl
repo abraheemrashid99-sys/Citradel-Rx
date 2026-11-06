@@ -238,3 +238,6 @@
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_eata_deepsic__wb_sir0", "seed": 14, "ok": true, "seconds": 323.0, "finished": "2026-11-06T21:32:51.825502+00:00"}
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_clean_helper", "name": "clean_95ec1bbb2f", "seed": 13, "ok": true, "seconds": 145.4, "finished": "2026-11-06T21:33:10.569428+00:00"}
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_clean_helper", "name": "clean_95ec1bbb2f", "seed": 14, "ok": true, "seconds": 146.2, "finished": "2026-11-06T21:34:13.498976+00:00"}
+{"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_drift_deepsic__wb_sir0", "seed": 12, "ok": true, "seconds": 435.6, "finished": "2026-11-06T21:39:22.104915+00:00"}
+{"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_drift_deepsic__wb_sir0", "seed": 13, "ok": true, "seconds": 432.7, "finished": "2026-11-06T21:40:04.530683+00:00"}
+{"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_drift_deepsic__wb_sir0", "seed": 14, "ok": true, "seconds": 421.8, "finished": "2026-11-06T21:40:12.389595+00:00"}

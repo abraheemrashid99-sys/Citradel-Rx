@@ -246,3 +246,7 @@ pushed results to GitHub (20:52)
 [238 done, ~78 left | 5.9 h, ~1.9 h to go at this pace] t2 P2 p2_eata_deepsic__wb_sir0 s14 OK 5 min  == p2_eata_deepsic__wb_sir0 seed 14: ser_mean=0.3504 ser_median=0.0434 ser_pre=0.0183 ser_attack=0.8253 ser_post=0.0380
 [239 done, ~77 left | 5.9 h, ~1.9 h to go at this pace] t2 P2 clean_95ec1bbb2f s13 OK 2 min  == clean_95ec1bbb2f seed 13: ser_mean=0.0323 ser_median=0.0285
 [240 done, ~76 left | 5.9 h, ~1.9 h to go at this pace] t2 P2 clean_95ec1bbb2f s14 OK 2 min  == clean_95ec1bbb2f seed 14: ser_mean=0.0326 ser_median=0.0290
+pushed results to GitHub (21:37)
+[241 done, ~75 left | 6.0 h, ~1.9 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s12 OK 7 min  == p2_drift_deepsic__wb_sir0 seed 12: ser_mean=0.3525 ser_median=0.1023 ser_pre=0.0675 ser_attack=0.7610 ser_post=0.1096
+[242 done, ~74 left | 6.0 h, ~1.8 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s13 OK 7 min  == p2_drift_deepsic__wb_sir0 seed 13: ser_mean=0.3523 ser_median=0.1008 ser_pre=0.0321 ser_attack=0.7691 ser_post=0.0862
+[243 done, ~73 left | 6.0 h, ~1.8 h to go at this pace] t2 P2 p2_drift_deepsic__wb_sir0 s14 OK 7 min  == p2_drift_deepsic__wb_sir0 seed 14: ser_mean=0.3518 ser_median=0.0930 ser_pre=0.0346 ser_attack=0.7749 ser_post=0.0795
