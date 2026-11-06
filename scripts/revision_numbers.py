@@ -49,14 +49,25 @@ def load(folder: str) -> List[dict]:
             try:
                 r = json.load(open(fn))
                 r["_file"] = fn
-                out.append(r)
             except Exception:
-                pass
+                continue
+            # 38.901 UMi runs made with the first drop files (5 ms blocks, replaced before any analysis)
+            if r["config"]["channel"].get("model") == "umi" and (r["summary"].get("umi_drop") or {}).get("t_block") != 0.001:
+                print(f"   left out {os.path.relpath(fn, RES)}: UMi drop without 1 ms blocks (re-run it)")
+                continue
+            out.append(r)
         _cache[folder] = out
     return _cache[folder]
 
 
 def mkey(cfg: dict) -> str:
+    """Settings that a clean twin must share with its attacked run. Options added to the code after a
+    record was written are filled in at their defaults, so records of different code versions match."""
+    try:
+        from citadel_rx.config import Config
+        cfg = Config.from_dict(cfg).to_dict()
+    except Exception:
+        pass
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 
@@ -64,7 +75,7 @@ MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz
 
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper"]
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper"] + [f"rev_clean_pool{i}" for i in range(1, 9)]
 
 
 def machine(r: dict):
@@ -355,8 +366,8 @@ def refdeg() -> None:
     rows = []
     for a in ("0.25", "0.75"):
         variants = [("rev_p3_refdeg", f"p3_a4_a{a}__sir0", "--", "a4." + a.replace(".", "")),
-                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain v1", "a4." + a.replace(".", "") + "abstain"),
-                    ("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", "abstain v2", None)]
+                    ("rev_p3_refdeg", f"p3_a4_a{a}_abstain__sir0", "abstain, 1st", "a4." + a.replace(".", "") + "abstain"),
+                    ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain", None)]
         if a == "0.25":
             variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
         for folder, name, state, key in variants:
@@ -448,7 +459,8 @@ def ablations() -> None:
     rows = []
     ref = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL)
     if ref is not None:
-        sel = [p for p in ref["pairs"] if p[0]["seed"] in (10, 11)]
+        ab_seeds = {r["seed"] for r in load("rev_p5_ablate")} or {10, 11}   # the seeds the ablations were run on
+        sel = [p for p in ref["pairs"] if p[0]["seed"] in ab_seeds]
         if sel:
             ex = np.mean([(ser(a)[window(a)[0]:window(a)[1]] - ser(c)[window(a)[0]:window(a)[1]]).mean() for a, c in sel])
             k1 = sum(rejections(a, True)[0] for a, _ in sel); n1 = sum(rejections(a, True)[1] for a, _ in sel)
@@ -472,10 +484,10 @@ def scenarios() -> None:
         for npil in (32, 100):
             for rx in ("citadel", "online_deepsic"):
                 spec.append(("rev_p6_blocklen", f"p6_{rx}_nd{nd}_np{npil}__sir0", f"$N_d={nd}$, $N_p={npil}$", RXLABEL[rx]))
+    for rx in ("citadel", "online_deepsic", "lmmse"):   # SED profile stretched over the array (channel.sed_stretch)
+        spec.append(("rev2_arrays_stretch", f"p6s_{rx}_4x16s__sir0", "$U\\times N=4\\times16$", RXLABEL[rx]))
     for rx in ("citadel", "online_deepsic", "lmmse"):
-        spec.append(("rev_p6_arrays", f"p6_{rx}_4x16__sir0", "$U\\times N=4\\times16$", RXLABEL[rx]))
-    for rx in ("citadel", "online_deepsic", "lmmse"):
-        spec.append(("rev2_arrays", f"d4_{rx}_8x32__sir0", "$U\\times N=8\\times32$", RXLABEL[rx]))
+        spec.append(("rev2_arrays_stretch", f"d4s_{rx}_8x32s__sir0", "$U\\times N=8\\times32$", RXLABEL[rx]))
     for rx in ("citadel", "online_deepsic", "lmmse"):
         spec.append(("rev_p6_qam16", f"p6_{rx}_qam16__sir0", "16-QAM, 20 dB", RXLABEL[rx]))
     spec += [("rev_p6_deploy", "p6_citadel_steps30__sir0", "30 fast steps", "Citadel-Rx"),
@@ -483,7 +495,8 @@ def scenarios() -> None:
     bl = {}
     for folder, name, l1, l2 in spec:
         c = cell(folder, name, CLEAN_ALL)
-        put_cell("sc." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p6_", "").replace("d4_", "").split("__")[0]), c)
+        base = name.replace("p6s_", "").replace("d4s_", "").replace("p6_", "").replace("d4_", "").split("__")[0]
+        put_cell("sc." + re.sub(r"[^A-Za-z0-9]", "", base.replace("4x16s", "4x16").replace("8x32s", "8x32")), c)
         if c is not None and folder == "rev_p6_blocklen":
             bl.setdefault("cit" if "citadel" in name else "onl", []).append(c)
         if c is not None:
@@ -701,7 +714,8 @@ def extras() -> None:
         put("qam.passnn", f"{np.mean([b['pass_nn'] for b in cb]):.2f}"); put("qam.passref", f"{np.mean([b['pass_mm'] for b in cb]):.2f}")
         put("qam.frej", f"{100 * np.mean([b['gamma'] < 0.5 for b in cb]):.0f}")
     # the abstain state on clean runs: the block from which it rejects, and the reference at that point
-    ab = [r for r in load("rev_clean_cloud") if r["config"]["citadel"].get("abstain")]
+    ab = [r for r in load("rev_clean_cloud") if r["config"]["citadel"].get("abstain")
+          and r["config"]["citadel"].get("abstain_mode", "legacy") == "legacy"]   # the first version only
     if ab:
         firsts, refs0, refsl, nrej, nall = [], [], [], 0, 0
         for r in ab:
@@ -763,17 +777,25 @@ def campaign2() -> None:
     # B2 at full strength: A4 with 20 PGD steps
     c = cell("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", CLEAN_ALL)
     put_cell("b2.a4pgd20", c)
-    # H3, second version: abstain on the residual-ratio statistic, frozen threshold
-    fz = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
+    # H3, final version: abstain on the residual of CRC-verified symbols over the pilot noise, frozen threshold
+    fz = os.path.join(ROOT, "configs", "revision2_frozen_abstain_verified.json")
     if os.path.exists(fz):
         f = json.load(open(fz))
         put("h3.z", f"{f['chosen_z']:g}"); put("h3.calrate", f"{100 * f['clean_abstention_rate'][str(f['chosen_z'])]:.1f}")
-        put("h3.calmax", f"{f['max_abs_dev']:.1f}")
+        put("h3.calmax", f"{f['max_abs_dev']:.1f}"); put("h3.calblocks", str(f["n_blocks"]))
     for a in ("0.25", "0.75"):
-        put_cell("h3.a4" + a.replace(".", ""), cell("rev2_abstain", f"h3_a4_a{a}_ratio__sir0", CLEAN_ALL))
-    put_cell("h3.a1", cell("rev2_abstain", "h3_a1_ratio__sir0", CLEAN_ALL))
+        c = cell("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", CLEAN_ALL)
+        put_cell("h3.a4" + a.replace(".", ""), c)
+        if c is not None:   # blocks abstained inside and outside the attack window
+            ins = [bool(b.get("abstain")) for p in c["pairs"] for b in p[0]["blocks"][window(p[0])[0]:window(p[0])[1]]]
+            put("h3.a4" + a.replace(".", "") + ".abst", f"{100 * np.mean(ins):.0f}")
+    c = cell("rev2_abstain_v3", "h3v_a1__sir0", CLEAN_ALL)
+    put_cell("h3.a1", c)
+    if c is not None:
+        cl = [bool(b.get("abstain")) for _, cln in c["pairs"] for b in cln["blocks"][5:]]
+        put("h3.cleanabst", f"{100 * np.mean(cl):.1f}"); put("h3.cleanabstk", f"{sum(cl)}/{len(cl)}")
     for tag in ("redraw", "snrdrop"):   # legitimate changes: blocks abstained after the change, SER after it
-        recs = [r for r in load("rev2_abstain") if r["name"] == f"h3_ratio_{tag}__none"]
+        recs = [r for r in load("rev2_abstain_v3") if r["name"] == f"h3v_{tag}__none"]
         if recs:
             ab = [sum(bool(b.get("abstain")) for b in r["blocks"][50:]) for r in recs]
             put(f"h3.{tag}.abst", f"{np.mean(ab):.1f}"); put(f"h3.{tag}.abstmax", str(max(ab)))
@@ -814,14 +836,26 @@ def campaign2() -> None:
         tgt = float(np.mean([np.mean([b["ser_user"][0] for b in a["blocks"][window(a)[0]:window(a)[1]]])
                              - np.mean([b["ser_user"][0] for b in cl["blocks"][window(a)[0]:window(a)[1]]]) for a, cl in c["pairs"]]))
         put(key + ".tgt", f_sig(tgt))
-        rows.append(f"{l1} & {l2} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_sig(tgt)} & "
-                    f"{f_rate(c['rej']) if 'Citadel' in l2 or 'per-user' in l2 else '--'}\\\\")
+        if "peruser" in name:   # per-user gating: the gate reverts users, not blocks; count (block, user) reverts
+            vt = [b["verdict_g2_user"][0] < 0.5 for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]]
+                  if b.get("verdict_g2_user")]
+            vo = [v < 0.5 for a, _ in c["pairs"] for b in a["blocks"][window(a)[0]:window(a)[1]] if b.get("verdict_g2_user")
+                  for v in b["verdict_g2_user"][1:]]
+            vc = [v < 0.5 for _, cl in c["pairs"] for b in cl["blocks"][5:] if b.get("verdict_g2_user") for v in b["verdict_g2_user"]]
+            rj = f"{f_rate((sum(vt), len(vt)))} / {f_rate((sum(vo), len(vo)))}" if vt else "--"
+            put(key + ".revtgt", f_rate((sum(vt), len(vt)))); put(key + ".revoth", f_rate((sum(vo), len(vo))))
+            put(key + ".revclean", f_rate((sum(vc), len(vc))))
+        else:
+            rj = f_rate(c["rej"]) if "Citadel" in l2 else "--"
+        rows.append(f"{l1} & {l2} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_sig(tgt)} & {rj}\\\\")
     write_table("peruser", rows)
     # D8: the second backbone (joint-symbol detector) under white-box A1 at SIR 0 dB
     fz = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
     if os.path.exists(fz):
         f = json.load(open(fz))
-        put("d8.tuned", f["chosen"].replace("_", ", ").replace("ep", "").replace("lr", "learning rate ") + " epochs")
+        m = re.match(r"ep(\d+)_lr([0-9.e-]+)$", f["chosen"])
+        put("d8.tuned", f"{m.group(1)} epochs, learning rate {float(m.group(2)):g}")
+        put("d8.calser", f_ser(f["cal_clean_ser"]))
     rows = []
     for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback")):
         c = cell("rev2_joint", f"d8_{rx}_joint__wb_sir0", CLEAN_ALL)

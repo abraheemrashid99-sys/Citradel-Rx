@@ -57,7 +57,7 @@ class BlockFadingChannel:
 
     # ---- channel matrices --------------------------------------------
     def _sed_mean(self) -> np.ndarray:
-        rows = np.arange(self.n_ant)[:, None]
+        rows = np.arange(self.n_ant)[:, None] * (self.n_user / self.n_ant if getattr(self.cfg, "sed_stretch", False) else 1.0)
         cols = np.arange(self.n_user)[None, :]
         return np.exp(-np.abs(rows - cols)).astype(np.float64)
 
@@ -107,6 +107,11 @@ class BlockFadingChannel:
             self._umi_data = z["H"]
             self._umi_att = {k[3:]: z[k] for k in z.files if k.startswith("G_d")}      # distance -> (T, N, 1)
             self._umi_sir = {k[5:]: float(z[k]) for k in z.files if k.startswith("sir_d")}
+            try:   # t_block etc.: recorded with every run (scripts/make_umi_channels.py)
+                import json
+                self.umi_meta = {k: v for k, v in json.loads(str(z["meta"])).items() if k in ("t_block", "fc", "speed_kmh", "target_db")}
+            except Exception:
+                self.umi_meta = {}
         H = self._umi_data
         if b >= H.shape[0]:
             raise ValueError("more blocks than the UMi drop holds")

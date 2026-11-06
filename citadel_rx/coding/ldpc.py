@@ -15,8 +15,13 @@ import torch
 
 class LDPCFramer:
     def __init__(self, k: int, n: int, bits_per_symbol: int, num_iter: int = 20, llr_mag: float = 3.0):
+        # importing Sionna seeds torch's global generator from OS entropy: keep the run's RNG state
+        state = torch.get_rng_state()
+        import sionna.phy
+        sionna.phy.config.seed = 0
         from sionna.phy.fec.crc import CRCDecoder, CRCEncoder
         from sionna.phy.fec.ldpc import LDPC5GDecoder, LDPC5GEncoder
+        torch.set_rng_state(state)
         if n % bits_per_symbol:
             raise ValueError("coded bits per code block must fill whole symbols")
         self.enabled = True
@@ -41,8 +46,15 @@ class LDPCFramer:
 
     def check(self, decided_bits: np.ndarray) -> np.ndarray:
         """decided bits (n_cb, n_user, n) -> CRC pass after LDPC decoding (n_cb, n_user)."""
+        return self.decode(decided_bits)[0]
+
+    def decode(self, decided_bits: np.ndarray):
+        """-> (CRC pass (n_cb, n_user), re-encoded codewords of the decoded blocks (n_cb, n_user, n))."""
         b = torch.as_tensor(decided_bits, dtype=torch.float32)
+        state = torch.get_rng_state()
         with torch.no_grad():
             u = self.dec((2.0 * b - 1.0) * self.llr_mag)      # logit convention: positive = bit 1
             _, ok = self.crc_dec(u)
-        return ok.squeeze(-1).numpy().astype(bool)
+            cw = self.enc(u)
+        torch.set_rng_state(state)
+        return ok.squeeze(-1).numpy().astype(bool), cw.numpy().astype(np.int64)

@@ -124,15 +124,7 @@ class GateController:
                 tau2 = self.g2_tau_derived(pass_mm, surprise_ratio)
                 stats["g2_tau"] = tau2
             elif self.g2_relative is not None:
-                # Prop. 2.3 inverted: the reference pass rate gives the reference SER p_ref; tolerate
-                # p_ref + delta with delta = max(abs_min, rel * p_ref), i.e. a slack that scales with
-                # the operating point instead of a fixed percentage point.
-                L = self.g2_relative["L"]
-                p_ref = 1.0 - float(np.clip(pass_mm, 1e-9, 1.0)) ** (1.0 / L)
-                delta = max(self.g2_relative["abs_min"], self.g2_relative["rel"] * p_ref)
-                tau2 = float(((1.0 - min(p_ref + delta, 0.999)) / max(1.0 - p_ref, 1e-9)) ** L)
-                if self.adaptive and surprise_ratio > 1:
-                    tau2 = 1 - (1 - tau2) * float(np.clip(1.0 / surprise_ratio, self.tighten_floor, 1.0))
+                tau2 = self.g2_tau_relative(pass_mm, surprise_ratio)
                 stats["g2_tau"] = tau2
             verdicts["g2"] = _soft_step(s, tau2, self.kappa, accept_below=False)
         if "g3" in self.gates and innov_norm is not None:
@@ -151,6 +143,18 @@ class GateController:
         else:
             raise ValueError(self.mode)
         return GateVerdict(gamma=gamma, stats=stats, verdicts=verdicts)
+
+    def g2_tau_relative(self, pass_ref: float, surprise_ratio: float = 1.0) -> float:
+        """Prop. 2.3 inverted: the reference pass rate gives the reference SER p_ref; tolerate
+        p_ref + delta with delta = max(abs_min, rel * p_ref), i.e. a slack that scales with the
+        operating point instead of a fixed percentage point."""
+        L = self.g2_relative["L"]
+        p_ref = 1.0 - float(np.clip(pass_ref, 1e-9, 1.0)) ** (1.0 / L)
+        delta = max(self.g2_relative["abs_min"], self.g2_relative["rel"] * p_ref)
+        tau2 = float(((1.0 - min(p_ref + delta, 0.999)) / max(1.0 - p_ref, 1e-9)) ** L)
+        if self.adaptive and surprise_ratio > 1:
+            tau2 = 1 - (1 - tau2) * float(np.clip(1.0 / surprise_ratio, self.tighten_floor, 1.0))
+        return tau2
 
     def g2_tau_derived(self, pass_ref: float, surprise_ratio: float = 1.0, n: Optional[int] = None) -> float:
         """Audit A7: no hand-set floor. The tolerated excess per-symbol error is
@@ -181,6 +185,8 @@ class GateController:
             s = g2_crc(float(a), float(r)) / ema
             if self.g2_relative is not None and self.g2_relative.get("mode") == "derived":
                 tau = self.g2_tau_derived(float(r), surprise_ratio, n=n_sub)
+            elif self.g2_relative is not None:   # the block gate's relative rule, on this user's reference
+                tau = self.g2_tau_relative(float(r), surprise_ratio)
             else:
                 tau = self.thresholds(surprise_ratio)["g2"]
             out.append(_soft_step(s, tau, self.kappa, accept_below=False))
