@@ -733,7 +733,8 @@ give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, against
 \val{ab.complete.excess} for plain A1 on the same seeds, with rejection rates between
 \val{atk.cit0.rejmin} and 1: deeper unrolling, more steps and restarts, the soft-gate objective
 with the exact thresholds and running statistics, expectation over noise, a Citadel-Rx surrogate
-and a search on the NACK feedback do not get poisoned blocks accepted. At SIR 10\,dB the excess is
+and a search on the NACK feedback do not get poisoned blocks accepted, and neither does a physical
+attacker with one, two or four antennas, also when its channel estimate is in error. At SIR 10\,dB the excess is
 \val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The same attacks raise the SER of online DeepSIC by
 \val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With five seeds,
 differences of a few $10^{-3}$ between attacks lie within the intervals; what the table rules out
@@ -859,7 +860,7 @@ Attack & \thead{See-\\ds} & \thead{Excess SER\\{}[95\% CI]} & Rej. & $D_K$ & Str
 \centering
 \includegraphics[width=\columnwidth]{fig_rev_p4_paired_a1_sir0_clip}
 \caption{Paired displacement of every level and of the anchor under A1 at SIR 0\,dB, window 30--69
-shaded (mean over seeds 10--12, band from the smallest to the largest seed), with the design bound
+shaded (mean over seeds 10--14, band from the smallest to the largest seed), with the design bound
 \eqref{eq:design} and the structural bound \eqref{eq:struct} (largest over the seeds).}
 \label{fig:retention}
 \end{figure}
