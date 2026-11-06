@@ -128,6 +128,12 @@ def main():
         anc_a = sum(wk * la[k + 1][:n] for k, wk in enumerate(w))
         anc_c = sum(wk * lc[k + 1][:n] for k, wk in enumerate(w))
         r["paired_anchor"] = np.linalg.norm(anc_a - anc_c, axis=1).tolist()
+        # how far each run's levels moved from their common state at the window start: the paired
+        # displacement is at most the sum of the two (triangle inequality), so a small `adv` and a
+        # `clean` close to D_k mean the attacked run stood still while the clean run followed the channel
+        w0 = int((r["summary"].get("attack_window") or [c["attack"]["start_block"]])[0])
+        r["paired_move"] = {"adv": [np.linalg.norm(a[:n] - a[w0], axis=1).tolist() for a in la],
+                            "clean": [np.linalg.norm(b[:n] - b[w0], axis=1).tolist() for b in lc]}
         r["paired_with"] = os.path.basename(cfn)
         json.dump(r, open(fn, "w"))
         results.append((r, recs[cfn]))

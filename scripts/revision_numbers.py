@@ -359,6 +359,16 @@ def deny() -> None:
         put(k + ".after", f_ser(after)); put(k + ".excess", f_sig(ex)); put(k + ".post", f_sig(post))
         put(k + ".frej", f_rate(frk)); put(k + ".drop", f_ser(dr)); put(k + ".n", str(len(s)))
         rows.append(f"{lab} & {len(s)} & {f_ser(after)} & {f_rate(frk) if rx.startswith('citadel') else '--'} & {f_sig(ex)} & {f_sig(post)} & {f_ser(dr)}\\\\")
+        if rx.startswith("citadel"):
+            rj = [rejections(den[i], True, skip=0) for i in s]
+            put(k + ".rejatt", f_rate((sum(a for a, _ in rj), sum(b for _, b in rj))))
+            put(k + ".rejattmin", f"{min(a / b for a, b in rj):.2f}"); put(k + ".rejattmax", f"{max(a / b for a, b in rj):.2f}")
+    plain = {(r["name"].replace("p3_citadel_", ""), r["seed"]): ser(r) for r in recs if r["name"].startswith("p3_citadel_") and "streak" not in r["name"]}
+    strk = {(r["name"].replace("p3_citadel_streak_", ""), r["seed"]): ser(r) for r in recs if r["name"].startswith("p3_citadel_streak_")}
+    common = sorted(set(plain) & set(strk))
+    if common:
+        put("deny.streak.ndiff", str(sum(bool(np.any(np.abs(plain[c] - strk[c]) > 1e-12)) for c in common)))
+        put("deny.streak.nruns", str(len(common)))
     write_table("deny", rows)
 
 
@@ -393,6 +403,8 @@ def ablations() -> None:
             k0 = sum(rejections(c, None)[0] for _, c in sel); n0 = sum(rejections(c, None)[1] for _, c in sel)
             rows.append(f"Complete receiver & {len(sel)} & {f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))} & {f_sig(ex)} & "
                         f"{f_rate((k1, n1))} & {f_rate((k0, n0))}\\\\")
+            put("ab.complete.clean", f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))); put("ab.complete.excess", f_sig(ex))
+            put("ab.complete.rej", f_rate((k1, n1))); put("ab.complete.frej", f_rate((k0, n0)))
     for tag, l in lab:
         c = cell("rev_p5_ablate", f"p5_{tag}__wb_sir0", ["rev_clean"])
         put_cell("ab." + tag.replace("_", ""), c)
@@ -486,7 +498,7 @@ def retention() -> None:
         put_cell(key, c)
         if c is None or not all("paired_disp" in a for a, _ in c["pairs"]):
             continue
-        DK, des, ext, anc = [], [], [], []
+        DK, des, ext, anc, mv = [], [], [], [], []
         for a, cl in c["pairs"]:
             cfg = a["config"]["citadel"]
             K = len(a["paired_disp"])
@@ -501,11 +513,113 @@ def retention() -> None:
             eta_K = cfg["level_lr"][K - 2]
             ext.append(float(extended_bound(a, cl, np.array(a["paired_disp"][K - 2]), eta_K, K, w0, w1).max()))
             anc.append(max(a["paired_anchor"][w0:w1]))
+            if "paired_move" in a:   # movement of level K from the window start, at the window end
+                u = a["paired_move"]["adv"][K - 1][w1 - 1]; v = a["paired_move"]["clean"][K - 1][w1 - 1]
+                d = a["paired_disp"][K - 1][w1 - 1]
+                mv.append((u, v, (u * u + v * v - d * d) / (2 * u * v) if u > 0 and v > 0 else float("nan")))
+        if mv:
+            put(key + ".movadv", f"{np.mean([m[0] for m in mv]):.1f}"); put(key + ".movcln", f"{np.mean([m[1] for m in mv]):.1f}")
+            put(key + ".movcos", f"{np.mean([m[2] for m in mv]):.2f}")
+            put(key + ".movpct", f"{100 * np.mean([m[0] / m[1] for m in mv]):.0f}")
         put(key + ".DK", f"{np.mean(DK):.2f}"); put(key + ".design", f"{np.mean(des):.1f}")
         put(key + ".struct", f"{np.mean(ext):.1f}"); put(key + ".anchor", f"{np.mean(anc):.2f}")
         rows.append(f"{lab} & {c['n']} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {np.mean(DK):.2f} & "
                     f"{np.mean(ext):.1f} & {np.mean(des):.1f}\\\\")
     write_table("retention", rows)
+
+
+def extras() -> None:
+    """Numbers quoted in the text that are not table cells (mechanisms behind the table entries)."""
+    # why rollback is not enough (Sec. VI-B): what the reference of the CRC test does under attack,
+    # when the first poisoned block is accepted, and whether the receiver recovers after the window
+    for rx, tag in (("crc_rollback", "crc"), ("citadel", "cit"), ("rollback_allgates", "rag")):
+        folder, nm = ("rev_p2", f"p2_{rx}__wb_sir0") if rx == "rollback_allgates" else ("rev_p1", f"p1_{rx}__wb_sir0")
+        c = cell(folder, nm, ["rev_clean"])
+        if c is None:
+            continue
+        first0 = nacc = acc = att = 0
+        postrej, refA, refC, nnA, endex = [], [], [], [], []
+        for a, cl in c["pairs"]:
+            w0, w1 = window(a)
+            accb = [b["block"] for b in a["blocks"] if b.get("attacked") and b.get("gamma") is not None and b["gamma"] >= 0.5]
+            first0 += bool(accb) and accb[0] == w0
+            nacc += bool(accb)
+            acc += len(accb)
+            att += sum(bool(b.get("attacked")) for b in a["blocks"])
+            postrej.append(np.mean([b["gamma"] < 0.5 for b in a["blocks"] if b["block"] >= w1]))
+            refA.append(np.mean([b["pass_mm"] for b in a["blocks"] if b.get("attacked")]))
+            refC.append(np.mean([b["pass_mm"] for b in cl["blocks"][w0:w1]]))
+            nnA.append(np.mean([b["pass_nn"] for b in a["blocks"] if b.get("attacked")]))
+            endex.append(float((ser(a)[-10:] - ser(cl)[-10:]).mean()))
+        k = "c1." + tag
+        put(k + ".first0", str(first0)); put(k + ".seedsacc", str(nacc)); put(k + ".nseeds", str(c["n"]))
+        put(k + ".acc", f"{acc}/{att}"); put(k + ".postrej", f"{np.mean(postrej):.2f}")
+        put(k + ".refatt", f"{np.mean(refA):.2f}"); put(k + ".refcln", f"{np.mean(refC):.2f}")
+        put(k + ".nnatt", f"{np.mean(nnA):.2f}"); put(k + ".endex", f_sig(float(np.mean(endex))))
+    c = cell("rev_p1", "p1_citadel__wb_sir0", ["rev_clean"])
+    if c is not None:
+        att = [b for a, _ in c["pairs"] for b in a["blocks"] if b.get("attacked")]
+        for g in ("g1", "g2", "g3"):   # share of the poisoned blocks each gate rejects on its own
+            put(f"gate.{g}", f"{100 * np.mean([b['verdict_' + g] < 0.5 for b in att]):.0f}")
+        put("gate.lmmseatt", f"{np.mean([b['pass_lmmse'] for b in att]):.2f}")
+        put("gate.lmmsecln", f"{np.mean([b['pass_lmmse'] for _, cl in c['pairs'] for b in cl['blocks'][5:]]):.2f}")
+
+        def clipped(recs):
+            k = n = 0
+            for r in recs:
+                for b in r["blocks"]:
+                    for e in b.get("consolidations") or []:
+                        n += 1
+                        k += bool(e.get("clipped"))
+            return k, n
+        ka, na = clipped([a for a, _ in c["pairs"]])
+        kc, nc = clipped([cl for _, cl in c["pairs"]])
+        put("clip.att", f"{ka}/{na}"); put("clip.cln", f"{kc}/{nc}")
+    # the clip against the clean consolidation increments of the chosen candidate on the calibration seeds
+    fz = os.path.join(ROOT, "configs", "revision_frozen_citadel.json")
+    if os.path.exists(fz):
+        chosen = json.load(open(fz))["chosen"]
+        for lev in (2, 3):
+            inc = [e["inc_norm"] for r in load("rev_cal_citadel") if r["name"] == f"cand_{chosen}__clean"
+                   for b in r["blocks"] for e in (b.get("consolidations") or []) if e["level"] == lev]
+            if inc:
+                put(f"clip.calmax{lev}", f"{max(inc):.1f}"); put(f"clip.calp99{lev}", f"{np.percentile(inc, 99):.1f}")
+    # where the clean-SER gain comes from: online DeepSIC -> + CRC selection -> Citadel-Rx (10 seeds)
+    cs = {rx: cell("rev_p1", f"p1_{rx}__wb_sir0", ["rev_clean"]) for rx in P1RX}
+    if all(cs[rx] is not None for rx in ("citadel", "online_deepsic", "online_select")):
+        o, sl, ci = (cs[rx]["clean_all"] for rx in ("online_deepsic", "online_select", "citadel"))
+        put("sel.share", f"{100 * (o - sl) / (o - ci):.0f}")
+    for rx, cc in cs.items():   # wall time per block of one single-threaded run (clean twins)
+        if cc is not None:
+            put("time." + rx.replace("_", ""), f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs']]):.2f}")
+    for folder, nm, k in (("rev_p2", "p2_lmmse__wb_sir0", "lmmse"), ("rev_p6_deploy", "p6_citadel_steps30__sir0", "steps30"),
+                          ("rev_p6_deploy", "p6_citadel_last_layer__sir0", "lastlayer")):
+        cc = cell(folder, nm, ["rev_clean"])
+        if cc is not None:
+            put("time." + k, f"{np.mean([np.mean([b['t_rx'] for b in cl['blocks']]) for _, cl in cc['pairs']]):.2f}")
+    # jamming at the same SIR covers the data symbols: energy ratio to pilot poisoning
+    r0 = next(iter(load("rev_p1")), None)
+    if r0 is not None:
+        put("jam.energyratio", f"{r0['config']['frame']['data_bits'] // r0['config']['frame']['pilot_bits']}")
+    # EATA-style filter: largest mean data entropy of the attacked receiver against its threshold
+    ents = [b["data_entropy"] for r in load("rev_p2") if r["name"].startswith("p2_eata") for b in r["blocks"]
+            if b.get("data_entropy") is not None]
+    if ents:
+        thr = 0.4 * np.log(4)
+        put("eata.maxent", f"{max(ents):.2f}"); put("eata.thr", f"{thr:.2f}"); put("eata.nfilt", str(sum(e > thr for e in ents)))
+    # 16-QAM: clean blocks, CRC pass fraction of the network against the reference
+    cq = cell("rev_p6_qam16", "p6_citadel_qam16__sir0", ["rev_clean"])
+    if cq is not None:
+        cb = [b for _, cl in cq["pairs"] for b in cl["blocks"][5:]]
+        put("qam.passnn", f"{np.mean([b['pass_nn'] for b in cb]):.2f}"); put("qam.passref", f"{np.mean([b['pass_mm'] for b in cb]):.2f}")
+        put("qam.frej", f"{100 * np.mean([b['gamma'] < 0.5 for b in cb]):.0f}")
+    # A4: the reference the gates compare against, attacked blocks against the clean twin
+    for a in ("0.25", "0.75"):
+        ca = cell("rev_p3_refdeg", f"p3_a4_a{a}__sir0", ["rev_clean_cloud"])
+        if ca is not None:
+            put("a4." + a.replace(".", "") + ".refatt", f"{np.mean([b['pass_mm'] for x, _ in ca['pairs'] for b in x['blocks'] if b.get('attacked')]):.2f}")
+            put("a4." + a.replace(".", "") + ".refcln", f"{np.mean([b['pass_mm'] for x, cl in ca['pairs'] for b in cl['blocks'][window(x)[0]:window(x)[1]]]):.2f}")
+            put("a4." + a.replace(".", "") + ".nnatt", f"{np.mean([b['pass_nn'] for x, _ in ca['pairs'] for b in x['blocks'] if b.get('attacked')]):.2f}")
 
 
 def campaign_size() -> None:
@@ -518,7 +632,8 @@ def campaign_size() -> None:
 def main() -> None:
     for name in NCOLS:   # every table file exists, so the paper always compiles
         write_table(name, [])
-    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); campaign_size()
+    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras()
+    campaign_size()
     lines = ["% generated by scripts/revision_numbers.py -- do not edit",
              "\\makeatletter"]
     for k in sorted(V):
