@@ -64,7 +64,7 @@ calibration seeds, white-box poisoning at 0\,dB signal-to-interference ratio rai
 error rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its clean run, against
 \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC, with \val{p1.citadel.wb0.rejpct}\% of
 the poisoned blocks rejected at a \val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks
-built against the gates leave this excess unchanged, and the ordering holds with a second network
+built against the gates leave this excess unchanged within its intervals, and the ordering holds with a second network
 backbone and with eight users and 32 antennas. An attack that also degrades the references raises
 the excess, and the receiver fails where its network is worse than LMMSE: at 16-QAM, and in an NR
 LDPC link over 3GPP urban-micro channels, whose rotating phases the networks do not track.
@@ -169,10 +169,12 @@ and a CRC threshold derived from the pass-fraction statistics, which adapts to t
 tuned baselines, among them CRC-Rollback, anchored, decision-directed and EATA- and CoTTA-style
 receivers; attacks built against the defence (soft gates, deep unrolling, restarts, expectation
 over noise, joint pilot and data poisoning of the references, denial of adaptation, optimised slow
-drift, a rank-limited physical attacker, a grey-box surrogate and a query attacker); settings
-fixed on calibration seeds by rules stated in advance and results on held-out seeds;
-randomised attack windows; and the excess SER over a matched clean run with block-bootstrap
-intervals and seed-level tests.
+drift, a physical attacker with one to four antennas, a grey-box surrogate and a query attacker);
+an NR LDPC link over 3GPP urban-micro drops with the attacker placed in the scene, a second network
+backbone, eight users with 32 antennas and 2000-block horizons; settings fixed on calibration seeds
+by rules stated in advance and results on held-out seeds; randomised attack windows; the excess SER
+over a matched clean run with block-bootstrap intervals and seed-level tests; and the failures this
+exposes (16-QAM, the coded scene, the abstain state), each reported with its mechanism.
 \end{enumerate}
 
 Section~\ref{sec:model} gives the system and threat model, Section~\ref{sec:citadel} the receiver,
