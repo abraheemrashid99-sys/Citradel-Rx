@@ -35,3 +35,6 @@
 {"shard": "pool3", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_redraw__none", "seed": 12, "ok": true, "seconds": 512.6, "finished": "2026-11-06T20:54:41.912899+00:00"}
 {"shard": "pool3", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_citadel_streak_redraw__a1deny", "seed": 12, "ok": true, "seconds": 613.4, "finished": "2026-11-06T20:55:13.748341+00:00"}
 {"shard": "pool3", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_redraw__deny", "seed": 12, "ok": true, "seconds": 506.9, "finished": "2026-11-06T20:55:45.518661+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_streak_redraw__none", "seed": 12, "ok": true, "seconds": 516.3, "finished": "2026-11-06T21:03:18.181166+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_streak_redraw__deny", "seed": 12, "ok": true, "seconds": 546.8, "finished": "2026-11-06T21:04:20.562116+00:00"}
+{"shard": "pool3", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_citadel_snrdrop__none", "seed": 12, "ok": true, "seconds": 863.2, "finished": "2026-11-06T21:05:16.602223+00:00"}

@@ -40,3 +40,6 @@ pushed results to GitHub (20:21)
 [35 done, ~47 left | 3.6 h, ~4.8 h to go at this pace] t1 P3deny p3_citadel_redraw__none s12 OK 9 min  == p3_citadel_redraw__none seed 12: ser_mean=0.2829 ser_median=0.2228
 [36 done, ~46 left | 3.6 h, ~4.6 h to go at this pace] t1 B3 b3_citadel_streak_redraw__a1deny s12 OK 10 min  == b3_citadel_streak_redraw__a1deny seed 12: ser_mean=0.3316 ser_median=0.2830 ser_pre=0.0183 ser_attack=0.5283 ser_post=0.6013
 [37 done, ~45 left | 3.6 h, ~4.4 h to go at this pace] t1 P3deny p3_citadel_redraw__deny s12 OK 8 min  == p3_citadel_redraw__deny seed 12: ser_mean=0.3248 ser_median=0.2735 ser_pre=0.0183 ser_attack=0.5161 ser_post=0.5948
+[38 done, ~44 left | 3.7 h, ~4.3 h to go at this pace] t1 P3deny p3_citadel_streak_redraw__none s12 OK 9 min  == p3_citadel_streak_redraw__none seed 12: ser_mean=0.2829 ser_median=0.2228
+[39 done, ~43 left | 3.7 h, ~4.1 h to go at this pace] t1 P3deny p3_citadel_streak_redraw__deny s12 OK 9 min  == p3_citadel_streak_redraw__deny seed 12: ser_mean=0.3243 ser_median=0.2735 ser_pre=0.0183 ser_attack=0.5151 ser_post=0.5947
+[40 done, ~42 left | 3.7 h, ~3.9 h to go at this pace] t1 P3deny p3_citadel_snrdrop__none s12 OK 14 min  == p3_citadel_snrdrop__none seed 12: ser_mean=0.2363 ser_median=0.2045
