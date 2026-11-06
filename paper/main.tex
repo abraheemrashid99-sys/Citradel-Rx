@@ -1037,7 +1037,18 @@ Receiver & \thead{See-\\ds} & \thead{Clean\\SER} & \thead{Excess SER\\{}[95\% CI
 \bottomrule
 \end{tabular}
 \end{table}
-% RESULTS-PENDING: joint backbone prose
+With the joint-symbol detector in place of DeepSIC (Table~\ref{tab:joint}), the levels, gates and
+fallback of Citadel-Rx keep their frozen settings, and online training is tuned on the calibration
+seeds (\val{d8.tuned}, clean SER \val{d8.calser}). The ordering of Table~\ref{tab:p1} holds: under
+white-box A1 at SIR 0\,dB the excess SER of Citadel-Rx is \val{d8.citadel.excess} (95\% interval
+\val{d8.citadel.ci}), with \val{d8.citadel.rejk} poisoned blocks rejected, against
+\val{d8.onlinedeepsic.excess} for online training and \val{d8.crcrollback.excess} for CRC-Rollback,
+which rejects \val{d8.crcrollback.rejk} of them. The joint detector is the weaker network on this
+channel (clean SER \val{d8.onlinedeepsic.clean} with online training), and the price is paid on
+clean blocks: Citadel-Rx rejects \val{d8.citadel.frejk} of them, against
+\val{p1.citadel.wb0.frej} on DeepSIC, while its clean SER, \val{d8.citadel.clean}, stays below that
+of online training on the same backbone. The levels and gates do not depend on DeepSIC's structure,
+but how often they let the network adapt depends on how good the network is.
 
 \subsection{A Coded NR Link in a 3GPP Scene}\label{sec:umi}
 \begin{table}[t]
