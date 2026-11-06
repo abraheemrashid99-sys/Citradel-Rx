@@ -146,3 +146,40 @@ pushed results to GitHub (22:02)
 [68 done, ~32 left | 0.0 h, ~0.0 h to go at this pace] t1 H7 h7_online_deepsic__a2 s13 OK 0 min  == h7_online_deepsic__a2 seed 13: exists, skipped (results/rev2_peruser/h7_online_deepsic__a2_s13_94fffb9bba2e.json)
 [69 done, ~31 left | 0.0 h, ~0.0 h to go at this pace] t1 D23 clean_fa0f3fbeb2 s13 OK 0 min  == clean_fa0f3fbeb2 seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
 [70 done, ~30 left | 0.0 h, ~0.0 h to go at this pace] t1 P3adapt clean_1a7479201b s12 OK 0 min  == clean_1a7479201b seed 12: exists, skipped (results/rev_clean_pool4/clean_1a7479201b_s12_f4d1eac8da46.json)
+[71 done, ~29 left | 0.0 h, ~0.0 h to go at this pace] t1 P3deny p3_online_deepsic_snrdrop__none s13 OK 2 min  == p3_online_deepsic_snrdrop__none seed 13: ser_mean=0.2495 ser_median=0.2210
+[72 done, ~28 left | 0.0 h, ~0.0 h to go at this pace] t1 B1 b1_online_deepsic_M4__sir0 s12 OK 2 min  == b1_online_deepsic_M4__sir0 seed 12: ser_mean=0.3381 ser_median=0.0570 ser_pre=0.0333 ser_attack=0.7829 ser_post=0.0605
+[73 done, ~27 left | 0.0 h, ~0.0 h to go at this pace] t1 P3phys p3_online_deepsic_M2__sir0 s12 OK 2 min  == p3_online_deepsic_M2__sir0 seed 12: ser_mean=0.2763 ser_median=0.0595 ser_pre=0.0333 ser_attack=0.6185 ser_post=0.0828
+[74 done, ~26 left | 0.1 h, ~0.0 h to go at this pace] t1 P3phys p3_online_deepsic_M1__sir0 s12 OK 2 min  == p3_online_deepsic_M1__sir0 seed 12: ser_mean=0.1179 ser_median=0.0562 ser_pre=0.0333 ser_attack=0.2342 ser_post=0.0567
+[75 done, ~25 left | 0.1 h, ~0.0 h to go at this pace] t1 B1 b1_online_deepsic_M2_csi0.1__sir0 s12 OK 2 min  == b1_online_deepsic_M2_csi0.1__sir0 seed 12: ser_mean=0.2392 ser_median=0.0610 ser_pre=0.0333 ser_attack=0.5280 ser_post=0.0780
+[76 done, ~24 left | 0.1 h, ~0.0 h to go at this pace] t1 B1 b1_online_deepsic_M2_csi0.01__sir0 s12 OK 2 min  == b1_online_deepsic_M2_csi0.01__sir0 seed 12: ser_mean=0.2577 ser_median=0.0583 ser_pre=0.0333 ser_attack=0.5774 ser_post=0.0707
+[77 done, ~23 left | 0.1 h, ~0.0 h to go at this pace] t1 P3know p3_online_deepsic_sigbudget__sir0 s12 OK 2 min  == p3_online_deepsic_sigbudget__sir0 seed 12: ser_mean=0.3235 ser_median=0.0570 ser_pre=0.0333 ser_attack=0.7506 ser_post=0.0515
+[78 done, ~22 left | 0.1 h, ~0.0 h to go at this pace] t1 B3 b3_online_deepsic_redraw__none s12 OK 4 min  == b3_online_deepsic_redraw__none seed 12: ser_mean=0.2575 ser_median=0.2272
+[79 done, ~21 left | 0.2 h, ~0.0 h to go at this pace] t1 P3deny p3_online_deepsic_redraw__none s12 OK 5 min  == p3_online_deepsic_redraw__none seed 12: ser_mean=0.2575 ser_median=0.2272
+[80 done, ~20 left | 0.2 h, ~0.0 h to go at this pace] t1 P3deny p3_online_deepsic_redraw__deny s12 OK 5 min  == p3_online_deepsic_redraw__deny seed 12: ser_mean=0.3296 ser_median=0.3369 ser_pre=0.0347 ser_attack=0.5186 ser_post=0.5643
+[81 done, ~19 left | 0.2 h, ~0.0 h to go at this pace] t1 D23 clean_fa0f3fbeb2 s12 OK 0 min  == clean_fa0f3fbeb2 seed 12: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[82 done, ~18 left | 0.2 h, ~0.0 h to go at this pace] t1 B3 b3_online_deepsic_redraw__a1deny s12 OK 5 min  == b3_online_deepsic_redraw__a1deny seed 12: ser_mean=0.4958 ser_median=0.5905 ser_pre=0.0347 ser_attack=0.8365 ser_post=0.6373
+[83 done, ~17 left | 0.2 h, ~0.0 h to go at this pace] t1 P3deny p3_online_deepsic_snrdrop__none s12 OK 4 min  == p3_online_deepsic_snrdrop__none seed 12: ser_mean=0.2500 ser_median=0.2220
+[84 done, ~16 left | 0.2 h, ~0.0 h to go at this pace] t1 H7 h7_online_deepsic__a2 s12 OK 2 min  == h7_online_deepsic__a2 seed 12: ser_mean=0.2262 ser_median=0.0565 ser_pre=0.0333 ser_attack=0.5092 ser_post=0.0474
+[85 done, ~15 left | 0.3 h, ~0.0 h to go at this pace] t1 P1 clean_4e1098edcf s13 OK 6 min  == clean_4e1098edcf seed 13: ser_mean=0.0316 ser_median=0.0302
+[86 done, ~14 left | 0.3 h, ~0.0 h to go at this pace] t1 P1 p1_crc_rollback__wb_sir-10 s13 OK 7 min  == p1_crc_rollback__wb_sir-10 seed 13: ser_mean=0.5816 ser_median=0.6911 ser_pre=0.0156 ser_attack=0.6266 ser_post=0.6999
+[87 done, ~13 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 clean_c1b8e62df3 s13 OK 0 min  == clean_c1b8e62df3 seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[88 done, ~12 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 clean_c1b8e62df3 s11 OK 0 min  == clean_c1b8e62df3 seed 11: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[89 done, ~11 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 d23_lmmse_d35__phys s13 OK 0 min  == d23_lmmse_d35__phys seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[90 done, ~10 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 d23_lmmse_d75__phys s13 OK 0 min  == d23_lmmse_d75__phys seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[91 done, ~9 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 d23_lmmse_d150__phys s13 OK 0 min  == d23_lmmse_d150__phys seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[92 done, ~8 left | 0.3 h, ~0.0 h to go at this pace] t1 B3 b3_lmmse_redraw__none s13 OK 1 min  == b3_lmmse_redraw__none seed 13: ser_mean=0.0697 ser_median=0.0548
+[93 done, ~7 left | 0.3 h, ~0.0 h to go at this pace] t1 P1 p1_crc_rollback__wb_sir10 s13 OK 6 min  == p1_crc_rollback__wb_sir10 seed 13: ser_mean=0.0470 ser_median=0.0354 ser_pre=0.0156 ser_attack=0.0754 ser_post=0.0315
+[94 done, ~6 left | 0.3 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_redraw__none s13 OK 1 min  == p3_lmmse_redraw__none seed 13: ser_mean=0.0697 ser_median=0.0548
+[95 done, ~5 left | 0.3 h, ~0.0 h to go at this pace] t1 P1 p1_crc_rollback__jam s13 OK 3 min  == p1_crc_rollback__jam seed 13: ser_mean=0.3568 ser_median=0.0411 ser_pre=0.0156 ser_attack=0.8513 ser_post=0.0303
+[96 done, ~4 left | 0.3 h, ~0.0 h to go at this pace] t1 P1 p1_crc_rollback__tr_sir0 s13 OK 7 min  == p1_crc_rollback__tr_sir0 seed 13: ser_mean=0.2859 ser_median=0.3404 ser_pre=0.0156 ser_attack=0.2672 ser_post=0.3766
+[97 done, ~3 left | 0.3 h, ~0.0 h to go at this pace] t1 D23 clean_59f668f264 s13 OK 0 min  == clean_59f668f264 seed 13: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[98 done, ~2 left | 0.3 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_redraw__deny s13 OK 1 min  == p3_lmmse_redraw__deny seed 13: ser_mean=0.1724 ser_median=0.1128 ser_pre=0.0494 ser_attack=0.2986 ser_post=0.0339
+[99 done, ~1 left | 0.3 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_snrdrop__none s13 OK 1 min  == p3_lmmse_snrdrop__none seed 13: ser_mean=0.2629 ser_median=0.2506
+[100 done, ~0 left | 0.4 h, ~0.0 h to go at this pace] t1 B3 b3_lmmse_redraw__a1deny s13 OK 4 min  == b3_lmmse_redraw__a1deny seed 13: ser_mean=0.2877 ser_median=0.1024 ser_pre=0.0494 ser_attack=0.5290 ser_post=0.0339
+paired displacement rev2_drift_long: rc 0
+| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |
+|---|---|---|---|---|---|---|---|
+| a3star e=0.05 | 0 | [8.5, 4.5] | 1 | 14.77 | 261.00 | 16.70 | 15.14 |
+
+== pool4 finished: 100 runs, 0 failed, 0.4 h
+pushed results to GitHub (22:47)

@@ -1,0 +1,8 @@
+== pool9: 18 runs queued (before de-duplication), 4 workers, pre-training cache cache/pretrain
+== pool9: 18 runs queued (before de-duplication), 4 workers, pre-training cache cache/pretrain
+[1 done, ~17 left | 0.5 h, ~8.2 h to go at this pace] t1 H3v h3v_a4_a0.75__sir0 s15 OK 29 min  == h3v_a4_a0.75__sir0 seed 15: ser_mean=0.0284 ser_median=0.0168 ser_pre=0.0254 ser_attack=0.0450 ser_post=0.0114
+[2 done, ~16 left | 0.5 h, ~3.9 h to go at this pace] t1 H3v h3v_a4_a0.25__sir0 s15 OK 29 min  == h3v_a4_a0.25__sir0 seed 15: ser_mean=0.0287 ser_median=0.0184 ser_pre=0.0254 ser_attack=0.0452 ser_post=0.0119
+[3 done, ~15 left | 0.5 h, ~2.4 h to go at this pace] t1 H3v h3v_a4_a0.25__sir0 s17 OK 29 min  == h3v_a4_a0.25__sir0 seed 17: ser_mean=0.0305 ser_median=0.0160 ser_pre=0.0232 ser_attack=0.0526 ser_post=0.0114
+[4 done, ~14 left | 0.5 h, ~1.7 h to go at this pace] t1 H3v h3v_a4_a0.75__sir0 s17 OK 29 min  == h3v_a4_a0.75__sir0 seed 17: ser_mean=0.0283 ser_median=0.0153 ser_pre=0.0232 ser_attack=0.0477 ser_post=0.0107
+[5 done, ~13 left | 0.6 h, ~1.6 h to go at this pace] t1 H3v clean_2cb3064d71 s15 OK 7 min  == clean_2cb3064d71 seed 15: ser_mean=0.0157 ser_median=0.0117
+[6 done, ~12 left | 0.6 h, ~1.2 h to go at this pace] t1 H3v h3v_a1__sir0 s15 OK 7 min  == h3v_a1__sir0 seed 15: ser_mean=0.0220 ser_median=0.0152 ser_pre=0.0254 ser_attack=0.0287 ser_post=0.0114
