@@ -890,11 +890,20 @@ structural bound of \val{ret.p8e02.struct}); at 50\% they reject all of them, th
 nearly stands still (it moved \val{ret.p8e05.movpct}\% as far as the clean one), and
 $D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. After every A3$^\ast$ setting the excess is at
 most \val{ret.p8.postmax}. Over 300 blocks the design bound is loose, while the structural bound is
-\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. The drift guard was run
-only at 50\%, where every attacked block is rejected and it has nothing to guard: it lowered $D_K$ to
-\val{ret.p8e05guard.DK} by pulling both runs toward the pre-trained weights (the clean memory moved
-\val{ret.p8e05guard.movcln} instead of \val{ret.p8e05.movcln}), at an excess of
-\val{ret.p8e05guard.excess}; whether it helps against an accepted drift is not tested here.
+\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. At 50\%, where every
+attacked block is rejected, the drift guard lowered $D_K$ to \val{ret.p8e05guard.DK} by pulling both
+runs toward the pre-trained weights (the clean memory moved \val{ret.p8e05guard.movcln} instead of
+\val{ret.p8e05.movcln}), at an excess of \val{ret.p8e05guard.excess}. Against the accepted 5\% drift,
+the case it is meant for, the drift was still accepted (\val{ret.h5.rejk} attacked blocks rejected),
+both memories moved less (\val{ret.h5.movadv} instead of \val{ret.p8e005.movadv}) and $D_K$ fell from
+\val{ret.p8e005.DK} to \val{ret.h5.DK} (structural bound \val{ret.h5.struct}), but the excess SER was
+unchanged (\val{ret.h5.excess}, \val{ret.h5.post} after the window): the guard shrinks what an
+accepted drift leaves in the memory without lowering its cost.
+
+Without attack the memory does not drift either. Over 2000 clean blocks (two seeds) the SER of
+Citadel-Rx was \val{d7.citadel.first} over blocks 5--499 and \val{d7.citadel.last} over the last 500,
+with \val{d7.citadel.frejk} blocks falsely rejected; that of tuned online DeepSIC was
+\val{d7.onlinedeepsic.first} and \val{d7.onlinedeepsic.last}.
 
 \subsection{Other Baselines}\label{sec:baselines}
 \begin{table}[t]
@@ -1045,8 +1054,11 @@ with its channel from the same drop, so its SIR is not a setting: over the five 
 \val{d23.d150.sirmin} to \val{d23.d150.sirmax}\,dB at 150\,m (median \val{d23.d150.sirmed}). It
 knows the receiver (white-box) and designs its pilot perturbation through its own channel. The data
 of every user are NR code blocks with CRC-24A and LDPC base graph 2 ($k=520$, $n=1000$)
-\cite{ts38212}, decoded with 20 belief-propagation iterations from the hard symbol decisions, and
-the CRC after decoding gives the block error rate (BLER). All receivers keep their frozen settings;
+\cite{ts38212}, scrambled with the user's NR PUSCH sequence ($c_{\rm init}=n_{\rm RNTI}2^{15}+n_{\rm ID}$)
+\cite{ts38211}, decoded with 20 belief-propagation iterations from the hard symbol decisions, and
+the CRC after decoding gives the block error rate (BLER). The scrambling matters for the gates: the
+all-zero codeword has a zero CRC, so without it a detector stuck on one symbol would pass every check
+(a first version of these runs had this flaw and is not reported). All receivers keep their frozen settings;
 the CRC gate uses the virtual pass fraction of Section~\ref{sec:gates}.
 % RESULTS-PENDING: coded scene prose
 
@@ -1162,6 +1174,7 @@ The COST2100 traces are those released with \cite{raviv2023}.
 \bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu, ``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2018.
 \bibitem{tr38901} 3GPP, ``Study on channel model for frequencies from 0.5 to 100 GHz,'' TR 38.901, V19.5.0, 2026, Table 7.4.1-1.
 \bibitem{ts38212} 3GPP, ``NR; Multiplexing and channel coding,'' TS 38.212, V19.2.0, 2025, Secs. 5.1 and 5.3.2.
+\bibitem{ts38211} 3GPP, ``NR; Physical channels and modulation,'' TS 38.211, Secs. 5.2.1 and 6.3.1.1.
 \bibitem{sionna} J.~Hoydis, S.~Cammerer, F.~Ait Aoudia, M.~Nimier-David, L.~Maggi, G.~Marcus, A.~Vem, and A.~Keller, ``Sionna,'' software, version 2.2.0, 2022. [Online]. Available: \url{https://nvlabs.github.io/sionna/}
 \bibitem{ts36212} 3GPP, ``Evolved Universal Terrestrial Radio Access (E-UTRA); Multiplexing and channel coding,'' TS 36.212, V19.1.0, 2025, Sec. 5.1.1.
 \bibitem{liu2012cost} L.~Liu, C.~Oestges, J.~Poutanen, K.~Haneda, P.~Vainikainen, F.~Quitin, F.~Tufvesson, and P.~De~Doncker, ``The COST 2100 MIMO channel model,'' \emph{IEEE Wireless Commun.}, vol.~19, no.~6, pp. 92--99, Dec. 2012.
