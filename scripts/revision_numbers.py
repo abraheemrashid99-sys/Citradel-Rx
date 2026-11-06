@@ -60,11 +60,11 @@ def mkey(cfg: dict) -> str:
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 
-MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz": "cloud", "windows": "windows"}
+MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz": "cloud", "windows": "windows", "helper": "helper"}
 
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win"]
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper"]
 
 
 def machine(r: dict):

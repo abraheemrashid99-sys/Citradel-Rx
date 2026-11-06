@@ -73,7 +73,8 @@ RND = ["attack.start_mode=random"]
 ONLINE_BASED = {"online_deepsic", "online_select", "crc_rollback", "rollback_allgates", "l2sp_deepsic", "ema_deepsic",
                 "ewc_deepsic", "dd_deepsic", "cotta_deepsic", "eata_deepsic"}
 CLEAN_DIR = {"laptop": "rev_clean", "cloud": "rev_clean_cloud", "windows": "rev_clean_win",
-             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud"}   # more drivers on the cloud
+             "cloudx": "rev_clean_cloud", "cloudy": "rev_clean_cloud", "cloudz": "rev_clean_cloud",   # more drivers on the cloud
+             "helper": "rev_clean_helper"}   # a second cloud machine
 FZ_ABST = os.path.join(ROOT, "configs", "revision2_frozen_abstain.json")
 FZ_JOINT = os.path.join(ROOT, "configs", "revision2_frozen_joint.json")
 T5 = [10, 11, 12, 13, 14]   # second campaign: the 2-seed experiments get seeds 12-14, the 3-seed cells 13-14
@@ -378,6 +379,22 @@ def rev2x_jobs() -> List[Job]:
     return jobs
 
 
+def helper_jobs() -> List[Job]:
+    """Campaign 4: a second cloud machine takes the jobs the Windows laptop reaches last (tiers 2-3)
+    and the cloud machine's tier 2. The original assignees keep them in their lists: whichever
+    machine gets to a job second finds the record (results arrive through the periodic git pull)
+    and skips it, so nothing is lost if one machine stops."""
+    out = []
+    for j in rev2_jobs():
+        if (j.shard == "windows" and j.tier >= 2) or (j.shard == "cloud" and j.tier == 2):
+            out.append(Job("helper", j.tier, j.group, CLEAN_DIR["helper"] if j.clean_twin else j.out, j.name, j.seeds, j.ov,
+                           clean_twin=j.clean_twin, kind=j.kind))
+    # the most expensive first, so that the slower laptop is left with the cheap remainder
+    order = {"D4": 0, "P6": 1, "P5": 2, "P2": 3, "P7": 4, "P7grid": 5}
+    out.sort(key=lambda j: order.get(j.group, 9))
+    return out
+
+
 # ------------------------------------------------------------------------------------ settings
 def resolve(job: Job, seed: int, fz_cit: Optional[dict], fz_base: Optional[dict]) -> Tuple[Tuple[str, str, int], List[str]]:
     ov: List[str] = []
@@ -567,9 +584,13 @@ class Campaign:
                  cache_gb: float = 0.6, campaign: int = 1):
         self.shard, self.workers, self.wait_hours, self.push_every, self.min_free_mb = shard, workers, wait_hours, push_every, min_free_mb
         self.cache_gb = cache_gb
-        src = rev2x_jobs() if campaign == 3 else (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs())
+        src = helper_jobs() if campaign == 4 else (rev2x_jobs() if campaign == 3 else
+                                                    (rev2_jobs() if campaign == 2 else calibration_jobs() + test_jobs()))
         jobs = [j for j in src if j.shard == shard and j.tier <= tier]
-        jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
+        if campaign == 4:
+            jobs.sort(key=lambda j: {"D4": 0, "P6": 1, "P5": 2, "P2": 3, "P7": 4, "P7grid": 5}.get(j.group, 9))
+        if campaign != 4:
+            jobs.sort(key=lambda j: j.tier)   # stable: list order within a tier is the priority
         self.queue: List[Tuple[Job, int]] = [(j, s) for j in jobs for s in j.seeds]
         self.cal_kind = "cal" if shard == "cloud" else "tune"
         self.cal_left = sum(1 for j, _ in self.queue if j.kind == self.cal_kind)
@@ -583,7 +604,7 @@ class Campaign:
         self.last_fetch = 0.0
         self.calibrated = False
         self._freezing = False
-        if campaign in (2, 3):   # settings were frozen by the first campaign's rules; nothing is calibrated again
+        if campaign in (2, 3, 4):   # settings were frozen by the first campaign's rules; nothing is calibrated again
             self.fz_cit, self.fz_base = json.load(open(FZ_CIT)), json.load(open(FZ_BASE))
             self.cal_left, self.calibrated = 0, True
         os.makedirs(LOGS, exist_ok=True)
@@ -762,8 +783,8 @@ def dry(shard_filter: Optional[str], campaign: int = 1) -> None:
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz"])
-    ap.add_argument("--campaign", type=int, choices=[1, 2, 3], default=1,
+    ap.add_argument("--shard", choices=["laptop", "cloud", "windows", "cloudx", "cloudy", "cloudz", "helper"])
+    ap.add_argument("--campaign", type=int, choices=[1, 2, 3, 4], default=1,
                     help="2 = the second revision campaign, 3 = its new-feature experiments (shards cloudx, cloudy)")
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--tier", type=int, choices=[1, 2, 3], default=3, help="run tiers up to this one")
@@ -783,7 +804,7 @@ def main():
     if args.push_only:
         push_results(args.shard)
         return
-    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith("cloud") else 0.6)
+    cache_gb = args.cache_gb if args.cache_gb is not None else (3.0 if args.shard.startswith("cloud") or args.shard == "helper" else 0.6)
     Campaign(args.shard, args.workers, args.tier, args.wait_hours, args.push_every, args.min_free_mb, cache_gb, args.campaign).run()
 
 
