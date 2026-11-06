@@ -4,9 +4,11 @@
   abstain (H3): the clean calibration runs (seeds 0-2, rev2_abstain_cal) log the deviation of the
     abstain statistic in standard deviations on every block while never abstaining. The threshold z
     is the smallest of 3, 4, 5, 6, 8 whose clean abstention rate over blocks 5-99 is at most 2%.
-  joint backbone (D8): online DeepSIC with the joint backbone, epochs 30/100/300 x learning rate
-    1e-3/5e-3 on clean runs of seeds 0-2 (rev2_joint_tune); the lowest mean clean SER wins (the rule
-    used for the DeepSIC baselines). Citadel-Rx keeps its frozen settings on the new backbone.
+  joint backbone (D8): online DeepSIC with the joint backbone, epochs 30/100 x learning rate 1e-3/5e-3
+    on clean runs of seeds 0-2 (rev2_joint_tune); the lowest mean clean SER wins (the rule used for
+    the DeepSIC baselines). The 300-epoch setting of the first plan was dropped before any test run of
+    the backbone, to save compute (configs/claims.json, "dropped"). Citadel-Rx keeps its frozen
+    settings on the new backbone.
 
     python scripts/freeze_rev2.py      # writes configs/revision2_frozen_abstain.json, revision2_frozen_joint.json
 """
@@ -60,11 +62,12 @@ def freeze_joint() -> None:
         if m and r["seed"] in CAL:
             table.setdefault((int(m.group(1)), float(m.group(2))), {})[r["seed"]] = float(np.mean([b["ser"] for b in r["blocks"]]))
     full = {k: float(np.mean(list(v.values()))) for k, v in table.items() if sorted(v) == CAL}
-    if len(full) < 6:
-        print("joint: tuning runs incomplete", len(full), "of 6 settings")
+    full = {k: v for k, v in full.items() if k[0] in (30, 100)}
+    if len(full) < 4:
+        print("joint: tuning runs incomplete", len(full), "of 4 settings")
         return
     (ep, lr), ser = min(full.items(), key=lambda kv: kv[1])
-    out = {"rule": "lowest mean clean SER over seeds 0-2 among epochs {30,100,300} x lr {1e-3,5e-3}",
+    out = {"rule": "lowest mean clean SER over seeds 0-2 among epochs {30,100} x lr {1e-3,5e-3}",
            "table": {f"ep{k[0]}_lr{k[1]:g}": v for k, v in sorted(full.items())}, "chosen": f"ep{ep}_lr{lr:g}", "cal_clean_ser": ser,
            "overrides": [f"receiver.epochs={ep}", f"receiver.lr={lr}", "receiver.weight_decay=0.0"]}
     json.dump(out, open(os.path.join(ROOT, "configs", "revision2_frozen_joint.json"), "w"), indent=1)
