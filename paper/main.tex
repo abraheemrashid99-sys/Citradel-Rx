@@ -984,10 +984,12 @@ fractions noisier, and the clean false rejection rises to \val{sc.citadelnd1000n
 $N_d=1000$, $N_p=32$. The SED profile $e^{-|i-j|}$ puts 99\% of the channel energy of an $8\times32$
 array on 9 antennas, so the larger arrays use it stretched over the array, $e^{-|iU/N-j|}$, which
 keeps the structure of the interference and spreads the energy over 31 of 32 antennas. With
-$4\times16$ antennas the excess of Citadel-Rx is \val{sc.citadel4x16.excess}, against
-\val{sc.onlinedeepsic4x16.excess} for online DeepSIC and \val{sc.lmmse4x16.excess} for LMMSE; with
-$8\times32$ it is \val{sc.citadel8x32.excess}, against \val{sc.onlinedeepsic8x32.excess} and
-\val{sc.lmmse8x32.excess}.
+$4\times16$ antennas the excess of Citadel-Rx is \val{sc.citadel4x16.excess}, with
+\val{sc.citadel4x16.rej} of the poisoned blocks rejected, against \val{sc.onlinedeepsic4x16.excess}
+for online DeepSIC and \val{sc.lmmse4x16.excess} for LMMSE; with eight users and $8\times32$
+antennas it is \val{sc.citadel8x32.excess} (\val{sc.citadel8x32.rej} rejected), against
+\val{sc.onlinedeepsic8x32.excess} and \val{sc.lmmse8x32.excess}, with no clean block falsely rejected
+in either array (\val{sc.citadel4x16.frejk} and \val{sc.citadel8x32.frejk}).
 
 Citadel-Rx fails at 16-QAM and 20\,dB. There the pre-trained network passes a fraction
 \val{qam.passnn} of the CRCs on clean blocks and the LMMSE reference \val{qam.passref}, so the
