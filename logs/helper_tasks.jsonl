@@ -209,3 +209,4 @@
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_clean_helper", "name": "clean_fb035082bd", "seed": 12, "ok": true, "seconds": 243.0, "finished": "2026-11-06T21:04:08.265407+00:00"}
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_clean_helper", "name": "clean_fb035082bd", "seed": 14, "ok": true, "seconds": 94.6, "finished": "2026-11-06T21:04:37.473269+00:00"}
 {"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_ema_deepsic__wb_sir0", "seed": 13, "ok": true, "seconds": 238.8, "finished": "2026-11-06T21:07:50.708982+00:00"}
+{"shard": "helper", "tier": 2, "group": "P2", "out": "rev_p2", "name": "p2_ema_deepsic__wb_sir0", "seed": 12, "ok": true, "seconds": 269.3, "finished": "2026-11-06T21:08:20.242686+00:00"}

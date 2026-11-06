@@ -217,3 +217,4 @@ pushed results to GitHub (20:52)
 [209 done, ~107 left | 5.4 h, ~2.8 h to go at this pace] t2 P2 clean_fb035082bd s12 OK 4 min  == clean_fb035082bd seed 12: ser_mean=0.0370 ser_median=0.0321
 [210 done, ~106 left | 5.5 h, ~2.8 h to go at this pace] t2 P2 clean_fb035082bd s14 OK 2 min  == clean_fb035082bd seed 14: ser_mean=0.0357 ser_median=0.0303
 [211 done, ~105 left | 5.5 h, ~2.7 h to go at this pace] t2 P2 p2_ema_deepsic__wb_sir0 s13 OK 4 min  == p2_ema_deepsic__wb_sir0 seed 13: ser_mean=0.2729 ser_median=0.0520 ser_pre=0.0155 ser_attack=0.5357 ser_post=0.1205
+[212 done, ~104 left | 5.5 h, ~2.7 h to go at this pace] t2 P2 p2_ema_deepsic__wb_sir0 s12 OK 4 min  == p2_ema_deepsic__wb_sir0 seed 12: ser_mean=0.2400 ser_median=0.0583 ser_pre=0.0285 ser_attack=0.4590 ser_post=0.2470
