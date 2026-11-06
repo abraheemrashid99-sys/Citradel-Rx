@@ -26,11 +26,17 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
     a config option was added) the same non-default settings."""
     import glob
     import json
+    def complete(fn: str) -> bool:
+        # a run that saves level snapshots is finished only when its snapshot file exists too
+        # (the machine may have stopped between writing the record and the snapshots)
+        return not probe.run.save_params or os.path.exists(fn.replace(".json", ".levels.npz"))
+
     exact = os.path.join(out_dir, f"{name}_s{seed}_{probe.hash()}.json")
     if os.path.exists(exact):
         try:
             json.load(open(exact))
-            return exact
+            if complete(exact):
+                return exact
         except Exception:   # truncated record from an interrupted run: run it again
             pass
     for fn in glob.glob(os.path.join(out_dir, f"{name}_s{seed}_*.json")):
@@ -38,7 +44,7 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
             rec = json.load(open(fn))
         except Exception:
             continue
-        if rec.get("seed") == seed and probe.matches_record(rec.get("config", {})):
+        if rec.get("seed") == seed and probe.matches_record(rec.get("config", {})) and complete(fn):
             return fn
     return ""
 
