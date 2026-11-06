@@ -25,3 +25,9 @@
 {"shard": "pool5", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_online_deepsic_joint__wb_sir0", "seed": 11, "ok": true, "seconds": 1295.4, "finished": "2026-11-06T21:15:55.160970+00:00"}
 {"shard": "pool5", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_crc_rollback_joint__wb_sir0", "seed": 10, "ok": true, "seconds": 1362.8, "finished": "2026-11-06T21:17:42.116686+00:00"}
 {"shard": "pool5", "tier": 1, "group": "D8", "out": "rev_clean_pool5", "name": "clean_45472e37db", "seed": 10, "ok": true, "seconds": 158.3, "finished": "2026-11-06T21:18:07.980525+00:00"}
+{"shard": "pool5", "tier": 1, "group": "D8", "out": "rev2_joint", "name": "d8_crc_rollback_joint__wb_sir0", "seed": 12, "ok": true, "seconds": 1346.0, "finished": "2026-11-06T21:38:21.174911+00:00"}
+{"shard": "pool5", "tier": 1, "group": "D8", "out": "rev_clean_pool5", "name": "clean_45472e37db", "seed": 12, "ok": true, "seconds": 1276.2, "finished": "2026-11-06T21:38:58.324465+00:00"}
+{"shard": "pool5", "tier": 1, "group": "B2", "out": "rev_clean_pool5", "name": "clean_0b811be896", "seed": 11, "ok": true, "seconds": 796.3, "finished": "2026-11-06T21:51:37.519470+00:00"}
+{"shard": "pool5", "tier": 1, "group": "B1", "out": "rev2_phys", "name": "b1_citadel_M4__sir0", "seed": 11, "ok": true, "seconds": 833.0, "finished": "2026-11-06T21:52:51.354300+00:00"}
+{"shard": "pool5", "tier": 1, "group": "B1", "out": "rev2_phys", "name": "b1_citadel_M2_csi0.1__sir0", "seed": 11, "ok": true, "seconds": 518.9, "finished": "2026-11-06T22:00:16.427722+00:00"}
+{"shard": "pool5", "tier": 1, "group": "B1", "out": "rev2_phys", "name": "b1_citadel_M2_csi0.01__sir0", "seed": 11, "ok": true, "seconds": 513.0, "finished": "2026-11-06T22:01:24.407949+00:00"}
