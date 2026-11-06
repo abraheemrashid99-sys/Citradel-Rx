@@ -198,6 +198,8 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         summary["attack_window"] = [int(window[0]), int(window[1])]
     if getattr(attacker, "sir_override", None) is not None:
         summary["sir_geometry_db"] = attacker.sir_override
+    if cfg.channel.model == "umi":
+        summary["umi_drop"] = getattr(channel, "umi_meta", {})   # t_block of the 38.901 drop file used
     summary["pretrain_time_s"] = pretrain_time
     summary["pretrain_cached"] = pretrain_cached
     summary["mean_t_rx_s"] = float(np.mean([b["t_rx"] for b in blocks]))

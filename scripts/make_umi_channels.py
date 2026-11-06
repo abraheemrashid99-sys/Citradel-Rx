@@ -17,7 +17,11 @@ g_att / g_target, and the geometric SIR, relative to the users' received signal 
 SIR = 10 log10(sum_u min(g_u, g_target) / g_att): it follows from the geometry, not from a setting.
 
 Each block is one narrowband channel (the frequency response at the carrier) sampled every
-T_block = 5 ms; frequency selectivity within a block is not modelled.
+T_block = 1 ms: one NR slot at 15 kHz subcarrier spacing, whose 14 x 12 x 150 = 25,200 resource
+elements match the block length of the paper (25,000 data symbols; about 27 MHz). At 3 km/h and
+3.5 GHz the channel then changes by about 4% between blocks (relative Frobenius norm), as in the
+paper's other channel models (3.5% synthetic, 1.3% COST2100); frequency selectivity within a block
+is not modelled.
 
 One drop per seed holds the users, one attacker at each distance and the reference, so the users'
 channels (and the clean comparison run) are the same for every attacker position.
@@ -103,7 +107,7 @@ def main() -> None:
     ap.add_argument("--n-ant", type=int, default=4)
     ap.add_argument("--n-user", type=int, default=4)
     ap.add_argument("--blocks", type=int, default=100)
-    ap.add_argument("--t-block", type=float, default=0.005)
+    ap.add_argument("--t-block", type=float, default=0.001)
     ap.add_argument("--fc", type=float, default=3.5e9)
     ap.add_argument("--speed-kmh", type=float, default=3.0)
     args = ap.parse_args()
@@ -113,7 +117,9 @@ def main() -> None:
         out = drop(s, args.dists, args.n_ant, args.n_user, args.blocks, args.t_block, args.fc, args.speed_kmh)
         fn = os.path.join(OUT, f"umi_N{args.n_ant}_U{args.n_user}_s{s}.npz")
         arrays = {k: v for k, v in out.items() if k == "H" or k.startswith("G_d") or k.startswith("sir_d")}
-        np.savez(fn, **arrays, meta=json.dumps({k: out[k] for k in ("path_gain_db", "target_db", "user_rx_db", "dist", "angle_deg", "los")}))
+        meta = {k: out[k] for k in ("path_gain_db", "target_db", "user_rx_db", "dist", "angle_deg", "los")}
+        meta.update(t_block=args.t_block, fc=args.fc, speed_kmh=args.speed_kmh)
+        np.savez(fn, **arrays, meta=json.dumps(meta))
         for d in args.dists:
             summary.append({"d_att": d, "seed": s, "sir_db": round(out[f"sir_d{d:g}"], 2)})
         print(f"seed {s}: " + ", ".join(f"d {d:g} m -> SIR {out[f'sir_d{d:g}']:+.1f} dB" for d in args.dists)

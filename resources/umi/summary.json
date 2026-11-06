@@ -2,76 +2,76 @@
  {
   "d_att": 35.0,
   "seed": 10,
-  "sir_db": -9.36
+  "sir_db": -9.2
  },
  {
   "d_att": 75.0,
   "seed": 10,
-  "sir_db": -1.0
+  "sir_db": -0.84
  },
  {
   "d_att": 150.0,
   "seed": 10,
-  "sir_db": 9.23
+  "sir_db": 9.39
  },
  {
   "d_att": 35.0,
   "seed": 11,
-  "sir_db": -33.79
+  "sir_db": -33.91
  },
  {
   "d_att": 75.0,
   "seed": 11,
-  "sir_db": -17.5
+  "sir_db": -17.63
  },
  {
   "d_att": 150.0,
   "seed": 11,
-  "sir_db": -4.49
+  "sir_db": -4.61
  },
  {
   "d_att": 35.0,
   "seed": 12,
-  "sir_db": -28.8
+  "sir_db": -28.68
  },
  {
   "d_att": 75.0,
   "seed": 12,
-  "sir_db": -14.27
+  "sir_db": -14.16
  },
  {
   "d_att": 150.0,
   "seed": 12,
-  "sir_db": 1.97
+  "sir_db": 2.09
  },
  {
   "d_att": 35.0,
   "seed": 13,
-  "sir_db": -19.25
+  "sir_db": -19.64
  },
  {
   "d_att": 75.0,
   "seed": 13,
-  "sir_db": 4.39
+  "sir_db": 3.99
  },
  {
   "d_att": 150.0,
   "seed": 13,
-  "sir_db": 14.69
+  "sir_db": 14.29
  },
  {
   "d_att": 35.0,
   "seed": 14,
-  "sir_db": -25.86
+  "sir_db": -26.07
  },
  {
   "d_att": 75.0,
   "seed": 14,
-  "sir_db": -2.92
+  "sir_db": -3.13
  },
  {
   "d_att": 150.0,
   "seed": 14,
-  "sir_db": -2.89
+  "sir_db": -3.1
  }
 ]

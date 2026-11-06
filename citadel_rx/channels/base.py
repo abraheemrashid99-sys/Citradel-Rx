@@ -107,6 +107,11 @@ class BlockFadingChannel:
             self._umi_data = z["H"]
             self._umi_att = {k[3:]: z[k] for k in z.files if k.startswith("G_d")}      # distance -> (T, N, 1)
             self._umi_sir = {k[5:]: float(z[k]) for k in z.files if k.startswith("sir_d")}
+            try:   # t_block etc.: recorded with every run (scripts/make_umi_channels.py)
+                import json
+                self.umi_meta = {k: v for k, v in json.loads(str(z["meta"])).items() if k in ("t_block", "fc", "speed_kmh", "target_db")}
+            except Exception:
+                self.umi_meta = {}
         H = self._umi_data
         if b >= H.shape[0]:
             raise ValueError("more blocks than the UMi drop holds")
