@@ -603,3 +603,5 @@ Traceback (most recent call last):
         f"(possible zip bomb)")
 zipfile.BadZipFile: Overlapped entries: 'level1.npy' (possible zip bomb)
 !! paired displacement failed: send this output
+pushed results to GitHub (15:29)
+== finished Fri Nov  6 15:29:31 PKT 2026. Results are on GitHub (branch claude/fervent-cray-ah5drn).
