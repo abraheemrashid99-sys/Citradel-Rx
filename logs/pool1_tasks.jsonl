@@ -54,3 +54,13 @@
 {"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_a1__sir0", "seed": 13, "ok": true, "seconds": 544.8, "finished": "2026-11-06T21:30:25.149589+00:00"}
 {"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_redraw__none", "seed": 13, "ok": true, "seconds": 810.9, "finished": "2026-11-06T21:34:57.286560+00:00"}
 {"shard": "pool1", "tier": 1, "group": "H3v", "out": "rev2_abstain_v3", "name": "h3v_snrdrop__none", "seed": 13, "ok": true, "seconds": 800.8, "finished": "2026-11-06T21:35:46.357517+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir-10", "seed": 14, "ok": true, "seconds": 1615.7, "finished": "2026-11-06T21:54:41.797857+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__wb_sir10", "seed": 14, "ok": true, "seconds": 1687.9, "finished": "2026-11-06T22:03:05.184483+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_lmmse_d35__phys", "seed": 11, "ok": true, "seconds": 2.2, "finished": "2026-11-06T22:03:07.365714+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_lmmse_d75__phys", "seed": 11, "ok": true, "seconds": 1.9, "finished": "2026-11-06T22:03:09.302380+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev2_umi_ldpc", "name": "d23_lmmse_d150__phys", "seed": 11, "ok": true, "seconds": 2.1, "finished": "2026-11-06T22:03:11.393196+00:00"}
+{"shard": "pool1", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_lmmse_redraw__none", "seed": 11, "ok": true, "seconds": 36.3, "finished": "2026-11-06T22:03:47.715124+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P1", "out": "rev_p1", "name": "p1_meta_deepsic__tr_sir0", "seed": 14, "ok": true, "seconds": 1702.2, "finished": "2026-11-06T22:04:08.538058+00:00"}
+{"shard": "pool1", "tier": 1, "group": "D23", "out": "rev_clean_pool1", "name": "clean_59f668f264", "seed": 11, "ok": true, "seconds": 2.0, "finished": "2026-11-06T22:04:10.572897+00:00"}
+{"shard": "pool1", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_lmmse_redraw__a1deny", "seed": 11, "ok": true, "seconds": 223.6, "finished": "2026-11-06T22:07:31.356228+00:00"}
+{"shard": "pool1", "tier": 1, "group": "P1", "out": "rev_clean_pool1", "name": "clean_1950a64849", "seed": 14, "ok": true, "seconds": 3398.9, "finished": "2026-11-06T22:27:04.032287+00:00"}
