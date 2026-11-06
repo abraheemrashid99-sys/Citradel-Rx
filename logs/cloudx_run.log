@@ -1,0 +1,3 @@
+== cloudx: 141 runs queued (before de-duplication), 2 workers, pre-training cache cache/pretrain
+[1 done, ~140 left | 0.3 h, ~38.0 h to go at this pace] t0 H3cal h3cal_ratio__clean s0 OK 16 min  == h3cal_ratio__clean seed 0: ser_mean=0.0154 ser_median=0.0119
+[2 done, ~139 left | 0.3 h, ~19.1 h to go at this pace] t0 H3cal h3cal_ratio__clean s1 OK 16 min  == h3cal_ratio__clean seed 1: ser_mean=0.0149 ser_median=0.0117
