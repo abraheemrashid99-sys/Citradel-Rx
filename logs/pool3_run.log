@@ -43,3 +43,15 @@ pushed results to GitHub (20:21)
 [38 done, ~44 left | 3.7 h, ~4.3 h to go at this pace] t1 P3deny p3_citadel_streak_redraw__none s12 OK 9 min  == p3_citadel_streak_redraw__none seed 12: ser_mean=0.2829 ser_median=0.2228
 [39 done, ~43 left | 3.7 h, ~4.1 h to go at this pace] t1 P3deny p3_citadel_streak_redraw__deny s12 OK 9 min  == p3_citadel_streak_redraw__deny seed 12: ser_mean=0.3243 ser_median=0.2735 ser_pre=0.0183 ser_attack=0.5151 ser_post=0.5947
 [40 done, ~42 left | 3.7 h, ~3.9 h to go at this pace] t1 P3deny p3_citadel_snrdrop__none s12 OK 14 min  == p3_citadel_snrdrop__none seed 12: ser_mean=0.2363 ser_median=0.2045
+pushed results to GitHub (21:06)
+[41 done, ~41 left | 3.8 h, ~3.8 h to go at this pace] t1 P3deny p3_citadel_streak_snrdrop__none s12 OK 14 min  == p3_citadel_streak_snrdrop__none seed 12: ser_mean=0.2363 ser_median=0.2045
+[42 done, ~40 left | 3.9 h, ~3.7 h to go at this pace] t1 H7 h7_citadel__a2 s12 OK 9 min  == h7_citadel__a2 seed 12: ser_mean=0.0212 ser_median=0.0136 ser_pre=0.0174 ser_attack=0.0299 ser_post=0.0108
+[43 done, ~39 left | 3.9 h, ~3.5 h to go at this pace] t1 H7 h7_citadel__a1 s12 OK 9 min  == h7_citadel__a1 seed 12: ser_mean=0.0213 ser_median=0.0145 ser_pre=0.0174 ser_attack=0.0302 ser_post=0.0106
+[44 done, ~38 left | 3.9 h, ~3.3 h to go at this pace] t1 D23 clean_7188cad35c s12 OK 0 min  == clean_7188cad35c seed 12: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+[45 done, ~37 left | 4.0 h, ~3.3 h to go at this pace] t1 H7 h7_citadel_peruser__a2 s12 OK 14 min  == h7_citadel_peruser__a2 seed 12: ser_mean=0.0225 ser_median=0.0155 ser_pre=0.0194 ser_attack=0.0310 ser_post=0.0110
+[46 done, ~35 left | 4.0 h, ~3.0 h to go at this pace] t1 H7 h7_citadel_peruser__a1 s12 OK 9 min  == h7_citadel_peruser__a1 seed 12: ser_mean=0.0227 ser_median=0.0166 ser_pre=0.0194 ser_attack=0.0313 ser_post=0.0112
+[47 done, ~33 left | 4.1 h, ~2.8 h to go at this pace] t1 H7 clean_69fac9f0c0 s12 OK 14 min  == clean_69fac9f0c0 seed 12: ser_mean=0.0157 ser_median=0.0121
+[48 done, ~32 left | 4.1 h, ~2.7 h to go at this pace] t1 H3v clean_2cb3064d71 s12 OK 15 min  == clean_2cb3064d71 seed 12: ser_mean=0.0149 ser_median=0.0117
+[49 done, ~31 left | 4.1 h, ~2.6 h to go at this pace] t1 H3v h3v_a1__sir0 s12 OK 10 min  == h3v_a1__sir0 seed 12: ser_mean=0.0211 ser_median=0.0145 ser_pre=0.0174 ser_attack=0.0296 ser_post=0.0107
+[50 done, ~30 left | 4.3 h, ~2.6 h to go at this pace] t1 H3v h3v_redraw__none s12 OK 15 min  == h3v_redraw__none seed 12: ser_mean=0.2830 ser_median=0.2241
+[51 done, ~29 left | 4.3 h, ~2.4 h to go at this pace] t1 H3v h3v_snrdrop__none s12 OK 15 min  == h3v_snrdrop__none seed 12: ser_mean=0.2363 ser_median=0.2045
