@@ -139,3 +139,12 @@ pushed results to GitHub (22:30)
 [64 done, ~3 left | 0.0 h, ~0.0 h to go at this pace] t1 B3 b3_lmmse_redraw__a1deny s11 OK 0 min  == b3_lmmse_redraw__a1deny seed 11: exists, skipped (results/rev2_deny_a1/b3_lmmse_redraw__a1deny_s11_9599c8680b06.json)
 [65 done, ~2 left | 0.0 h, ~0.0 h to go at this pace] t1 B3 b3_lmmse_redraw__none s11 OK 0 min  == b3_lmmse_redraw__none seed 11: exists, skipped (results/rev2_deny_a1/b3_lmmse_redraw__none_s11_64c43017f49b.json)
 [66 done, ~1 left | 0.0 h, ~0.0 h to go at this pace] t1 D23 clean_59f668f264 s11 OK 0 min  == clean_59f668f264 seed 11: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
+pushed results to GitHub (23:18)
+[67 done, ~0 left | 0.8 h, ~0.0 h to go at this pace] t1 P1 p1_meta_deepsic__jam s14 OK 48 min  == p1_meta_deepsic__jam seed 14: ser_mean=0.3604 ser_median=0.0458 ser_pre=0.0193 ser_attack=0.8532 ser_post=0.0353
+paired displacement rev_p4_paired: rc 0
+| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |
+|---|---|---|---|---|---|---|---|
+| a1 | 0 | [8.5, 4.5] | 1 | 4.20 | 18.00 | 16.79 | 5.81 |
+| a1 | 10 | [8.5, 4.5] | 1 | 3.44 | 18.00 | 13.09 | 6.90 |
+
+== pool1 finished: 67 runs, 0 failed, 0.8 h
