@@ -182,8 +182,8 @@ optimised slow drift, a grey-box surrogate and a query attacker) and a physical 
 four antennas;
 an NR LDPC link over 3GPP urban-micro drops with the attacker placed in the scene, a second network
 backbone, eight users with 32 antennas and 2000 clean blocks; settings fixed on calibration seeds
-by rules stated in advance, with one exception stated in Table~\ref{tab:hyper} (the abstain
-statistic), and results on held-out seeds; randomised attack windows; the excess SER
+by rules stated in advance, with two exceptions stated in Table~\ref{tab:hyper} (the abstain
+statistic and the SED profile of the larger arrays), and results on held-out seeds; randomised attack windows; the excess SER
 over a matched clean run with block-bootstrap intervals and seed-level tests; and the failures this
 exposes (reference degradation through the data, denial of adaptation during a channel change,
 per-user gating against a one-user attack, 16-QAM, the coded scene, the abstain state), each
@@ -278,8 +278,8 @@ meant to make the gates reject every block, combined with a real abrupt channel 
 blocks are accepted and their updates are consolidated into the slow levels.
 \item \emph{Physical attacker}: $\bm E_b=\bm X_b\bm G^{\!\top}$ with $M\in\{1,2,4\}$ attacker antennas and a
 fixed channel $\bm G$ with i.i.d. $\mathcal N(0,1/N)$ entries drawn per seed; with an estimate
-$\hat{\bm G}=\bm G+$ an error of relative variance $0.1$ or $0.01$, the attacker designs $\bm X_b$ for
-$\hat{\bm G}$ and the receiver sees $\bm E_b(\bm G\hat{\bm G}^{+})^{\!\top}$.
+$\hat{\bm G}=\bm G+$ an error of relative variance $0.1$ or $0.01$, the attacker designs $\bm E_b=\bm X_b\hat{\bm G}^{\!\top}$ for
+$\hat{\bm G}$ and the receiver sees $\bm X_b\bm G^{\!\top}=\bm E_b(\bm G\hat{\bm G}^{+})^{\!\top}$.
 \item \emph{Attacker in a 3GPP scene}: the physical attacker placed in a TR 38.901 UMi drop at 35, 75
 or 150\,m from the base station at the maximum power of a user, so that its SIR follows from the
 geometry, path loss and shadowing (Section~\ref{sec:umi}).
@@ -469,7 +469,7 @@ SED profile of the larger arrays, stretched after test runs with the unstretched
 \toprule
 Setting & Value; provenance\\
 \midrule
-$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order for QPSK ($=256$), 256 for 16-QAM, 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}\\
+$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order for QPSK ($=256$), 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}; width kept at 256 for 16-QAM (not $64\cdot16$, Section~\ref{sec:scen})\\
 $K$, $C$ & 3, $(1,8,32)$; first version; ablation in Section~\ref{sec:ablate}\\
 $\eta^{(2)},\eta^{(3)}$, $\lambda$, $\delta$ & $1,\tfrac12$, $0.5$, $0.1$; first version; sensitivity of $\eta^{(3)}$, $\lambda$, $\delta$ in Section~\ref{sec:sens}\\
 $\tau_1,\tau_3,\omega$, tightening & $1.25$, $4$, $0.1\tau$, $30\%$; first version; sensitivity\\
@@ -594,8 +594,8 @@ Attacker & PGD 20 steps of $0.25\epsilon$ through 2 unrolled steps \cite{wu2024,
 
 \textit{Receivers.} LMMSE on the least-squares pilot estimate, and a Huber-robust version
 \cite{huber1964}; online DeepSIC \cite{shlezinger2021}; Meta-DeepSIC \cite{raviv2023};
-\emph{CRC-Rollback}, online DeepSIC with the CRC gate G2 at the first version's absolute slack, a
-fixed $\tau_2=0.99^{L}$, judged against LMMSE only, without CRC selection, and with rollback to the
+\emph{CRC-Rollback}, online DeepSIC with the CRC gate G2 at a fixed absolute slack of $0.01$ ($\tau_2=0.99^{L}$, tightened under surprise as in
+Section~\ref{sec:gates}), judged against LMMSE only, without CRC selection, and with rollback to the
 last accepted weights, and the same with all three gates (the $K=1$ ablation, Section~\ref{sec:ablate},
 has Citadel-Rx's gates and selection); online DeepSIC with the CRC selection of Citadel-Rx, which separates
 the selection gain from the memory; L2-SP \cite{l2sp2018}, EWC with the Fisher information of the
@@ -793,7 +793,7 @@ poisoned blocks accepted as plain A1 (rejection at least \val{atk.citadelsigbudg
 is in error (at least \val{atk.b1citadelM2csi001sir0.rej}); one with a single antenna gets more
 accepted (\val{atk.citadelM1sir0.rejk} rejected) and gives the lowest excess at SIR 0\,dB
 (\val{atk.citadelM1sir0.excess}). At SIR 10\,dB the excess is
-\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The \val{atk.onl0.n} of these attacks also run against online DeepSIC (Combined$^{b}$ in place of
+\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The \val{atk.onl0.n} of these attacks that were also run against online DeepSIC (Combined$^{b}$ in place of
 Combined$^{a}$) raise its SER by
 \val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With five seeds,
 differences of a few $10^{-3}$ between attacks lie within the intervals; what the table rules out
@@ -1115,7 +1115,7 @@ at $4\times16$), which are not in Table~\ref{tab:scen}. In those runs Citadel-Rx
 \val{sc.unstr.citadel8x32.rejk} poisoned blocks rejected), online DeepSIC
 \val{sc.unstr.onlinedeepsic8x32.excess} and LMMSE \val{sc.unstr.lmmse8x32.excess} at $8\times32$, and
 \val{sc.unstr.citadel4x16.excess}, \val{sc.unstr.onlinedeepsic4x16.excess} and
-\val{sc.unstr.lmmse4x16.excess} at $4\times16$. With
+\val{sc.unstr.lmmse4x16.excess} at $4\times16$. With the stretched profile and
 $4\times16$ antennas the excess of Citadel-Rx is \val{sc.citadel4x16.excess}, with
 \val{sc.citadel4x16.rej} of the poisoned blocks rejected, against \val{sc.onlinedeepsic4x16.excess}
 for online DeepSIC and \val{sc.lmmse4x16.excess} for LMMSE; with eight users and $8\times32$
@@ -1276,7 +1276,8 @@ the blocks it rejects are detected with that memory: without this fallback the e
 \val{ab.nofallback.excess} instead of \val{ab.complete.excess} (seeds 10--14). CRC-Rollback, a CRC test at a fixed slack with rollback, judges
 against LMMSE on the poisoned pilots alone and fails, and so does Citadel-Rx with its own gates,
 slack and CRC selection but a single memory (\val{ab.K1.excess}): the failure comes from the
-reference, not from the looser slack. What remains under attack, an excess of
+reference, not from the slack: with LMMSE as the only reference, Citadel-Rx's own relative slack
+loosens as the attack degrades that reference. What remains under attack, an excess of
 \val{p1.citadel.wb0.excess} at the headline cell, is the price of rejecting: in the forty attacked blocks
 the receiver detects with a memory that did not adapt to them, and the CRC selection loses most of
 its gain, because its LMMSE alternative uses the poisoned estimate (its pass fraction falls from
@@ -1285,8 +1286,7 @@ its gain, because its LMMSE alternative uses the poisoned estimate (its pass fra
 Table~\ref{tab:attacks} at SIR 0\,dB, those adapted to the defence or its feedback, the physical
 attackers and the signal-referenced budget, the excess stays between \val{atk.cit0.exmin} and
 \val{atk.cit0.exmax}; the ordering holds for the \val{atk.onl0.n} of them also run against online
-DeepSIC, with shorter blocks, with eight users and 32 antennas and with a second network backbone
-(where the gates reject \val{d8.citadel.frejk} clean blocks). Over 2000 clean blocks
+DeepSIC, with shorter blocks, with eight users and 32 antennas and with a second network backbone. Over 2000 clean blocks
 (\val{d7.citadel.n} seeds) the SER of Citadel-Rx does not drift (\val{d7.citadel.first} over blocks
 5--499, \val{d7.citadel.last} over the last 500), and \val{d7.citadel.frejk} clean blocks are
 rejected. A slow drift kept small
@@ -1333,7 +1333,7 @@ scrambling over stochastic 3GPP urban-micro drops (not a ray-traced scene) with 
 narrowband channel per slot, ideal power control and hard-decision decoding; the other experiments
 use CRC-8 sub-blocks over the SED model with cosine fading (COST2100 traces enter the calibration
 only). The headline cell has ten test seeds and most other experiments five; the optimised drift,
-the first abstain version and the long clean horizon have two (the 900-block drift \val{ret.b5.n}) and the sensitivity test
+the first abstain version, the unstretched $4\times16$ runs and the long clean horizon have two (the 900-block drift \val{ret.b5.n}) and the sensitivity test
 one, so seed-level tests are possible only at the headline cell (with five seeds the smallest
 attainable two-sided $p$ is $0.0625$). The theory bounds the displacement of the slowest level, not
 the error rate; the design bound holds for any attacker but is coarse, and the structural bound needs
