@@ -2168,6 +2168,39 @@
      18
     ]
    }
+  },
+  "pool11": {
+   "until": "2026-11-07T20:00:00+00:00",
+   "runs": {
+    "p2t_drift_deepsic__wb_sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_561d9aa753": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "p2t_medbn_deepsic__wb_sir0": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ],
+    "clean_0af30a992e": [
+     10,
+     11,
+     12,
+     13,
+     14
+    ]
+   }
   }
  },
  "dropped_note": "tune_joint_ep300_*: dropped before any test run of the second backbone (compute). d4_*_8x32, p6_*_4x16 and their clean twins: the unstretched SED profile illuminates only about U+3 antennas; replaced by the stretched profile (d4s_*, p6s_*, channel.sed_stretch=true) before their analysis; d23_* and their clean twins: coded scene without NR scrambling, in which the all-zero codeword passes the CRC-24A check; replaced by d23s_* (frame.ldpc_scramble=true)"

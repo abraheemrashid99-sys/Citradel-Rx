@@ -2392,6 +2392,88 @@
     "h3v_snrdrop__none",
     18
    ]
+  ],
+  "pool11": [
+   [
+    "p2t_drift_deepsic__wb_sir0",
+    10
+   ],
+   [
+    "twin:p2t_drift_deepsic__wb_sir0",
+    10
+   ],
+   [
+    "p2t_drift_deepsic__wb_sir0",
+    11
+   ],
+   [
+    "twin:p2t_drift_deepsic__wb_sir0",
+    11
+   ],
+   [
+    "p2t_drift_deepsic__wb_sir0",
+    12
+   ],
+   [
+    "twin:p2t_drift_deepsic__wb_sir0",
+    12
+   ],
+   [
+    "p2t_drift_deepsic__wb_sir0",
+    13
+   ],
+   [
+    "twin:p2t_drift_deepsic__wb_sir0",
+    13
+   ],
+   [
+    "p2t_drift_deepsic__wb_sir0",
+    14
+   ],
+   [
+    "twin:p2t_drift_deepsic__wb_sir0",
+    14
+   ],
+   [
+    "p2t_medbn_deepsic__wb_sir0",
+    10
+   ],
+   [
+    "twin:p2t_medbn_deepsic__wb_sir0",
+    10
+   ],
+   [
+    "p2t_medbn_deepsic__wb_sir0",
+    11
+   ],
+   [
+    "twin:p2t_medbn_deepsic__wb_sir0",
+    11
+   ],
+   [
+    "p2t_medbn_deepsic__wb_sir0",
+    12
+   ],
+   [
+    "twin:p2t_medbn_deepsic__wb_sir0",
+    12
+   ],
+   [
+    "p2t_medbn_deepsic__wb_sir0",
+    13
+   ],
+   [
+    "twin:p2t_medbn_deepsic__wb_sir0",
+    13
+   ],
+   [
+    "p2t_medbn_deepsic__wb_sir0",
+    14
+   ],
+   [
+    "twin:p2t_medbn_deepsic__wb_sir0",
+    14
+   ]
   ]
  },
  "estimated_core_minutes": {
@@ -2404,6 +2486,7 @@
   "pool7": 519,
   "pool8": 510,
   "pool9": 462,
-  "pool10": 308
+  "pool10": 308,
+  "pool11": 180
  }
 }
