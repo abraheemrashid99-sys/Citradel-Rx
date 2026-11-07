@@ -130,3 +130,4 @@
 {"shard": "pool5", "tier": 1, "group": "D23", "out": "rev_clean_pool5", "name": "clean_59f668f264", "seed": 14, "ok": true, "seconds": 1.6, "finished": "2026-11-06T23:45:02.918121+00:00"}
 {"shard": "pool5", "tier": 1, "group": "P3deny", "out": "rev_p3_deny", "name": "p3_lmmse_snrdrop__none", "seed": 14, "ok": true, "seconds": 30.5, "finished": "2026-11-06T23:45:26.179207+00:00"}
 {"shard": "pool5", "tier": 1, "group": "B3", "out": "rev2_deny_a1", "name": "b3_lmmse_redraw__a1deny", "seed": 14, "ok": true, "seconds": 213.0, "finished": "2026-11-06T23:47:05.678203+00:00"}
+{"shard": "pool5", "tier": 1, "group": "B5", "out": "rev2_drift_long", "name": "b5_a3star_e0.05__long1000", "seed": 11, "ok": true, "seconds": 11010.7, "finished": "2026-11-07T01:15:27.402232+00:00"}
