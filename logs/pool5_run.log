@@ -142,3 +142,13 @@ pushed results to GitHub (23:42)
 [97 done, ~3 left | 1.6 h, ~0.0 h to go at this pace] t1 D23 clean_59f668f264 s14 OK 0 min  == clean_59f668f264 seed 14: taken over by the nobody (dropped from the plan) machine (configs/claims.json), skipped
 [98 done, ~2 left | 1.6 h, ~0.0 h to go at this pace] t1 P3deny p3_lmmse_snrdrop__none s14 OK 1 min  == p3_lmmse_snrdrop__none seed 14: ser_mean=0.2638 ser_median=0.2498
 [99 done, ~1 left | 1.6 h, ~0.0 h to go at this pace] t1 B3 b3_lmmse_redraw__a1deny s14 OK 4 min  == b3_lmmse_redraw__a1deny seed 14: ser_mean=0.2882 ser_median=0.1680 ser_pre=0.0500 ser_attack=0.5061 ser_post=0.1518
+pushed results to GitHub (00:27)
+pushed results to GitHub (01:12)
+[100 done, ~0 left | 3.1 h, ~0.0 h to go at this pace] t1 B5 b5_a3star_e0.05__long1000 s11 OK 184 min  == b5_a3star_e0.05__long1000 seed 11: ser_mean=0.0166 ser_median=0.0129 ser_pre=0.0234 ser_attack=0.0164 ser_post=0.0163
+paired displacement rev2_drift_long: rc 0
+| attack | SIR | clip kappa | seeds | max D_K in window | design bound 2 kappa_K n(W) | extended structural bound (A2) | max D_anchor |
+|---|---|---|---|---|---|---|---|
+| a3star e=0.05 | 0 | [8.5, 4.5] | 1 | 14.87 | 261.00 | 16.82 | 15.22 |
+
+== pool5 finished: 100 runs, 0 failed, 3.1 h
+pushed results to GitHub (01:15)

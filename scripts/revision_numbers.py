@@ -446,12 +446,20 @@ def baselines() -> None:
     names = ["lmmse", "lmmse_robust", "rollback_allgates", "l2sp_deepsic", "ema_deepsic", "ewc_deepsic", "dd_deepsic",
              "cotta_deepsic", "eata_deepsic", "drift_deepsic", "titans_single", "medbn_deepsic"]
     rows = []
+    def bcell(rx):   # drift detection and median-of-means: the reruns with the tuned optimiser (C5), if there
+        if rx in ("drift_deepsic", "medbn_deepsic"):
+            ct = cell("rev2_p2_tuned", f"p2t_{rx}__wb_sir0", CLEAN_ALL)
+            if ct is not None:
+                return ct
+        return cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL)
+    for rx in ("drift_deepsic", "medbn_deepsic"):   # the untuned first runs, kept for the response letter
+        put_cell("p2u." + rx.replace("_", ""), cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL))
     for rx in names:
-        c = cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL)
+        c = bcell(rx)
         put_cell("p2." + rx.replace("_", ""), c)
         if c is not None:
             rows.append(f"{RXLABEL[rx]} & {c['n']} & {f_ser(c['clean_all'])} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_ser(c['raw'])}\\\\")
-    exs = [cell("rev_p2", f"p2_{rx}__wb_sir0", CLEAN_ALL) for rx in names]
+    exs = [bcell(rx) for rx in names]
     exs = [c for c in exs if c is not None]
     if exs:
         put("p2.exmin", f_sig(min(c["excess"] for c in exs))); put("p2.exmax", f_sig(max(c["excess"] for c in exs)))
@@ -473,11 +481,13 @@ def ablations() -> None:
     if ref is not None:
         ab_seeds = {r["seed"] for r in load("rev_p5_ablate")} or {10, 11}   # the seeds the ablations were run on
         sel = [p for p in ref["pairs"] if p[0]["seed"] in ab_seeds]
-        if sel:
+        cref = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL, seeds=ab_seeds)
+        if sel and cref is not None:
+            put("ab.complete.ci", f_ci(cref["ci"]))
             ex = np.mean([(ser(a)[window(a)[0]:window(a)[1]] - ser(c)[window(a)[0]:window(a)[1]]).mean() for a, c in sel])
             k1 = sum(rejections(a, True)[0] for a, _ in sel); n1 = sum(rejections(a, True)[1] for a, _ in sel)
             k0 = sum(rejections(c, None)[0] for _, c in sel); n0 = sum(rejections(c, None)[1] for _, c in sel)
-            rows.append(f"Complete receiver & {len(sel)} & {f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))} & {f_sig(ex)} & "
+            rows.append(f"Complete receiver & {len(sel)} & {f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))} & {f_sig(ex)} {f_ci(cref['ci'])} & "
                         f"{f_rate((k1, n1))} & {f_rate((k0, n0))}\\\\")
             put("ab.complete.clean", f_ser(np.mean([ser(c)[5:].mean() for _, c in sel]))); put("ab.complete.excess", f_sig(ex))
             put("ab.complete.rej", f_rate((k1, n1))); put("ab.complete.frej", f_rate((k0, n0)))
@@ -504,6 +514,9 @@ def scenarios() -> None:
         spec.append(("rev_p6_qam16", f"p6_{rx}_qam16__sir0", "16-QAM, 20 dB", RXLABEL[rx]))
     spec += [("rev_p6_deploy", "p6_citadel_steps30__sir0", "30 fast steps", "Citadel-Rx"),
              ("rev_p6_deploy", "p6_citadel_last_layer__sir0", "last layer adaptable", "Citadel-Rx")]
+    for rx in ("citadel", "online_deepsic", "lmmse"):   # the unstretched runs made before the profile was changed
+        put_cell("sc.unstr." + rx.replace("_", "") + "8x32", cell("rev2_arrays", f"d4_{rx}_8x32__sir0", CLEAN_ALL))
+        put_cell("sc.unstr." + rx.replace("_", "") + "4x16", cell("rev_p6_arrays", f"p6_{rx}_4x16__sir0", CLEAN_ALL))
     bl = {}
     for folder, name, l1, l2 in spec:
         c = cell(folder, name, CLEAN_ALL)
@@ -541,6 +554,9 @@ def sensitivity() -> None:
         put("sens.cleanmin", f_ser(min(c["clean_all"] for c, _ in allc))); put("sens.cleanmax", f_ser(max(c["clean_all"] for c, _ in allc)))
         cmax, lmax = max(allc, key=lambda cl: cl[0]["frej"][0] / max(1, cl[0]["frej"][1]))
         put("sens.frejmax", f_rate(cmax["frej"])); put("sens.n", str(len(allc)))
+    c1 = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL, seeds={10})
+    if c1 is not None:   # x1: the frozen settings on the same seed
+        put("sens.ref", f_sig(c1["excess"])); put("sens.refclean", f_ser(c1["clean_all"]))
     grid = [cell("rev2_sens_grid", f"grid_crc{m1}_g1{m2}__wb_sir0", CLEAN_ALL) for m1 in ("0.5", "2") for m2 in ("0.5", "2")]
     grid = [c for c in grid if c is not None]
     if grid:   # two settings changed together (corners of CRC slack x G1 slack)
@@ -897,7 +913,7 @@ def campaign2() -> None:
     for d in (35, 75, 150):
         sd = [x["sir_db"] for x in sirs if x["d_att"] == d]
         if sd:
-            put(f"d23.d{d}.sirmed", f"{np.median(sd):+.0f}"); put(f"d23.d{d}.sirmin", f"{min(sd):+.0f}"); put(f"d23.d{d}.sirmax", f"{max(sd):+.0f}")
+            put(f"d23.d{d}.sirmed", f"${np.median(sd):+.0f}$"); put(f"d23.d{d}.sirmin", f"${min(sd):+.0f}$"); put(f"d23.d{d}.sirmax", f"${max(sd):+.0f}$")
         labelled = False
         for rx, l in (("citadel", "Citadel-Rx"), ("online_deepsic", "Online"), ("crc_rollback", "CRC-Rollback"), ("lmmse", "LMMSE")):
             cb = cell("rev2_umi_ldpc_scr", f"d23s_{rx}_d{d}__phys", CLEAN_ALL, metric="bler")
@@ -907,7 +923,7 @@ def campaign2() -> None:
             put_cell(key + "bler", cb)
             if cb is None:
                 continue
-            first = f"{d}\\,m ({np.median(sd):+.0f}\\,dB)" if (not labelled and sd) else ""
+            first = f"{d}\\,m (${np.median(sd):+.0f}$\\,dB)" if (not labelled and sd) else ""
             labelled = True
             rows.append(f"{first} & {l} & {cb['n']} & {f_ser(cb['clean_all'])} & {f_sig(cb['excess'])} {f_ci(cb['ci'])} & "
                         f"{f_sig(cs['excess'])} & {f_rate(cs['rej']) if rx in ('citadel', 'crc_rollback') else '--'}\\\\")
