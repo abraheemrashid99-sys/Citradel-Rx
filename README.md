@@ -83,3 +83,28 @@ python scripts/paper_numbers.py results/
 Every run writes `results/<exp>/<name>_s<seed>_<confighash>.json` with the full
 config, git commit, per-block metrics and gate statistics. `scripts/paper_numbers.py`
 rebuilds all tables and figures from those files and nothing else.
+
+The revised manuscript (`paper/main.tex`) is rebuilt from the records alone:
+
+```
+python scripts/revision_numbers.py          # every number (paper/numbers.tex) and table body (paper/tables/)
+python scripts/fill_response.py              # the response letter, docs/RESPONSE_TO_REVIEWERS.md, from the same numbers
+cd paper && pdflatex main && pdflatex main  # the PDF
+```
+
+Re-running the revision campaigns (CPU only; every run single-threaded, resumable, finished runs
+are skipped; the frozen settings in `configs/revision*_frozen*.json` are read, not re-derived):
+
+```
+pip install -r requirements.txt -r requirements-coded.txt   # Sionna 2.2 for the NR LDPC chain
+python scripts/revision_fast.py --shard laptop --workers 8               # first campaign, MacBook share
+python scripts/revision_fast.py --shard cloud --workers 4                # first campaign, cloud share
+python scripts/revision_fast.py --campaign 6 --shard local --workers 4   # the whole second campaign
+```
+
+To re-derive the second campaign's frozen settings as well, run its calibration and tuning first
+(`--campaign 6 --shard local --tier 0`), then `python scripts/freeze_rev2.py`, then the command
+above. The 38.901 UMi drops are in `resources/umi/` (`python scripts/make_umi_channels.py`
+regenerates them). How the second campaign was actually split over machines is in
+`docs/REVISION_PLAN.md`; the analysis pairs every attacked run with the clean twin from the machine
+that ran it.

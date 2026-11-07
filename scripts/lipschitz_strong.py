@@ -76,7 +76,7 @@ def main():
     ap.add_argument("--frozen", action="store_true", help="measure the configuration frozen by the calibration phase")
     args = ap.parse_args()
     if args.frozen:
-        fz = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "revision_frozen.json")))
+        fz = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "revision_frozen_citadel.json")))
         args.set = list(fz["citadel_overrides"]) + list(args.set)
     res = [run_family(f, args) for f in args.families]
     json.dump({"args": vars(args), "results": res}, open(args.out, "w"), indent=1)

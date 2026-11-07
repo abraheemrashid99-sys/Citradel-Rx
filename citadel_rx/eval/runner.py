@@ -151,6 +151,12 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         blk = frames.make(b)
         y_p = channel.transmit(blk.s_pilot, st)
         y_d = channel.transmit(blk.s_data, st)
+        if cfg.channel.model == "umi" and cfg.attack.type != "none":   # UMi scene: the attacker's channel and SIR
+            G_all, sir_geo, g_rms = channel.umi_attacker(cfg.attack.att_dist)
+            st.G = G_all[b]
+            if cfg.attack.sir_from_geometry:
+                attacker.sir_override, attacker.g_rms = sir_geo, g_rms
+        attacker.block_state = st
         attacker.observe_clean(b, y_p, blk.idx_pilot, y_d, frames)
         tb = time.time()
         y_p_adv, y_d_adv, astats = attacker.craft(b, y_p, blk.idx_pilot, y_d, receiver, noise_var,
@@ -171,7 +177,9 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
         m.update({k: v for k, v in out.stats.items() if not isinstance(v, (np.ndarray,))})
         blocks.append(m)
         if cfg.run.save_params and hasattr(receiver, "level_snapshot"):
-            level_snaps.append({"block": b, "levels": [{k: v.tolist() for k, v in receiver.level_snapshot(k).items()}
+            # float16 arrays (the precision of the saved file): Python lists took ~8x the memory and,
+            # over hundreds of blocks and several parallel runs, pushed the machine into swap
+            level_snaps.append({"block": b, "levels": [{k: np.asarray(v, dtype=np.float16) for k, v in receiver.level_snapshot(k).items()}
                                                       for k in range(receiver.K)]})
         if verbose and (b % cfg.run.log_every == 0 or b == cfg.frame.n_blocks - 1):
             extra = ""
@@ -188,6 +196,12 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
     summary = summarise(blocks, window)
     if window is not None:
         summary["attack_window"] = [int(window[0]), int(window[1])]
+    if getattr(attacker, "sir_override", None) is not None:
+        summary["sir_geometry_db"] = attacker.sir_override
+    if cfg.channel.model == "umi":
+        summary["umi_drop"] = getattr(channel, "umi_meta", {})   # t_block of the 38.901 drop file used
+    if getattr(cfg.frame, "coding", "crc") == "ldpc":
+        summary["ldpc_scrambled"] = bool(getattr(frames.framer, "scrambled", False))
     summary["pretrain_time_s"] = pretrain_time
     summary["pretrain_cached"] = pretrain_cached
     summary["mean_t_rx_s"] = float(np.mean([b["t_rx"] for b in blocks]))
@@ -195,6 +209,8 @@ def run_experiment(cfg: Config, seed: Optional[int] = None, save: bool = True, v
     record = {"name": cfg.run.name, "seed": seed, "config": cfg.to_dict(), "config_hash": cfg.hash(),
               "receiver": getattr(receiver, "name", cfg.receiver.type), "summary": summary, "blocks": blocks,
               "device": str(device)}
+    if os.environ.get("CITADEL_MACHINE"):   # which machine ran it: a run and its clean twin pair on one machine
+        record["machine"] = os.environ["CITADEL_MACHINE"]
     if level_snaps:
         # displacement curves go into the JSON; the raw snapshots into a compressed side file
         K = len(level_snaps[0]["levels"])

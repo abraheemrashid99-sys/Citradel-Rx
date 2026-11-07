@@ -37,6 +37,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 
 def match_key(cfg):
+    try:   # options added to the code after a record was written: at their defaults
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from citadel_rx.config import Config
+        cfg = Config.from_dict(cfg).to_dict()
+    except Exception:
+        pass
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 
@@ -100,24 +106,24 @@ def extended_bound(adv, cln, D_prev, eta_K, K, w0, w1):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("folder")
-    ap.add_argument("--clean", default=None, help="folder of the clean twins (default: same folder)")
+    ap.add_argument("--clean", nargs="*", default=None, help="folder(s) of the clean twins (default: same folder)")
     ap.add_argument("--out", default="docs/figures/fig_paired_disp")
     args = ap.parse_args()
     recs = {fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.folder, "*.json"))}
-    if args.clean:
-        recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(args.clean, "*.json"))})
+    for folder in args.clean or []:   # several machines' clean folders: a record is paired with the twin of its own machine
+        recs.update({fn: json.load(open(fn)) for fn in glob.glob(os.path.join(folder, "*.json"))})
     # clean twins; two clean runs with the same settings (one saved with snapshots, one without) are
     # the same deterministic run, so prefer the one whose snapshot file exists
     clean = {}
     for fn, r in sorted(recs.items(), key=lambda kv: os.path.exists(kv[0].replace(".json", ".levels.npz"))):
         if r["config"]["attack"]["type"] == "none":
-            clean[(match_key(r["config"]), r["seed"])] = fn
+            clean[(match_key(r["config"]), r["seed"], r.get("machine"))] = fn
     results = []
     for fn, r in recs.items():
         c = r["config"]
         if c["attack"]["type"] == "none" or c["receiver"]["type"] != "citadel":
             continue
-        cfn = clean.get((match_key(c), r["seed"]))
+        cfn = clean.get((match_key(c), r["seed"], r.get("machine")))
         if cfn is None:
             continue
         la, lc = load_levels(fn), load_levels(cfn)
@@ -184,8 +190,8 @@ def main():
             ax.fill_between(np.arange(n_blocks), D[:, k].min(0), D[:, k].max(0), color=col, alpha=0.15, lw=0)
         ax.plot(np.arange(n_blocks), A.mean(0), color="#D55E00", lw=1.1, ls="--", label="anchor")
         if design is not None:
-            ax.plot(w0 + W, design, color="k", lw=0.9, ls=":", label=r"design bound $2\kappa_K n(W)$")
-        ax.plot(w0 + W, ext, color="0.4", lw=0.9, ls="-.", label="extended bound (A2)")
+            ax.plot(w0 + W, design, color="k", lw=0.9, ls=":", label=r"design bound on level $K$, $2\kappa_K n(W)$")
+        ax.plot(w0 + W, ext, color="0.4", lw=0.9, ls="-.", label=r"structural bound on level $K$")
         ax.set_xlabel("block"); ax.set_ylabel(r"paired displacement $\|\theta_{\rm adv}-\theta_{\rm clean}\|$")
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, fontsize=6.5)
         fig.subplots_adjust(left=0.17, right=0.98, top=0.97, bottom=0.42)

@@ -70,6 +70,34 @@ def find_existing(out_dir: str, name: str, seed: int, probe) -> str:
     return ""
 
 
+def claimed_elsewhere(name: str, seed: int) -> str:
+    """configs/claims.json lists runs that other machines have taken over (the helper cloud machine and
+    the pool machines of the second campaign); until a claim expires, the other machines skip those
+    runs, then run whatever is still missing. "dropped" runs are left out of the plan for everyone."""
+    import datetime as dt
+    import json
+    me = os.environ.get("CITADEL_MACHINE", "")
+    fn = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "configs", "claims.json")
+    if not me or not os.path.exists(fn):
+        return ""
+    try:
+        c = json.load(open(fn))
+        if seed in c.get("dropped", {}).get(name, []):
+            return "nobody (dropped from the plan)"
+        owners = dict(c.get("owners", {}))
+        if c.get("owner"):
+            owners.setdefault(c["owner"], {"until": c["until"], "runs": c.get("runs", {})})
+        now = dt.datetime.now(dt.timezone.utc)
+        for who, o in owners.items():
+            if who == me or now >= dt.datetime.fromisoformat(o["until"]):
+                continue
+            if seed in o.get("runs", {}).get(name, []):
+                return who
+        return ""
+    except Exception:
+        return ""
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("config", nargs="?", default=None)
@@ -106,6 +134,10 @@ def main() -> None:
         existing = find_existing(cfg.run.out_dir, cfg.run.name, s, probe)
         if existing and not args.force and not args.no_save:
             print(f"== {cfg.run.name} seed {s}: exists, skipped ({existing})")
+            continue
+        owner = claimed_elsewhere(cfg.run.name, s)
+        if owner and not args.force:
+            print(f"== {cfg.run.name} seed {s}: taken over by the {owner} machine (configs/claims.json), skipped")
             continue
         rec = run_experiment(cfg, seed=s, save=not args.no_save, verbose=not args.quiet)
         summ = rec["summary"]

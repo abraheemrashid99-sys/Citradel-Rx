@@ -46,6 +46,26 @@ Psychol. Rev. 102(3):419-457, 1995; Kumaran, Hassabis, McClelland, Trends Cogn. 
 Huber, Ann. Math. Statist. 35(1):73-101, 1964; 3GPP TR 38.901 V19.5.0 Table 7.4.1-1
 (UMi-Street Canyon LOS: PL1 = 32.4 + 21 log10(d3D) + 20 log10(fc) below the breakpoint).
 
+## Added in the second revision campaign
+
+3GPP TS 38.212 "NR; Multiplexing and channel coding", V19.2.0 (2025-12): Sec. 5.1 CRC calculation,
+Sec. 5.3.2 low density parity check coding (table of contents of the 3GPP draft record). The code
+blocks of the coded scene are built by Sionna PHY 2.2 (`LDPC5GEncoder`, `CRCEncoder("CRC24A")`).
+
+Sionna: cited as the software record its authors ask for, copied from the citation block of the
+installed package's metadata (`sionna-no-rt` 2.2.0, `importlib.metadata ... METADATA`): `@software{sionna,
+title = {Sionna}, author = {Hoydis, Jakob and Cammerer, Sebastian and {Ait Aoudia}, Fayçal and
+Nimier-David, Merlin and Maggi, Lorenzo and Marcus, Guillermo and Vem, Avinash and Keller, Alexander},
+note = {https://nvlabs.github.io/sionna/}, year = {2022}, version = {2.2.0}}`. The UMi drops use
+`sionna.phy.channel.tr38901.UMi` of the same package.
+
+3GPP TS 38.211 "NR; Physical channels and modulation", Sec. 5.2.1 (length-31 Gold sequence,
+N_c = 1600) and Sec. 6.3.1.1 (PUSCH scrambling, c_init = n_RNTI 2^15 + n_ID): the section numbers and
+the initialisation are those of Sionna's implementation (`sionna/phy/nr/utils.py::generate_prng_seq`,
+`sionna/phy/fec/scrambling.py::TB5GScrambler`), which the code uses. The version is not given in the
+bibliography: 3gpp.org and etsi.org were not reachable from the revision session; check it once by eye
+before submission.
+
 ## Items to check once by eye before submission
 
 * TR 38.901 V19.5.0, Table 7.4.1-1: the extracted PDF text was partly garbled; the coefficients

@@ -37,6 +37,7 @@ class ChannelState:
     H: np.ndarray            # (n_ant, n_user)
     noise_var: float         # per real dimension total (reference convention)
     rho: float               # block-to-block correlation (prior for G3)
+    G: Optional[np.ndarray] = None   # (n_ant, 1) attacker channel of the block (UMi scene, audit D3)
 
 
 class BlockFadingChannel:
@@ -56,7 +57,7 @@ class BlockFadingChannel:
 
     # ---- channel matrices --------------------------------------------
     def _sed_mean(self) -> np.ndarray:
-        rows = np.arange(self.n_ant)[:, None]
+        rows = np.arange(self.n_ant)[:, None] * (self.n_user / self.n_ant if getattr(self.cfg, "sed_stretch", False) else 1.0)
         cols = np.arange(self.n_user)[None, :]
         return np.exp(-np.abs(rows - cols)).astype(np.float64)
 
@@ -97,9 +98,41 @@ class BlockFadingChannel:
         self._H_prev = H
         return H
 
+    def _umi(self, b: int):
+        if not hasattr(self, "_umi_data"):
+            fn = os.path.join(os.path.dirname(self.cost_dir), "umi", f"umi_N{self.n_ant}_U{self.n_user}_s{self.cfg.seed}.npz")
+            if not os.path.exists(fn):
+                raise FileNotFoundError(f"{fn}: run scripts/make_umi_channels.py first")
+            z = np.load(fn)
+            self._umi_data = z["H"]
+            self._umi_att = {k[3:]: z[k] for k in z.files if k.startswith("G_d")}      # distance -> (T, N, 1)
+            self._umi_sir = {k[5:]: float(z[k]) for k in z.files if k.startswith("sir_d")}
+            try:   # t_block etc.: recorded with every run (scripts/make_umi_channels.py)
+                import json
+                self.umi_meta = {k: v for k, v in json.loads(str(z["meta"])).items() if k in ("t_block", "fc", "speed_kmh", "target_db")}
+            except Exception:
+                self.umi_meta = {}
+        H = self._umi_data
+        if b >= H.shape[0]:
+            raise ValueError("more blocks than the UMi drop holds")
+        return H[b], None
+
+    def umi_attacker(self, dist: float):
+        """(per-block attacker channels (T, N, 1), geometric SIR in dB, rms norm of G) at this distance."""
+        if not hasattr(self, "_umi_att"):
+            self._umi(0)
+        key = f"{dist:g}"
+        if key not in self._umi_att:
+            raise ValueError(f"no attacker at {dist:g} m in this drop (have {sorted(self._umi_att)})")
+        G = self._umi_att[key]
+        return G, self._umi_sir[key], float(np.sqrt(np.mean(np.sum(np.abs(G) ** 2, axis=(1, 2)))))
+
     def state(self, b: int) -> ChannelState:
+        G = None
         if self.cfg.model == "synthetic":
             H = self._synthetic(b)
+        elif self.cfg.model == "umi":
+            H, G = self._umi(b)
         elif self.cfg.model == "cost2100":
             H = self._cost2100(b)
         else:
@@ -116,7 +149,7 @@ class BlockFadingChannel:
             elif self.cfg.abrupt_type == "snr_drop":
                 snr = snr - self.cfg.abrupt_snr_drop_db
         noise_var = 10 ** (-0.1 * snr)
-        return ChannelState(H=H, noise_var=noise_var, rho=self.rho)
+        return ChannelState(H=H, noise_var=noise_var, rho=self.rho, G=G)
 
     # ---- transmission -------------------------------------------------
     def transmit(self, s: np.ndarray, st: ChannelState, rng: Optional[np.random.Generator] = None) -> np.ndarray:
