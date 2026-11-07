@@ -1165,7 +1165,9 @@ Setting & $\times0.5$ & $\times0.75$ & $\times1.5$ & $\times2$ & \thead{Max fals
 Multiplying any one of eight settings by 0.5, 0.75, 1.5 or 2 (Table~\ref{tab:sens}, seed 10) keeps the clean SER
 between \val{sens.cleanmin} and \val{sens.cleanmax}, the excess between \val{sens.exmin} and
 \val{sens.exmax}, and the clean false rejection at or below \val{sens.frejmax}; no setting of the
-gates or of the memory is critical within a factor of two. The test uses one seed and four
+gates or of the memory is critical within a factor of two. Changing the CRC slack and the G1 slack
+together, by 0.5 or 2 each (the \val{sens.grid.n} corners), gives \val{sens.grid.exmin} to \val{sens.grid.exmax}
+at a false rejection of at most \val{sens.grid.frejmax}. The test uses one seed and four
 multipliers per setting, so it shows the absence of a cliff near the chosen values, not an optimum.
 
 \section{Discussion}\label{sec:discussion}
