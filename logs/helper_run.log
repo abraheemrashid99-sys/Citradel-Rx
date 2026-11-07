@@ -327,3 +327,4 @@ pushed results to GitHub (23:53)
 [315 done, ~1 left | 8.3 h, ~0.0 h to go at this pace] t3 P7grid grid_crc2_g10.5__wb_sir0 s10 OK 9 min  == grid_crc2_g10.5__wb_sir0 seed 10: ser_mean=0.0203 ser_median=0.0137 ser_pre=0.0234 ser_attack=0.0249 ser_post=0.0117
 [316 done, ~0 left | 8.4 h, ~0.0 h to go at this pace] t3 P7grid clean_085f370f5d s10 OK 9 min  == clean_085f370f5d seed 10: ser_mean=0.0149 ser_median=0.0113
 == helper finished: 316 runs, 0 failed, 8.4 h
+pushed results to GitHub (23:58)
