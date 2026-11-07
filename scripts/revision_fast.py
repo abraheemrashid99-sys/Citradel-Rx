@@ -420,6 +420,11 @@ def rev2x_jobs() -> List[Job]:
         jobs += JT("cloudz", 1, "D8", "rev2_joint", f"d8_{rx}_joint__wb_sir0", T5,
                    ([*rx_ov("citadel")] if rx == "citadel" else [f"receiver.type={rx}", "@JOINT"]) + ["receiver.backbone=joint"]
                    + RND + ["attack.type=a1", "attack.sir_db=0"])
+    # ===== drift detection and median-of-means with the tuned optimiser of online DeepSIC (C5; the
+    # P2 runs used the receivers' reference 300 epochs / 5e-3 because ONLINE_BASED omitted them) ==
+    for rx in ("drift_deepsic", "medbn_deepsic"):
+        jobs += JT("cloudw", 1, "P2t", "rev2_p2_tuned", f"p2t_{rx}__wb_sir0", T5,
+                   [f"receiver.type={rx}", "@BASE:online_deepsic"] + RND + a1(0))
     # ===== stretched SED profile for the larger arrays (audit D4; shard cloudw, run by a pool machine) ==
     for rx in ("citadel", "online_deepsic", "lmmse"):
         jobs += JT("cloudw", 1, "D4s", "rev2_arrays_stretch", f"d4s_{rx}_8x32s__sir0", T5,
