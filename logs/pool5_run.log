@@ -151,3 +151,4 @@ paired displacement rev2_drift_long: rc 0
 | a3star e=0.05 | 0 | [8.5, 4.5] | 1 | 14.87 | 261.00 | 16.82 | 15.22 |
 
 == pool5 finished: 100 runs, 0 failed, 3.1 h
+pushed results to GitHub (01:15)
