@@ -34,7 +34,7 @@ NBOOT = 4000
 RXLABEL = {"citadel": "Citadel-Rx", "online_deepsic": "Online DeepSIC", "meta_deepsic": "Meta-DeepSIC",
            "crc_rollback": "CRC-Rollback", "online_select": "Online + CRC selection", "lmmse": "LMMSE",
            "lmmse_robust": "Robust LMMSE (Huber)", "rollback_allgates": "Rollback, three gates",
-           "l2sp_deepsic": "L2-SP", "ema_deepsic": "EMA teacher", "ewc_deepsic": "EWC", "dd_deepsic": "CRC-verified DD",
+           "l2sp_deepsic": "L2-SP, weight 0.01", "ema_deepsic": "EMA teacher", "ewc_deepsic": "EWC", "dd_deepsic": "CRC-verified DD",
            "cotta_deepsic": "CoTTA-style", "eata_deepsic": "EATA-style", "drift_deepsic": "Drift detection",
            "titans_single": "Single memory (Titans)", "medbn_deepsic": "Median-of-means gradient"}
 
@@ -557,6 +557,7 @@ def sensitivity() -> None:
     c1 = cell("rev_p1", "p1_citadel__wb_sir0", CLEAN_ALL, seeds={10})
     if c1 is not None:   # x1: the frozen settings on the same seed
         put("sens.ref", f_sig(c1["excess"])); put("sens.refclean", f_ser(c1["clean_all"]))
+        put("sens.reffrejk", f"{c1['frej'][0]}/{c1['frej'][1]}")
     grid = [cell("rev2_sens_grid", f"grid_crc{m1}_g1{m2}__wb_sir0", CLEAN_ALL) for m1 in ("0.5", "2") for m2 in ("0.5", "2")]
     grid = [c for c in grid if c is not None]
     if grid:   # two settings changed together (corners of CRC slack x G1 slack)

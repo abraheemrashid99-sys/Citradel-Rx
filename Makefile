@@ -20,6 +20,8 @@ report:
 paper:
 	$(PY) scripts/revision_numbers.py
 	$(PY) scripts/revision_figures.py
+	$(PY) scripts/paired_disp.py results/rev_p4_paired --clean results/rev_clean_cloud $(wildcard results/rev_clean_pool*) --out docs/figures/fig_rev_p4_paired
+	$(PY) scripts/fill_response.py
 	cd paper && pdflatex -interaction=nonstopmode main.tex >/dev/null && pdflatex -interaction=nonstopmode main.tex | tail -2
 
 test:

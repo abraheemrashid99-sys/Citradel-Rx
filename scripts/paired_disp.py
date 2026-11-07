@@ -190,8 +190,8 @@ def main():
             ax.fill_between(np.arange(n_blocks), D[:, k].min(0), D[:, k].max(0), color=col, alpha=0.15, lw=0)
         ax.plot(np.arange(n_blocks), A.mean(0), color="#D55E00", lw=1.1, ls="--", label="anchor")
         if design is not None:
-            ax.plot(w0 + W, design, color="k", lw=0.9, ls=":", label=r"design bound $2\kappa_K n(W)$")
-        ax.plot(w0 + W, ext, color="0.4", lw=0.9, ls="-.", label="extended bound (A2)")
+            ax.plot(w0 + W, design, color="k", lw=0.9, ls=":", label=r"design bound on level $K$, $2\kappa_K n(W)$")
+        ax.plot(w0 + W, ext, color="0.4", lw=0.9, ls="-.", label=r"structural bound on level $K$")
         ax.set_xlabel("block"); ax.set_ylabel(r"paired displacement $\|\theta_{\rm adv}-\theta_{\rm clean}\|$")
         ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.28), ncol=2, fontsize=6.5)
         fig.subplots_adjust(left=0.17, right=0.98, top=0.97, bottom=0.42)

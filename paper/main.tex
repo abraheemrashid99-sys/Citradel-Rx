@@ -46,27 +46,27 @@
 
 \author{Abraheem~Rashid%
 \thanks{A. Rashid is with the Department of Computer Science, Brunel University London, London, U.K. (e-mail: 2546393@brunel.ac.uk).}%
-\thanks{Code, configuration files, every run record, the statistics and the scripts that regenerate every table, figure and number of this paper are available at \url{https://github.com/abraheemrashid99-sys/Citradel-Rx}; one command re-runs the campaign and one rebuilds the paper (Section~\ref{sec:setup}).}}
+\thanks{Code, configuration files, every run record, the statistics and the scripts that regenerate every table, figure and number of this paper are available at \url{https://github.com/abraheemrashid99-sys/Citradel-Rx}; three commands re-run the two campaigns and one (\texttt{make paper}) rebuilds every number, table and figure and the paper (Section~\ref{sec:setup}).}}
 
 \markboth{IEEE Transactions on Wireless Communications}{Rashid: Memory Is the Defence}
 \maketitle
 
 \begin{abstract}
-Neural receivers that learn at test time adapt to the channel from the pilots of every block, so
-the pilot stream is a training set that an adversary can write to. Such a receiver resists pilot
+Neural receivers that learn at test time train on the pilots of every block, a training set an
+adversary can write to. Such a receiver resists pilot
 poisoning if it consolidates into persistent memory only updates that a label-free physical check
-verifies against that memory, not against a reference the attacker also reaches. Citadel-Rx realises the
-principle in a DeepSIC receiver with a fast level fitted on every block and two slow levels
+verifies against that memory, not only against references the attacker also reaches. Citadel-Rx realises the
+principle in a DeepSIC receiver with a fast level fitted per block and two slow levels
 updated through a gated, clipped average of the faster states; the clip bounds how far any
-attacker can move the slowest level. A receiver with the same CRC test and rollback but a single
-memory fails: its reference, LMMSE on the poisoned pilots, degrades with the attack. On ten held-out seeds, with settings fixed on
-calibration seeds, white-box poisoning at 0\,dB signal-to-interference ratio raises the symbol
+attacker can move the slowest level per consolidation. With a single memory, a CRC test with
+rollback fails, as do the gates of Citadel-Rx: the only reference, LMMSE on the poisoned pilots,
+degrades with the attack. On ten held-out seeds, white-box poisoning at 0\,dB signal-to-interference ratio raises the symbol
 error rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its clean run, against
 \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC, with \val{p1.citadel.wb0.rejpct}\% of
 the poisoned blocks rejected at a \val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks
-built against the gates leave this excess unchanged within its intervals, and the ordering holds with a second network
-backbone and with eight users and 32 antennas. An attack that also degrades the references raises
-the excess, and the receiver fails where its network is worse than LMMSE: at 16-QAM, and in an NR
+adapted to the gates or their feedback leave this excess unchanged within its intervals, and the ordering holds with a second network
+backbone and with eight users and 32 antennas. Attacks that also degrade the references or coincide
+with a legitimate channel change raise the excess, and the receiver fails where its network passes far fewer CRCs than LMMSE on clean blocks: at 16-QAM, and in an NR
 LDPC link over 3GPP urban-micro channels, whose rotating phases the networks do not track.
 \end{abstract}
 
@@ -102,10 +102,11 @@ depend on each other. The simplest receiver with a check and a memory, online De
 test and rollback to its last accepted weights, fails: its only reference is LMMSE on the same
 poisoned pilots, which the attack degrades together with the update, so the first poisoned update
 passes the relative test, becomes the state the receiver rolls back to, and every later update
-starts from it (Section~\ref{sec:c1}). Citadel-Rx keeps memory at three rates, a fast level that
+starts from it (Section~\ref{sec:c1}); Citadel-Rx itself, with its gates and a single memory, fails in
+the same way (Section~\ref{sec:ablate}). Citadel-Rx keeps memory at three rates, a fast level that
 fits every block and two slow levels that change only through a gated, clipped average of the
-faster states, and its gates compare the fast level with a detector built on the slow memory,
-which the pilots of the block do not reach. Multi-rate memory is one realisation of the principle;
+faster states, and its gates compare the fast level with the better of LMMSE on the pilots of the
+block and a detector built on the slow memory, which those pilots do not reach. Multi-rate memory is one realisation of the principle;
 the ablation shows which of its parts are necessary.
 
 \begin{table}[t]
@@ -155,26 +156,38 @@ The contributions are as follows.
 \item \textbf{The principle and a receiver that realises it} (Section~\ref{sec:citadel}): gated,
 clipped consolidation into two slow levels, a fallback that detects a rejected block with the
 slow memory, and per-sub-block CRC selection among the fast, slow and LMMSE decisions; the
-ablation identifies the slow levels, the fallback and a decision-level gate as necessary, and
+ablation identifies a slow level (without one the excess SER is \val{ab.K1.excess}, with one
+\val{ab.K2.excess} against \val{ab.complete.excess} with two), the fallback and a decision-level gate
+as necessary, and
 attributes most of the clean-SER gain to the CRC selection.
 \item \textbf{Retention bounds for the algorithm as implemented} (Section~\ref{sec:theory}): a
 design bound, with no measured quantity, on the paired displacement of the slowest level under
 any attacker, and a structural bound for unequal gate verdicts computed from the paired
 trajectories. A first-version error in the consolidation rule, which broke the convexity the
 bounds rely on, is corrected.
-\item \textbf{Relative physics gates with a derived CRC slack} (Section~\ref{sec:gates}): three
-label-free tests whose statistics are ratios against a model-based reference on the same block,
-and a CRC threshold derived from the pass-fraction statistics, which adapts to the block length.
+\item \textbf{Relative physics gates with a CRC design rule} (Section~\ref{sec:gates}): three
+label-free ratio tests, of the model residual and the CRC pass fraction of the fast level against the better of
+LMMSE and the anchor detector on the same block and of the channel innovation against its running
+level,
+and a CRC threshold set by a target excess symbol-error probability over that reference (the
+relative slack with the first-version floor $2\cdot10^{-3}$, chosen by calibration; a slack derived
+from the pass-fraction statistics, which follows the block length, was not selected,
+Table~\ref{tab:cal}).
 \item \textbf{An evaluation built to be hard to pass} (Sections~\ref{sec:setup}--\ref{sec:results}):
-tuned baselines, among them CRC-Rollback, anchored, decision-directed and EATA- and CoTTA-style
-receivers; attacks built against the defence (soft gates, deep unrolling, restarts, expectation
-over noise, joint pilot and data poisoning of the references, denial of adaptation, optimised slow
-drift, a physical attacker with one to four antennas, a grey-box surrogate and a query attacker);
+baselines, among them CRC-Rollback, anchored, decision-directed and EATA- and CoTTA-style
+receivers, on the optimiser setting tuned for online DeepSIC and with their own settings at default
+values, except the L2-SP weight, which is swept; attacks built against the defence or its feedback (soft gates, deep unrolling, restarts,
+expectation over noise, joint pilot and data poisoning of the references, denial of adaptation,
+optimised slow drift, a grey-box surrogate and a query attacker) and a physical attacker with one to
+four antennas;
 an NR LDPC link over 3GPP urban-micro drops with the attacker placed in the scene, a second network
-backbone, eight users with 32 antennas and 2000-block horizons; settings fixed on calibration seeds
-by rules stated in advance and results on held-out seeds; randomised attack windows; the excess SER
+backbone, eight users with 32 antennas and 2000 clean blocks; settings fixed on calibration seeds
+by rules stated in advance, with one exception stated in Table~\ref{tab:hyper} (the abstain
+statistic), and results on held-out seeds; randomised attack windows; the excess SER
 over a matched clean run with block-bootstrap intervals and seed-level tests; and the failures this
-exposes (16-QAM, the coded scene, the abstain state), each reported with its mechanism.
+exposes (reference degradation through the data, denial of adaptation during a channel change,
+per-user gating against a one-user attack, 16-QAM, the coded scene, the abstain state), each
+reported with its mechanism.
 \end{enumerate}
 
 Section~\ref{sec:model} gives the system and threat model, Section~\ref{sec:citadel} the receiver,
@@ -188,10 +201,10 @@ $U$ single-antenna users transmit QPSK symbols to a base station with $N$ antenn
 divided into coherence blocks $b=1,2,\dots$; within block $b$ the channel $\bm H_b\in\mathbb{C}^{N\times U}$
 is constant and the received vector at symbol slot $n$ is
 \begin{equation}\label{eq:channel}
-\bm y_n = f\!\left(\bm H_b \bm s_n\right)+\bm w_n,\qquad \bm w_n\sim\mathcal{CN}(\bm 0,\sigma^2\bm I),
+\bm y_n = f\!\left(\bm H_b \bm s_n+\bm w_n\right),\qquad \bm w_n\sim\mathcal{CN}(\bm 0,\sigma^2\bm I),
 \end{equation}
-with $f$ the identity or the per-antenna power-amplifier nonlinearity $f(x)=\tanh(0.5x)$
-\cite{raviv2023}. Each block carries $N_p$ pilot symbols per user, known to the receiver, and $N_d$
+with unit-energy symbols, $\sigma^2=\tfrac12\,10^{-\mathrm{SNR}/10}$, and $f$ the identity or the
+entrywise nonlinearity $f(x)=\tanh(0.5x)$ of \cite{raviv2023}, applied to the noisy received samples. Each block carries $N_p$ pilot symbols per user, known to the receiver, and $N_d$
 data symbols framed in CRC-protected sub-blocks of $L$ symbols per user. The main channel is the
 spatial exponential decay (SED) model of \cite{shlezinger2021}, $[\bm H_b]_{ij}=c_{j,b}\,e^{-|i-j|}$,
 with a per-user cosine fading gain $c_{j,b}$; Table~\ref{tab:setup} lists the other families.
@@ -207,10 +220,10 @@ $N_p,N_d,L,n$ & pilot and data symbols per user and block; symbols per CRC sub-b
 $\theta^{(k)},K,C_k$ & parameters of memory level $k$; number of levels; period of level $k$ in blocks ($C_1=1$)\\
 $\eta_b,\eta^{(k)}$ & fast step size of block $b$; consolidation rate of level $k\ge2$\\
 $a_b,\lambda,\delta$ & anchor (slow projection); proximal weight; delta-rule decay\\
-$\gamma_b,\tau_i,\omega$ & gate verdict of block $b$; threshold of gate G$i$; soft-step width\\
+$\gamma_b,\tau_i,\omega,z_{\rm a}$ & gate verdict of block $b$; threshold of gate G$i$; soft-step width; abstain threshold\\
 $F_{\rm nn},F_{\rm ref},p_{\rm ref}$ & CRC pass fractions of the fast level and the reference; reference symbol-error probability\\
-$\rho,z,\kappa_k$ & relative CRC slack; statistical margin; consolidation clip of level $k$\\
-$\bm E_b,\epsilon_b,q$ & pilot perturbation; its energy budget; fraction of attacked blocks in the window\\
+$\rho,\xi,z,\kappa_k$ & relative CRC slack; excess symbol-error probability tolerated by G2; margin of the derived slack; consolidation clip of level $k$\\
+$\bm E_b,\epsilon_b$ & pilot perturbation; its budget\\
 $W,n(W)$ & window length in blocks; number of level-$K$ consolidations in it\\
 $d_b,D_k(b)$ & paired displacement of the fast level and of level $k$ (attacked minus clean run)\\
 \bottomrule
@@ -226,7 +239,7 @@ $\theta_{b-1}$; Meta-DeepSIC starts from an initialisation meta-learned by MAML 
 buffer of the last 20 pilot blocks, refreshed every five blocks \cite{raviv2023}.
 
 \subsection{Threat Model}
-The adversary adds $\bm E_b$ to the received pilot matrix $\bm Y_b\in\mathbb{C}^{N\times N_p}$ of an
+The adversary adds $\bm E_b$ to the received pilot matrix $\bm Y_b\in\mathbb{C}^{N_p\times N}$ (one row per pilot slot) of an
 attacked block, with $\norm{\bm E_b}_F\le\epsilon_b$ set by a signal-to-interference ratio (SIR),
 \begin{equation}\label{eq:budget}
 \epsilon_b=\norm{\bm R_b}_F\,10^{-\mathrm{SIR}/20},
@@ -234,32 +247,39 @@ attacked block, with $\norm{\bm E_b}_F\le\epsilon_b$ set by a signal-to-interfer
 where $\bm R_b=\bm Y_b$ (received energy, noise included, as in \cite{wu2024}) or $\bm R_b=\bm
 S_b\bm H_b^{\!\top}$ (users' signal energy only); both are reported. At SIR $0$\,dB the attacker's
 received pilot energy equals that of all $U$ users together (plus the noise, with the first budget).
-As an order of magnitude, with a common path-loss exponent $\alpha$, users at a common distance and
-equal transmit powers, the attacker must be $U^{1/\alpha}$ times closer to the base station than the
-users: about $1.9$ times for $U=4$ and the line-of-sight urban-micro exponent $\alpha=2.1$ below the
+As an order of magnitude, with a common path-loss exponent $\beta$, users at a common distance and
+equal transmit powers, the attacker must be $U^{1/\beta}$ times closer to the base station than the
+users: about $1.9$ times for $U=4$ and the line-of-sight urban-micro exponent $\beta=2.1$ below the
 breakpoint distance \cite{tr38901}. The attacker is synchronised to the frame and knows the pilot sequence, which is
 standardised. The attackers are:
 \begin{itemize}
 \item \emph{A1, availability} \cite{wu2024}: projected gradient ascent \cite{madry2018} on the
-post-adaptation data loss through an unrolled copy of the adaptation map.
+post-adaptation cross-entropy of the clean received pilots, which share the block's channel and stand
+in for the data, through a differentiable surrogate of the adaptation map: plain gradient steps per
+stage (two of size $5\cdot10^{-3}$ unless stated) from the victim's current weights; Adam, the delta
+rule and the proximal pull are not unrolled.
 \item \emph{A1 built against the defence}: deeper unrolling (10, 50 steps), more steps and random
 restarts, the soft-gate objective (the data loss of the fast level, which the receiver emits if it
 accepts the block, times a differentiable surrogate of the probability that its gates accept, plus a
-reward for acceptance; the surrogate uses the defence's exact thresholds and running statistics with
-the hard steps replaced by soft ones, as in BPDA \cite{athalye2018obfuscated}), and an expectation over
+reward for acceptance; the surrogate models G1, against LMMSE only, and G2, not G3, with the
+defence's running statistics, untightened thresholds and soft-step widths, a soft CRC pass rate and
+posterior-mean symbols, as in BPDA \cite{athalye2018obfuscated}), and an expectation over
 noise draws (EOT \cite{athalye2018eot}).
-\item \emph{A4, reference degradation}: a fraction $\alpha$ of the energy on the pilots and
-$1-\alpha$ on the data, optimised jointly so that the model-based references the gates compare
-against degrade with the fast level.
+\item \emph{A2, targeted}: A1 with the objective replaced by the post-adaptation loss of one user
+(user 1) minus that of the others; the perturbation covers the whole received pilot matrix.
+\item \emph{A4, reference degradation}: a fraction $\alpha$ of the per-symbol power at the SIR on the
+pilots and $1-\alpha$ on the data, each budget set by \eqref{eq:budget} on its own part (total energy
+about $\alpha+(1-\alpha)N_d/N_p$ times that of A1, $N_d/N_p\approx\val{jam.energyratio}$), optimised jointly for
+the soft-gate objective; the energy on the data also degrades the references the gates compare against.
 \item \emph{Denial of adaptation}: a fixed channel-estimate spoof $\bm E_b=\bm S_b\bm\Delta^{\!\top}$,
 meant to make the gates reject every block, combined with a real abrupt channel change.
-\item \emph{A3$^\ast$, optimised slow drift}: small perturbations over hundreds of blocks, of norm
-5, 20 or 50\% of that of the received pilots, that pull the receiver toward a spoofed channel while
-keeping its blocks accepted.
-\item \emph{Physical attacker}: $\bm E_b=\bm G\bm X_b$ with $M\in\{1,2,4\}$ attacker antennas and a
+\item \emph{A3$^\ast$, slow small-budget attack}: small perturbations over hundreds of blocks, of norm
+5, 20 or 50\% of that of the received pilots, each optimised for the soft-gate objective, so that its
+blocks are accepted and their updates are consolidated into the slow levels.
+\item \emph{Physical attacker}: $\bm E_b=\bm X_b\bm G^{\!\top}$ with $M\in\{1,2,4\}$ attacker antennas and a
 fixed channel $\bm G$ with i.i.d. $\mathcal N(0,1/N)$ entries drawn per seed; with an estimate
 $\hat{\bm G}=\bm G+$ an error of relative variance $0.1$ or $0.01$, the attacker designs $\bm X_b$ for
-$\hat{\bm G}$ and the receiver sees $\bm G\hat{\bm G}^{+}\bm E_b$.
+$\hat{\bm G}$ and the receiver sees $\bm E_b(\bm G\hat{\bm G}^{+})^{\!\top}$.
 \item \emph{Attacker in a 3GPP scene}: the physical attacker placed in a TR 38.901 UMi drop at 35, 75
 or 150\,m from the base station at the maximum power of a user, so that its SIR follows from the
 geometry, path loss and shadowing (Section~\ref{sec:umi}).
@@ -273,7 +293,7 @@ Table~\ref{tab:knowledge} states what each attacker knows.
 \scriptsize
 \begin{tabular}{@{}L{18mm}L{67mm}@{}}
 \toprule
-White-box & victim's current weights, adaptation map, gate thresholds and running statistics; differentiates through them\\
+White-box & victim's current weights, adaptation map, gate thresholds and running statistics; the block's received pilots (noise included) and noise power; for the soft-gate objective (also A3$^\ast$, A4) the users' data symbols and the received data; differentiates through a gradient-descent surrogate of the adaptation map and, for the soft-gate objective, soft G1 and G2\\
 Grey-box & the defence and its settings, not the weights: a Citadel-Rx surrogate trained on the pilots it observes\\
 Transfer & an online DeepSIC surrogate trained on the pilots it observes\\
 Query & no model: the victim's per-sub-block ACK/NACK feedback, searched with natural-evolution strategies \cite{wierstra2014,ilyas2018}\\
@@ -284,13 +304,13 @@ Query & no model: the victim's per-sub-block ACK/NACK feedback, searched with na
 \subsection{Metrics}
 The SER is the fraction of symbol slots in which at least one user is wrong
 \cite{shlezinger2021,raviv2023,wu2024}; the CRC is checked per user and sub-block, and the CRC gate
-uses the per-user pass fractions. The primary metric is the \emph{excess SER}: the SER of an
+uses the pass fraction over all users and sub-blocks (per user only with per-user gating). The primary metric is the \emph{excess SER}: the SER of an
 attacked run minus that of the matched clean run (same configuration, seed and channel draws,
 attack disabled, same machine), averaged over the attack window. Two runs of a pair are identical
 up to the first attacked block, so the excess isolates the attack from the difficulty of the
 blocks it hits. The gate is characterised by the rejection rate of poisoned blocks and the false
-rejection rate of clean blocks, each with its count (and a Wilson interval \cite{wilson1927} at the
-headline cell). The
+rejection rate of clean blocks; the tables give rates, the text gives counts for some of them (and
+a Wilson interval \cite{wilson1927} at the headline cell). The
 paired displacement $D_k(b)=\norm{\theta^{(k)}_{{\rm adv},b}-\theta^{(k)}_{{\rm clean},b}}$ measures what the attack
 left in level $k$.
 
@@ -316,8 +336,8 @@ only through what the gates accept (Fig.~\ref{fig:arch}, Algorithm~\ref{alg:bloc
 \draw[darr] (gate.south west)--(40,2)--(l2.east) node[pos=0.5,lbl,below]{$\gamma_b$};
 \draw[darr] (l2.west)--(13,2)--(13,11)--(l1.west|-13,11) node[pos=0.5,lbl,left]{pull};
 \end{tikzpicture}
-\caption{Citadel-Rx. The fast level fits every block; the gates compare its decisions with a
-model-based reference on the same block; levels 2 and 3 receive gated, clipped averages of the
+\caption{Citadel-Rx. The fast level fits every block; the gates compare its decisions with the
+better of LMMSE on the block's pilots and the anchor detector; levels 2 and 3 receive gated, clipped averages of the
 faster states; a rejected block is reverted and detected with the anchor; every CRC sub-block
 keeps the first passing detection.}
 \label{fig:arch}
@@ -333,9 +353,11 @@ block by $T=300$ steps of
 \theta&\leftarrow\mathrm{Adam}\big(\theta,\nabla_\theta\ell_b(\theta)\big),\label{eq:adam}
 \end{align}
 with $\ell_b$ the pilot cross-entropy of the stage being adapted (stages are adapted sequentially
-\cite{shlezinger2021}), $\bm\phi$ the normalised mean input of the stage, and
+\cite{shlezinger2021}), $\bm\phi$ the normalised mean input of the weight matrix (the stage input for
+the first layer, the hidden activation for the second; biases are not decayed), and
 $a_b=\tfrac12\theta^{(2)}_{b-1}+\tfrac12\theta^{(3)}_{b-1}$ the anchor. The step size follows the
-receiver's surprise $S_b=\norm{\nabla\ell_b(\theta_{b-1})}^2$ relative to its moving average $\bar
+receiver's surprise $S_b=\norm{\nabla_\theta\ell^{\rm det}_b(\theta_{b-1})}^2$, with $\ell^{\rm det}_b$
+the pilot cross-entropy of the posteriors of the full detector, relative to its moving average $\bar
 S_b$: $\eta_b=\eta_{\max}\,2r_b/(1+r_b)$ with $r_b=\mathrm{clip}(S_b/\bar S_b,\tfrac18,8)$, so the rate is
 bounded by $2\eta_{\max}$.
 
@@ -369,16 +391,17 @@ the least-squares channel estimate. All three are computed for the gates anyway;
 passes, the gate's choice is kept. Four optional states answer specific attacks and are evaluated
 with them (Sections~\ref{sec:refdeg}--\ref{sec:retention}). \emph{Abstain}: the block is rejected
 and not buffered when the reference itself has degraded. The first version tested the reference's
-pass fraction and residual against their running levels on accepted blocks ($z=4$, binomial floor
+pass fraction and residual against their running levels on accepted blocks ($z_{\rm a}=4$, binomial floor
 on the variance), and locked on clean runs. The final version tests
 $t_b=\log(r^{\rm v}_b/\hat\sigma^2_b)$, where $r^{\rm v}_b$ is the mean squared residual
 $\norm{\bm y_n-\hat{\bm H}_b\bm s_n}^2$ over the symbol slots whose decisions the CRC verifies for every
 user (the residual of the LMMSE decisions if fewer than 5\% are verified) and $\hat\sigma^2_b$ is the
 noise power estimated on the pilots. Without attack both estimate the noise power, whatever the
 channel, because verified decisions are correct; poisoned pilots inflate $\hat\sigma^2_b$ and energy
-on the data inflates $r^{\rm v}_b$. The receiver abstains when $|t_b-\bar t_b|>z\max(s_b,0.1)$,
+on the data inflates $r^{\rm v}_b$. The receiver abstains when $|t_b-\bar t_b|>z_{\rm a}\max(s_b,0.1)$,
 with the level $\bar t_b$ and the spread $s_b$ tracked on every non-abstained block, and re-bases the
-level after 50 consecutive abstentions, so that a lasting change cannot lock it. An intermediate
+level after 50 consecutive abstentions, meant to keep a lasting change from locking it; in the runs
+with a change at block 50 of 100 the re-base can fire only at the last block, so it is not evaluated. An intermediate
 version on the residual of the hard LMMSE decisions was dropped after its first test runs: that
 residual also follows the decision errors of the reference, which a legitimate redraw to a
 worse-conditioned channel raises. \emph{Per-user gating}: G2 is evaluated per user with that user's
@@ -422,35 +445,42 @@ against the threshold $\tau_2$ of the design rule below. The gate is tied to the
 attacker's own objective: an attack that raises the SER lowers the pass rate. With LDPC code blocks
 (Section~\ref{sec:umi}) the CRC after decoding tolerates raw symbol errors, so the pass fraction of
 a code block does not follow the design rule. There $F$ is replaced by the virtual pass fraction
-$(1-\hat p)^L$, with $\hat p$ the per-user symbol error rate of a detector (the $p$ of the design
-rule) on the code blocks that decode under a reference, whose re-encoded codewords are the
+$(1-\hat p)^L$, with $\hat p$ the symbol error rate of a detector over all users (per user with
+per-user gating; the $p$ of the design rule) on the code blocks that decode under a reference, whose re-encoded codewords are the
 transmitted symbols, and the rule applies unchanged; when no code block decodes under any reference,
 the code-block pass fractions are used.
 
-\textit{G3, channel prior.} The innovation energy of the LS estimate against its AR(1) prediction,
-relative to its running level and floored by the $\chi^2_{0.999}$ quantile, against $\tau_3=4$.
+\textit{G3, channel prior.} The innovation energy of the LS estimate against its AR(1) prediction
+(the previous block's estimate, scaled by the channel's correlation on Jakes fading), relative to its
+running level on accepted blocks floored by its expected value, against
+$\tau_3=\max\{4,\chi^2_{0.999}(NU)/(NU)\}$, which is 4 for every array here.
 
-Table~\ref{tab:hyper} gives the provenance of every setting.
+Table~\ref{tab:hyper} gives the provenance of the main settings.
 
 \begin{table}[t]
 \centering\caption{Settings and their provenance. Calibration: seeds 0--2 by the rules of
 Section~\ref{sec:setup}; first version: set during the development of the first version on seeds
-0--4. No setting was chosen on the test seeds 10--19, with one exception stated in the table: the
-statistic of the final abstain state was adopted after first test runs of the second version.}\label{tab:hyper}
+0--4. No setting was chosen on the test seeds 10--19, with two exceptions: the statistic of the final
+abstain state, adopted after first test runs of its second version (stated in the table), and the
+SED profile of the larger arrays, stretched after test runs with the unstretched one
+(Section~\ref{sec:scen}).}\label{tab:hyper}
 \scriptsize
 \begin{tabular}{@{}L{36mm}L{49mm}@{}}
 \toprule
 Setting & Value; provenance\\
 \midrule
-$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order ($=256$ for QPSK), 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}\\
+$Q$, MLP width, $T$, $\eta_{\max}$, Adam & 3, $64\cdot$order for QPSK ($=256$), 256 for 16-QAM, 300, $5\cdot10^{-3}$; DeepSIC reference \cite{shlezinger2021}\\
 $K$, $C$ & 3, $(1,8,32)$; first version; ablation in Section~\ref{sec:ablate}\\
-$\eta^{(2)},\eta^{(3)}$, $\lambda$, $\delta$ & $1,\tfrac12$, $0.5$, $0.1$; first version; sensitivity in Section~\ref{sec:sens}\\
+$\eta^{(2)},\eta^{(3)}$, $\lambda$, $\delta$ & $1,\tfrac12$, $0.5$, $0.1$; first version; sensitivity of $\eta^{(3)}$, $\lambda$, $\delta$ in Section~\ref{sec:sens}\\
 $\tau_1,\tau_3,\omega$, tightening & $1.25$, $4$, $0.1\tau$, $30\%$; first version; sensitivity\\
-CRC slack & relative $\rho=1$ with floor $2\cdot10^{-3}$, or derived $z=5$; mode chosen by calibration (\val{cal.chosen})\\
-$\kappa$ & $(8.5,4.5)$; at the largest clean consolidation increments of the calibration runs\\
-Consolidation rule, CRC selection & \eqref{eq:consol}; correctness fix; CRC selection kept by calibration\\
+Surprise clip, rejection threshold, anchor weights, G3 quantile & $[\tfrac18,8]$, $\tfrac12$, $(\tfrac12,\tfrac12)$, $0.999$; first version\\
+CRC slack & relative $\rho=1$ with floor $2\cdot10^{-3}$ (first version), or derived $z=5$ (set before calibration); mode chosen by calibration (\val{cal.chosen})\\
+$\kappa$ & $(8.5,4.5)$; set before calibration from the clean consolidation increments of earlier records of the calibration configurations; common to all candidates\\
+Consolidation rule, CRC selection & \eqref{eq:consol}; correctness fix; CRC selection common to all calibration candidates (ablation in Section~\ref{sec:ablate})\\
 Baseline epochs, learning rate, weight decay & tuned on calibration seeds (Section~\ref{sec:setup})\\
-Abstain (final version) & statistic and re-base after 50 abstentions: adopted after the second version's first test runs (seeds 10--12, A4); $z=\val{h3.z}$ by calibration; also tested on seeds 15--19, untouched by any choice\\
+Baseline method settings & L2-SP, EWC $10^{-2}$; EMA 0.9; CoTTA restore 0.05; EATA $0.4\ln4$; decision-directed weight 1; drift threshold 2; four median-of-means groups; not tuned (L2-SP also swept, Section~\ref{sec:baselines})\\
+Streak $k$, drift guard, abstain fallback, spread floor & 5, $5\%$, $5\%$ verified, $0.1$; one value each, not tuned\\
+Abstain (final version) & statistic and re-base after 50 abstentions: adopted after the second version's first test runs (seeds 10--12, A4); $z_{\rm a}=\val{h3.z}$ by calibration; also tested on seeds 15--19, untouched by any choice\\
 Second backbone & 512 hidden units; epochs and learning rate tuned on calibration seeds (\val{d8.tuned})\\
 Attacker & PGD 20 steps of $0.25\epsilon$, 2 unrolled steps \cite{wu2024}; stronger variants in Section~\ref{sec:adaptive}\\
 \bottomrule
@@ -483,8 +513,10 @@ the radius of the clean buffer around it. Then
 D_K(b_0+W)\le\big(\Delta(W)+\Omega(W)\big)\big(1-(1-\eta^{(K)})^{n(W)}\big)\\
 +\sum_{i\le n(W)}|\tilde s_i-\tilde s_i'|\,\norm{\theta'^{(K)}_i-m'_i},
 \end{multline}
-with $\Omega(W)=\max_i\norm{\bar w_i-\bar w'_i}_1r'_i$. With equal verdicts $\Omega=0$, the sum
-vanishes, and $\Delta(W)$ is at most the largest paired fast-level displacement.
+with $\Omega(W)=\max_i\norm{\bar w_i-\bar w'_i}_1r'_i$. With equal verdicts $\Omega=0$; if moreover
+the clip binds in neither run, or with the same factor in both, at every consolidation of every level,
+then $\tilde s_i=\tilde s_i'$, the sum vanishes, and $\Delta(W)$ is at most the largest paired
+fast-level displacement.
 \end{theorem}
 \begin{proof}
 (i) Level $K$ changes only at consolidations, and in each run by at most $\kappa_K$; the drift guard,
@@ -502,9 +534,11 @@ form in which the gate enters: rejected blocks are reverted and enter with weigh
 
 \begin{remark}[contraction]\label{rem:contraction}
 If the block map satisfied $\norm{\Phi(\theta;\bm Y+\bm E,a)-\Phi(\theta;\bm Y,a)}\le G_\Phi\norm{\bm E}$ and were
-jointly $L$-Lipschitz in $(\theta,a)$ with $L<1$, the largest fast displacement after $n_W$ accepted
-attacked blocks would satisfy $\Delta_f\le G_\Phi\epsilon(1-L^{n_W})/(1-L)$. The sufficient condition
-is $L=L_\theta+L_a<1$. Finite-difference probes of the fast learner, which the revision does not change,
+jointly $L_\Phi$-Lipschitz in $(\theta,a)$ with $L_\Phi<1$, and if every block of the window were
+accepted in both runs, the largest fast displacement after $n_W$ attacked blocks would satisfy
+$\Delta_f\le G_\Phi\epsilon(1-L_\Phi^{n_W})/(1-L_\Phi)$; on a block accepted in one run only, the
+displacement can grow by the norm of that run's update, which does not scale with $\epsilon$. The
+sufficient condition is $L_\Phi=L_\theta+L_a<1$. Finite-difference probes of the fast learner, which the revision does not change,
 give $L_\theta+L_a$ between \val{lip.summin} and \val{lip.summax} for proximal weights $\lambda$ from
 \val{lip.lammin} to \val{lip.lammax}, and a stronger search, a finite-difference hill climb on the
 input direction for $G_\Phi$ and the largest of 20 random parameter and anchor directions on each
@@ -518,10 +552,11 @@ Section~\ref{sec:scen} without a regret claim.
 
 \textit{Design rule for the CRC gate.} With i.i.d. symbol errors of probability $p$ in a sub-block of
 $L$ symbols and an $r$-bit CRC whose syndrome is uniform on error, $P(\mathrm{pass}\mid
-p)=(1-p)^L+2^{-r}(1-(1-p)^L)$. Inverting at $F_{\rm ref}$ gives $p_{\rm ref}$, and the rule ``reject if
-$F_{\rm nn}/F_{\rm ref}<\tau_2$'' with $\tau_2=\big((1-p_{\rm ref}-\delta)/(1-p_{\rm ref})\big)^{L}$
-tolerates an excess error probability $\delta$ over the reference. The relative slack sets
-$\delta=\max\{2\cdot10^{-3},\rho\,p_{\rm ref}\}$; the derived slack removes the floor and takes
+p)=(1-p)^L+2^{-r}(1-(1-p)^L)$. Neglecting the $2^{-r}$ term,
+inverting at $F_{\rm ref}$ gives $p_{\rm ref}=1-F_{\rm ref}^{1/L}$, and the rule ``reject if
+$F_{\rm nn}/F_{\rm ref}<\tau_2$'' with $\tau_2=\big((1-p_{\rm ref}-\xi)/(1-p_{\rm ref})\big)^{L}$
+tolerates an excess error probability $\xi$ over the reference. The relative slack sets
+$\xi=\max\{2\cdot10^{-3},\rho\,p_{\rm ref}\}$; the derived slack removes the floor and takes
 $\tau_2=\min\{1-z\sigma,\tau_2(\rho p_{\rm ref})\}$, with $\sigma$ the standard deviation of the
 normalised pass ratio on accepted blocks, floored by its binomial value $\sqrt{F(1-F)/n}/F$, so the
 threshold follows the block length. For $n$ independent sub-blocks, $P(|\hat F-F|\ge t)\le2e^{-2nt^2}$
@@ -535,7 +570,8 @@ uncorrelated with noise and mismatch. This is an assumption, not a fact: errors 
 noise is large. On clean blocks of the $\tanh$ channel at 10\,dB (first-version runs, seeds 0--2)
 the normalised G1 statistic has mean \val{g1nl.mean}, 99th percentile \val{g1nl.p99} and maximum
 \val{g1nl.max} over \val{g1nl.n} blocks; its largest value at any SNR from \val{g1nl.snrmin} to
-\val{g1nl.snrmax}\,dB is \val{g1nl.allmax}, below $\tau_1=1.25$.
+\val{g1nl.snrmax}\,dB is \val{g1nl.allmax}, below $\tau_1=1.25$ but above the fully tightened
+threshold $1+0.7(\tau_1-1)$, so G1 can reject a clean block of this channel when the surprise is high.
 
 \section{Experimental Protocol}\label{sec:setup}
 
@@ -545,11 +581,11 @@ the normalised G1 statistic has mean \val{g1nl.mean}, 99th percentile \val{g1nl.
 \begin{tabular}{@{}L{14mm}L{71mm}@{}}
 \toprule
 System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$ and $8\times32$ with the SED profile stretched over the array; 16-QAM at 20\,dB (MLP width kept at 256)\\
-Block & $N_p=100$ pilot and $N_d=25\,000$ data symbols per user; $N_d\in\{1000,5000\}$, $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
+Block & $N_p=100$ pilot and $N_d=24\,992$ data symbols per user; $N_d=992$ and $4\,992$ (nominally 1000 and 5000), $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
 CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
 Channel & SED with per-user cosine fading, gain $0.8+0.2\cos(2\pi b/T_j)$ with $T_j=51,39,33,21$ blocks (users 5--8: 47, 29, 43, 23) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
-Run & 100 blocks (400 and 1000 for A3$^\ast$, 2000 clean); 40-block attack window starting at a block drawn uniformly from 10--50 per seed\\
-Seeds & calibration 0--2; test 10--19 (headline cell), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
+Run & 100 blocks (400 and 1000 for A3$^\ast$, 2000 clean); unless stated, a 40-block attack window starting at a block drawn uniformly from 10--50 per seed; fixed windows: 30--69 for calibration and retention, 40--89 for denial, 30--329 and 30--929 for A3$^\ast$\\
+Seeds & calibration 0--2; test 10--19 (headline cell, final abstain state), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
 Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h; one block per 1\,ms slot (15\,kHz, 150 PRBs); NR LDPC code blocks (base graph 2, $k=520$, $n=1000$), each with a CRC-24A \cite{ts38212}, scrambled \cite{ts38211}\\
 Attacker & PGD 20 steps of $0.25\epsilon$ through 2 unrolled steps \cite{wu2024,madry2018}, unless stated\\
 \bottomrule
@@ -558,18 +594,22 @@ Attacker & PGD 20 steps of $0.25\epsilon$ through 2 unrolled steps \cite{wu2024,
 
 \textit{Receivers.} LMMSE on the least-squares pilot estimate, and a Huber-robust version
 \cite{huber1964}; online DeepSIC \cite{shlezinger2021}; Meta-DeepSIC \cite{raviv2023};
-\emph{CRC-Rollback}, online DeepSIC with the CRC gate and rollback to the last accepted weights, and
-the same with all three gates; online DeepSIC with the CRC selection of Citadel-Rx, which separates
+\emph{CRC-Rollback}, online DeepSIC with the CRC gate G2 at the first version's absolute slack, a
+fixed $\tau_2=0.99^{L}$, judged against LMMSE only, without CRC selection, and with rollback to the
+last accepted weights, and the same with all three gates (the $K=1$ ablation, Section~\ref{sec:ablate},
+has Citadel-Rx's gates and selection); online DeepSIC with the CRC selection of Citadel-Rx, which separates
 the selection gain from the memory; L2-SP \cite{l2sp2018}, EWC with the Fisher information of the
 pre-training data \cite{ewc2017} and an EMA teacher \cite{meanteacher2017}; CRC-verified
 decision-directed training, which adds the CRC-passing data symbols to the pilots \cite{schibisch2018,viterbinet2020};
 an EATA-style receiver, entropy filter and Fisher anchor \cite{eata2022}, and a CoTTA-style receiver,
-teacher and stochastic restore \cite{cotta2022}; a drift-detection receiver; a median-of-means
-gradient receiver after \cite{medbn}; and a single-memory receiver with the fast learner of
+teacher and stochastic restore \cite{cotta2022}; a drift-detection receiver that adapts a user's
+modules only when that user's pilot loss, standardised by its running mean and spread, exceeds 2; a
+median-of-means gradient receiver (coordinate-wise median of the gradients of four disjoint pilot
+groups), a robust-aggregation defence in the spirit of \cite{medbn}; and a single-memory receiver with the fast learner of
 Citadel-Rx and no slow levels \cite{behrouz2025titans}. All DeepSIC receivers share the
 architecture and the pre-training. A second backbone replaces DeepSIC in Citadel-Rx, online
 training and CRC-Rollback: a fully connected network with one hidden layer of 512 units that
-classifies the joint symbol of all users ($M^U=256$ classes) from the received vector, without
+classifies the joint symbol of all users ($4^U=256$ classes) from the received vector, without
 interference cancellation \cite{samuel2019,oshea2017}; detection uses its per-user marginals.
 
 \textit{Calibration and tuning, fixed in advance.} Online DeepSIC and Meta-DeepSIC are tuned over
@@ -577,15 +617,18 @@ interference cancellation \cite{samuel2019,oshea2017}; detection uses its per-us
 and $10^{-4}$ on clean runs of the calibration seeds; the lowest mean clean SER wins (online DeepSIC:
 \val{tune.onlinedeepsic.epochs} epochs, learning rate \val{tune.onlinedeepsic.lr}, weight decay
 \val{tune.onlinedeepsic.wd}; Meta-DeepSIC: \val{tune.metadeepsic.epochs}, \val{tune.metadeepsic.lr},
-\val{tune.metadeepsic.wd}), and every receiver built on online DeepSIC uses its setting. Citadel-Rx
+\val{tune.metadeepsic.wd}), and every receiver built on online DeepSIC uses its setting (the drift-detection and median-of-means
+receivers, first run at the reference 300 epochs and learning rate $5\cdot10^{-3}$, were rerun with it
+for the tables); the baselines' own method settings are not tuned (Table~\ref{tab:hyper}). Citadel-Rx
 has three candidates, relative or derived CRC slack and, with the relative slack, a fast level
-restarted from the anchor every block; the rule, fixed before the runs, is the lowest mean of the
+restarted from the anchor every block with its update per block projected onto a ball of radius 13;
+all three use the CRC selection, the clip $\kappa$ and \eqref{eq:consol}; the rule, fixed before the runs, is the lowest mean of the
 clean SER, the A1 window SER at SIR 0\,dB, and the A1 window SER on COST2100, among candidates with
 at most $2\%$ clean false rejections (Table~\ref{tab:cal}). The chosen settings are written to a file
 by the rule and read by every test run. The second campaign added two choices, again on seeds 0--2
-by rules fixed before any test run of the features: the abstain threshold $z$ is the smallest of
+by rules fixed before any test run of the features: the abstain threshold $z_{\rm a}$ is the smallest of
 3, 4, 5, 6 and 8 with at most $2\%$ abstentions on the clean blocks of calibration runs that never
-abstain (\val{h3.calblocks} blocks; chosen $z=\val{h3.z}$, largest deviation
+abstain (\val{h3.calblocks} blocks; chosen $z_{\rm a}=\val{h3.z}$, largest deviation
 \val{h3.calmax}), and online training on the second backbone is tuned over 30 and 100 epochs and
 learning rates $10^{-3}$ and $5\cdot10^{-3}$ like online DeepSIC (\val{d8.tuned}); Citadel-Rx keeps
 all its frozen settings on the second backbone and in the coded scene.
@@ -595,8 +638,7 @@ all its frozen settings on the second backbone and in the coded scene.
 moving-block bootstrap intervals \cite{kunsch1989} that resample seeds and then runs of twice the
 decorrelation length (at least five blocks) within each seed. Tests are at the seed level: an exact two-sided Wilcoxon
 signed-rank test on the per-seed means \cite{wilcoxon1945}, whose smallest attainable $p$ with ten
-seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1979}. Rates carry
-their counts.
+seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1979}.
 
 \textit{Reproducibility.} The first campaign ran on an Apple M4 laptop (ten cores, eight runs at a
 time) and a 4-core cloud machine, the second on 4-core cloud machines, every run single-threaded,
@@ -604,8 +646,9 @@ with disjoint sets of runs; every attacked run is paired with the clean twin fro
 machine-independent costs are counted in multiply-accumulates. Every record stores its configuration,
 seed, code version and timings; an attacked run and its clean twin always ran on the same machine.
 Pre-training is cached by configuration, seed, code and random-number state, which is exact (the
-repository's tests compare cached and uncached runs). One command re-runs the campaign and one
-recomputes every number and table of this paper.
+repository's tests compare cached and uncached runs). Three commands re-run the two campaigns, and
+\texttt{make paper} recomputes every number, table and figure of this paper from the records and
+rebuilds it (README, section Reproducibility).
 
 \begin{table}[t]
 \centering\caption{Calibration of Citadel-Rx on seeds 0--2 (SER). Score: mean of the clean, A1 and
@@ -625,9 +668,9 @@ Candidate & Clean & \thead{A1\\window} & \thead{COST2100\\A1} & \thead{False\\re
 \subsection{Headline Comparison}\label{sec:headline}
 \begin{table*}[t]
 \centering\caption{Excess SER (attacked minus matched clean run, attack window) at the headline
-cells, test seeds; 95\% moving-block interval at white-box SIR 0\,dB (10 seeds; other columns 5
-seeds). Clean: SER of the clean twins over blocks 5--99. Rejection and false rejection of the
-Citadel-Rx gates at white-box SIR 0\,dB. Script: \texttt{revision\_numbers.py}.}\label{tab:p1}
+cells, test seeds; 95\% moving-block interval at white-box SIR 0\,dB. Seeds 10--19 for WB $0$\,dB, Clean, Rej.\ and False rej., seeds 10--14 for
+the other columns. Clean: SER of the clean twins over blocks 5--99. Rejection of the poisoned blocks and false
+rejection on the clean twins, by the gates of Citadel-Rx and of CRC-Rollback, at white-box SIR 0\,dB. Script: \texttt{revision\_numbers.py}.}\label{tab:p1}
 \scriptsize
 \begin{tabular}{@{}lcccccccc@{}}
 \toprule
@@ -668,9 +711,10 @@ interval \val{p1.citadel.wb0.ci}; seed means from \val{p1.citadel.wb0.smin} to
 The excess of Citadel-Rx is small but not zero: it is positive on \val{p1.citadel.wb0.spos} of 10
 seeds (exact Wilcoxon $p=\val{p1.citadel.wb0.p}$). The gates reject \val{p1.citadel.wb0.rejk}
 poisoned blocks (95\% Wilson interval \val{p1.citadel.wb0.rejci}) and \val{p1.citadel.wb0.frejk}
-clean blocks of the clean twins (\val{p1.citadel.wb0.frejci}). The ordering is the
-same at SIR $-10$ and $+10$\,dB and under transfer (\val{p1.citadel.wbm10.n} seeds each). Over the 30 blocks after the
-window the excess of Citadel-Rx is \val{p1.citadel.wb0.post}; online DeepSIC keeps
+clean blocks of the clean twins (\val{p1.citadel.wb0.frejci}). Citadel-Rx also has the
+lowest excess at SIR $-10$ and $+10$\,dB and under transfer (\val{p1.citadel.wbm10.n} seeds each); the closest
+baseline, CRC-Rollback at $+10$\,dB, has \val{p1.crc_rollback.wb10.excess} against \val{p1.citadel.wb10.excess}. Over the blocks after the
+window (30, or fewer when the window ends late in the run) the excess of Citadel-Rx is \val{p1.citadel.wb0.post}; online DeepSIC keeps
 \val{p1.online_deepsic.wb0.post}, Meta-DeepSIC \val{p1.meta_deepsic.wb0.post}, whose meta-training
 buffer keeps poisoned pilots for 20 blocks after the attack, and CRC-Rollback
 \val{p1.crc_rollback.wb0.post}. Fig.~\ref{fig:trace}
@@ -691,8 +735,12 @@ to \val{p1.jam.exmax}); Citadel-Rx rejects \val{p1.citadel.jam.rejk} of the jamm
 pilots are clean.
 
 \subsection{Why Rollback Is Not Enough}\label{sec:c1}
-CRC-Rollback has the CRC gate and the rollback of Citadel-Rx but one memory, and it fails in every
-column of Table~\ref{tab:p1}. The records show why (Fig.~\ref{fig:trace}). Its only reference is
+CRC-Rollback is online DeepSIC with the CRC gate G2 at a fixed slack of $0.01$ ($\tau_2=0.99^{L}$),
+without CRC selection, and with rollback to the last accepted weights. Under every white-box and
+transfer attack of Table~\ref{tab:p1} its excess is several times that of Citadel-Rx, and at SIR 0
+and $-10$\,dB and under transfer it does not recover after the window (\val{p1.crc_rollback.wb0.post},
+\val{p1.crc_rollback.wbm10.post}, \val{p1.crc_rollback.tr0.post}); at $+10$\,dB it does
+(\val{p1.crc_rollback.wb10.post}). The records show why (Fig.~\ref{fig:trace}). Its only reference is
 LMMSE on the least-squares estimate from the same pilots, and the attack degrades that estimate:
 on attacked blocks the reference passes a fraction \val{c1.crc.refatt} of the CRCs, against
 \val{c1.crc.refcln} on the same blocks of the clean twin. A poisoned fast level that is merely less
@@ -703,7 +751,8 @@ the test and is reverted to it. After the attack the receiver rejects a fraction
 \val{c1.crc.postrej} of the clean blocks, and over the last ten blocks of the run its excess SER is
 still \val{c1.crc.endex}. Rollback with all three gates fails in the same way (\val{c1.rag.nseeds} seeds:
 \val{c1.rag.acc} attacked blocks accepted, excess \val{c1.rag.endex} at the end of the run), and so
-does Citadel-Rx without its slow levels (Section~\ref{sec:ablate}).
+does Citadel-Rx with its own gates, relative slack and CRC selection but one memory ($K=1$: excess
+\val{ab.K1.excess} in the attack window; Section~\ref{sec:ablate}).
 
 Citadel-Rx compares the fast level with the better of LMMSE and the anchor detector, which detects
 the data with the slow memory and does not use the pilots of the block. Under attack this
@@ -717,7 +766,9 @@ memory, and it can only do so because it judges against the memory.
 \begin{table}[t]
 \centering\caption{Attacks built against the defence, SIR 0\,dB unless stated, test seeds 10--14 (seeds per row).
 $^{a}$Soft gates, unroll 10, PGD 50, 2 restarts, EOT over 2 noise draws; $^{b}$the same without soft
-gates, which online DeepSIC does not have.}\label{tab:attacks}
+gates, which online DeepSIC does not have. With as many antennas as the receiver, the rank-4 physical
+attacker reaches every perturbation: it is A1, and its runs are identical to those of the A1 row of
+Table~\ref{tab:peruser}.}\label{tab:attacks}
 \scriptsize
 \begin{tabular}{@{}L{20mm}L{12mm}cccc@{}}
 \toprule
@@ -727,21 +778,31 @@ Attack & Receiver & \thead{See-\\ds} & \thead{Excess SER\\{}[95\% CI]} & \thead{
 \bottomrule
 \end{tabular}
 \end{table}
-Every attack of Table~\ref{tab:attacks} was built with full knowledge of the defence or of its
-feedback and run on test seeds 10--14. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks
-give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, against
-\val{ab.complete.excess} for plain A1 on the same seeds, with rejection rates between
+Every attack of Table~\ref{tab:attacks} was built against the defence, white-box unless stated
+(the grey-box attacker knows the defence and its settings, not its weights; the query attacker only
+its NACK feedback), and run on test seeds 10--14. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks, among
+them the rank-4 physical attacker, which is plain A1 (see the caption), give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, against
+\val{h7.citadela1.excess} to \val{ab.complete.excess} for plain A1 on the same seeds (two sets of
+runs, on different machines), with rejection rates between
 \val{atk.cit0.rejmin} and 1: deeper unrolling, more steps and restarts, the soft-gate objective
-with the exact thresholds and running statistics, expectation over noise, a Citadel-Rx surrogate
-and a search on the NACK feedback do not get poisoned blocks accepted, and neither does a physical
-attacker with one, two or four antennas, also when its channel estimate is in error. At SIR 10\,dB the excess is
-\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The same attacks raise the SER of online DeepSIC by
+with the thresholds and running statistics of G1 and G2 (G3 and the tightening are not modelled),
+expectation over noise, a Citadel-Rx surrogate,
+a search on the NACK feedback and a budget on the users' signal energy alone get about as few
+poisoned blocks accepted as plain A1 (rejection at least \val{atk.citadelsigbudgetsir0.rej}, against
+\val{ab.complete.rej} and \val{h7.citadela1.rej} for A1), and so does a physical attacker with two or four antennas, also when its channel estimate
+is in error (at least \val{atk.b1citadelM2csi001sir0.rej}); one with a single antenna gets more
+accepted (\val{atk.citadelM1sir0.rejk} rejected) and gives the lowest excess at SIR 0\,dB
+(\val{atk.citadelM1sir0.excess}). At SIR 10\,dB the excess is
+\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The \val{atk.onl0.n} of these attacks also run against online DeepSIC (Combined$^{b}$ in place of
+Combined$^{a}$) raise its SER by
 \val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With five seeds,
 differences of a few $10^{-3}$ between attacks lie within the intervals; what the table rules out
 is an attack that brings Citadel-Rx near the excess of the undefended receivers.
 
-When the gates reject nearly every attacked block, the excess no longer depends on the attack: it
-is the price of rejecting. The window is detected with the anchor, which has not adapted to the
+When the gates reject nearly every attacked block, the excess depends on the power of the pilot
+perturbation (SIR 0 against 10\,dB), not on how it was optimised: it is the price of rejecting a
+block with poisoned pilots; an attack that also reaches the data costs more
+(Section~\ref{sec:refdeg}). The window is detected with the anchor, which has not adapted to the
 block, and the LMMSE alternative of the CRC selection uses the poisoned channel estimate (its pass
 fraction falls from \val{gate.lmmsecln} on the clean twin to \val{gate.lmmseatt} on attacked
 blocks). On the poisoned blocks at the headline cell, the verdict of G2 on its own is below one half
@@ -751,7 +812,8 @@ decision-level gates G1 and G2 do the work, and G3 flags few poisoned blocks at 
 \subsection{Attacks on the References and on Adaptation}\label{sec:refdeg}
 \begin{table}[t]
 \centering\caption{Joint pilot and data attack on the references (A4), white-box SIR 0\,dB, 6 PGD
-steps over all data sub-blocks, test seeds 10--14 (seeds per row), with and without the abstain state
+steps over all data sub-blocks, test seeds 10--14 (rows marked 15--19: seeds 15--19; rows marked 1st: seeds 10 and 11), with and
+without the abstain state
 (first version: rejects every block of its clean runs as well, see text); one row with 20 PGD steps;
 jamming controls with the data power of A4.}\label{tab:refdeg}
 \scriptsize
@@ -780,7 +842,10 @@ Receiver & \thead{See-\\ds} & \thead{SER after\\redraw} & \thead{False\\rej.} & 
 \begin{table}[t]
 \centering\caption{Denial of adaptation as intended: white-box A1 at SIR 0\,dB on blocks 40--89 while
 the channel is redrawn at block 50, test seeds 10--14. Rejection of the attacked blocks, SER after the
-redraw without attack, excess SER in and after the attack, and streak-recovery re-fits tried/kept.}\label{tab:deny2}
+redraw without attack, excess SER in and after the attack, and streak-recovery re-fits tried/kept. The runs without attack are not those of
+Table~\ref{tab:deny}: each ran on the machine of its attacked run, and on seeds 10 and 11 that machine
+differs between the two tables (SER after the redraw for Citadel-Rx \val{b3.citadel.after} here,
+\val{deny.citadel.after} there).}\label{tab:deny2}
 \scriptsize
 \begin{tabular}{@{}L{17mm}cccccc@{}}
 \toprule
@@ -795,7 +860,7 @@ Receiver & \thead{See-\\ds} & Rej. & \thead{SER after\\redraw} & \thead{Excess i
 A1, white-box SIR 0\,dB, test seeds 10--14: excess SER of all users and of user 1; rejection of the
 attacked blocks (block gate) or reverts of user 1 / of the other users (per-user gate).}\label{tab:peruser}
 \scriptsize
-\begin{tabular}{@{}L{9mm}L{17mm}cccc@{}}
+\begin{tabular}{@{}L{8mm}L{12mm}cccc@{}}
 \toprule
 Attack & Receiver & \thead{See-\\ds} & \thead{Excess SER\\{}[95\% CI]} & \thead{Excess SER\\user 1} & \thead{Rej. or\\reverts}\\
 \midrule
@@ -804,12 +869,15 @@ Attack & Receiver & \thead{See-\\ds} & \thead{Excess SER\\{}[95\% CI]} & \thead{
 \end{tabular}
 \end{table}
 A4 splits the attacker's power between the pilots and the data so that the references the gates
-compare against degrade together with the fast level (Table~\ref{tab:refdeg}). It is the most
-effective attack on Citadel-Rx in this paper. With a quarter of the power on the pilots, the
+compare against degrade together with the fast level (Table~\ref{tab:refdeg}). At the headline
+setting and without a channel redraw, it gives Citadel-Rx the largest excess SER of the attacks on
+its pilots and references; jamming the data (a control), attacks during a channel redraw
+(Tables~\ref{tab:deny} and~\ref{tab:deny2}) and the settings where Citadel-Rx fails (16-QAM and the
+coded scene, Sections~\ref{sec:scen} and~\ref{sec:umi}) give more. With a quarter of the power on the pilots, the
 reference passes \val{a4.025.refatt} of the CRCs on attacked blocks (\val{a4.025.refcln} on the
 clean twin), close enough to the poisoned fast level (\val{a4.025.nnatt}) that only
 \val{a4.025.rejk} attacked blocks are rejected, and the excess SER is \val{a4.025.excess}, against
-\val{ab.complete.excess} for A1 on the same seeds; with three quarters on the pilots it is
+\val{h7.citadela1.excess} to \val{ab.complete.excess} for A1 on the same seeds; with three quarters on the pilots it is
 \val{a4.075.excess}. More optimisation does not make it stronger: with 20 PGD steps instead of 6 the
 excess at $\alpha=0.25$ is \val{b2.a4pgd20.excess} and \val{b2.a4pgd20.rejk} attacked blocks are
 rejected. An attacker that reaches the data does far more harm by jamming it: the same data power as
@@ -822,10 +890,12 @@ checks, so the fading of the channel alone, which lowers the reference pass frac
 from then on it rejected every block, clean or attacked (\val{abs.rejk} blocks of its clean twins;
 the lower excess of these rows in Table~\ref{tab:refdeg} is that of a receiver that no longer adapts
 in either run). The final version (Section~\ref{sec:citadel}) does what the first could not on clean
-runs: it abstained on none of \val{h3.cleanabstk} clean blocks of seeds 10--14 and none of
-\val{h3x.cleanabstk} of the fresh seeds 15--19, and on none after a 6\,dB SNR drop. It abstains on
+runs: it abstained on \val{h3.cleanabstk} clean blocks of seeds 10--14, on \val{h3x.cleanabstk} of
+the fresh seeds 15--19 and on \val{h3.snrdrop.abstk} of the blocks after a 6\,dB SNR drop (after the
+drop no slot is verified for every user, so there the statistic is that of the LMMSE decisions). It abstains on
 every attacked block of A1 and of A4 at $\alpha=0.75$, whose energy on the pilots inflates the noise
-estimate, but on only \val{h3.a4025.abst}\% of those of A4 at $\alpha=0.25$, and it does not lower
+estimate, but on only \val{h3.a4025.abst}\% of those of A4 at $\alpha=0.25$ on seeds 10--14
+(\val{h3x.a4025.abst}\% on seeds 15--19), and it does not lower
 the excess of A4 beyond the intervals: \val{h3.a4025.excess} and \val{h3.a4075.excess} on seeds
 10--14, against \val{a4.025.excess} and \val{a4.075.excess} without it (on seeds 15--19,
 \val{h3x.a4025.excess} and \val{h3x.a4075.excess}). After a legitimate redraw it abstains on
@@ -833,7 +903,9 @@ the excess of A4 beyond the intervals: \val{h3.a4025.excess} and \val{h3.a4075.e
 them on \val{h3.redraw.nall}: when the
 CRCs of one user fail after the redraw, no symbol slot is verified for every user (the verified
 fraction falls from \val{h3.redraw.verbefore} to \val{h3.redraw.verafter}), the statistic falls back
-to the residual of the LMMSE decisions, and that residual follows their errors. The final version is
+to the residual of the LMMSE decisions, and that residual follows their errors. On the seeds where it abstains on every remaining block, the
+re-base after 50 consecutive abstentions falls on the last block of the run, so these runs do not
+test it. The final version is
 therefore not a usable defence either; a residual on the verified symbols of each user is the next
 step.
 
@@ -848,12 +920,12 @@ block: they rejected fractions between \val{deny.citadel.rejattmin} and \val{den
 of the spoofed blocks on the \val{deny.citadel.n} seeds. It acted instead as an accepted perturbation during the change,
 raising the SER in its window by \val{deny.citadel.excess} for Citadel-Rx,
 \val{deny.onlinedeepsic.excess} for online DeepSIC and \val{deny.lmmse.excess} for LMMSE; in the ten
-blocks after it, Citadel-Rx was back at its no-spoof SER (\val{deny.citadel.post}) and online
-DeepSIC was not (\val{deny.onlinedeepsic.post}). Streak recovery was attempted
+blocks after it, the excess was \val{deny.citadel.post} for Citadel-Rx and
+\val{deny.onlinedeepsic.post} for online DeepSIC. Streak recovery was attempted
 \val{deny.streak.attempts} times in these runs and kept \val{deny.streak.accepted} times, changing
 \val{deny.streak.ndiff} of \val{deny.streak.nruns} runs.
 
-Denial as intended needs an attack that the gates reject on every block. Strong poisoning does that:
+Denial as intended needs an attack that the gates reject on nearly every block. Strong poisoning does that:
 A1 at SIR 0\,dB on blocks 40--89, while the channel is redrawn at block 50 (Table~\ref{tab:deny2}),
 is rejected on \val{b3.citadel.rej} of the attacked blocks, so Citadel-Rx does not adapt to the new
 channel while the attack lasts. It pays \val{b3.citadel.win} in excess SER in the window and still
@@ -865,18 +937,19 @@ excess to \val{b3.citadelstreak.win} in the window and \val{b3.citadelstreak.pos
 
 \textit{An attack on one user.} Per-user gating is meant for an attacker who poisons the pilots of
 one user only (A2, Table~\ref{tab:peruser}). It does not help here: the excess SER is
-\val{h7.citadelperusera2.excess} with it and \val{h7.citadela2.excess} without, because the
-block-level gates G1 and G3 still see the poisoned block and reject it, so the other users are
-reverted on \val{h7.citadelperusera2.revoth} of the attacked blocks as well as the attacked user
+\val{h7.citadelperusera2.excess} with it and \val{h7.citadela2.excess} without, because A2
+perturbs the received pilots, which the networks of all users take as input: the block-level gates
+G1 and G3 reject the whole block on \val{h7.citadelperusera2.rej} of the attacked blocks, and on
+most of the others the G2 test of the other users fails as well, so the other users are reverted on \val{h7.citadelperusera2.revoth} of the attacked blocks as well as the attacked user
 (\val{h7.citadelperusera2.revtgt}), and on clean blocks \val{h7.citadelperusera2.revclean} of the
 user updates are reverted. Against A1, which poisons all users, it gives
 \val{h7.citadelperusera1.excess}, against \val{h7.citadela1.excess}.
 
 \subsection{Retention Under Optimised Slow Drift}\label{sec:retention}
 \begin{table}[t]
-\centering\caption{Retention of the slowest level: paired displacement $D_K$ (largest in the window,
-mean over seeds) against the structural bound \eqref{eq:struct} and the design bound
-\eqref{eq:design}. A1: paired runs with level snapshots, fixed window 30--69, seeds 10--14. A3$^\ast$:
+\centering\caption{Retention of the slowest level: paired displacement $D_K$ against the structural
+bound \eqref{eq:struct} and the design bound \eqref{eq:design}, each the largest value in the window,
+averaged over seeds; in every run $D_K$ is below both bounds at every block of the window. A1: paired runs with level snapshots, fixed window 30--69, seeds 10--14. A3$^\ast$:
 blocks 30--329 of 400 (900 blocks: 30--929 of 1000), perturbation norm relative to the received
 pilots, seeds 10--11.}\label{tab:retention}
 \scriptsize
@@ -892,16 +965,19 @@ Attack & \thead{See-\\ds} & \thead{Excess SER\\{}[95\% CI]} & Rej. & $D_K$ & Str
 \centering
 \includegraphics[width=\columnwidth]{fig_rev_p4_paired_a1_sir0_clip}
 \caption{Paired displacement of every level and of the anchor under A1 at SIR 0\,dB, window 30--69
-shaded (mean over seeds 10--14, band from the smallest to the largest seed), with the design bound
-\eqref{eq:design} and the structural bound \eqref{eq:struct} (largest over the seeds).}
+shaded (mean over seeds 10--14; for the levels, band from the smallest to the largest seed). The
+design bound \eqref{eq:design} and the structural bound \eqref{eq:struct} apply to the slowest level
+only; the structural bound is drawn as the largest over the seeds, Table~\ref{tab:retention} gives
+its mean.}
 \label{fig:retention}
 \end{figure}
 
 Table~\ref{tab:retention} and Fig.~\ref{fig:retention} give the paired displacement for the A1 runs
 with level snapshots. The largest displacement of the slowest level in the window is
-\val{ret.p4sir0.DK} at SIR 0\,dB and \val{ret.p4sir10.DK} at 10\,dB (means over seeds), below the
-structural bound (\val{ret.p4sir0.struct} and \val{ret.p4sir10.struct}) and the design bound
-(\val{ret.p4sir0.design}). This displacement is not a footprint the attack left in the memory.
+\val{ret.p4sir0.DK} at SIR 0\,dB and \val{ret.p4sir10.DK} at 10\,dB, below the structural bound
+(\val{ret.p4sir0.struct} and \val{ret.p4sir10.struct}) and the design bound (\val{ret.p4sir0.design}),
+all means over seeds of the largest value in the window; on every seed $D_K$ stays below both bounds
+at every block. This displacement is not a footprint the attack left in the memory.
 Over the window the slowest level of the clean run moved by \val{ret.p4sir0.movcln} and that of the
 attacked run by \val{ret.p4sir0.movadv}, in nearly the same direction (cosine
 \val{ret.p4sir0.movcos} between the two movements): rejected blocks enter the consolidation with
@@ -914,12 +990,12 @@ at 10\,dB, and $D_K$ measures that lag.
 \includegraphics[width=\columnwidth]{fig_rev_drift}
 \caption{A3$^\ast$ on blocks 30--329 (shaded): paired displacement of the slowest level for each
 perturbation size (mean over seeds 10--11, band from the smaller to the larger seed) and the design
-bound \eqref{eq:design}.}
+bound \eqref{eq:design}; the structural bounds \eqref{eq:struct} are in Table~\ref{tab:retention}.}
 \label{fig:drift}
 \end{figure}
 
-A3$^\ast$ spreads its perturbation over 300 of 400 blocks and adds a soft-gate term to keep them
-accepted (Table~\ref{tab:retention}, Fig.~\ref{fig:drift}). With a norm of 5\% of that of the
+A3$^\ast$ spreads its perturbation over 300 of 400 blocks, each optimised for the soft-gate objective
+so that it is accepted (Table~\ref{tab:retention}, Fig.~\ref{fig:drift}). With a norm of 5\% of that of the
 received pilots (SIR \val{ret.p8e005.sir}\,dB) it succeeds: \val{ret.p8e005.rejk} attacked blocks
 are rejected. This is the case the retention bounds are for. Over the window the slowest level of
 the attacked run moved as far as that of the clean run (\val{ret.p8e005.movadv} and
@@ -930,8 +1006,8 @@ SER during the attack and \val{ret.p8e005.post} in the 30 blocks after it. At 20
 \val{ret.p8e02.rejk} attacked blocks (excess \val{ret.p8e02.excess}, $D_K=\val{ret.p8e02.DK}$ against a
 structural bound of \val{ret.p8e02.struct}); at 50\% they reject all of them, the attacked memory
 nearly stands still (it moved \val{ret.p8e05.movpct}\% as far as the clean one), and
-$D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. After every A3$^\ast$ setting the excess is at
-most \val{ret.p8.postmax}. Over 300 blocks the design bound is loose, while the structural bound is
+$D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. In the 30 blocks after the attack the excess is at
+most \val{ret.p8.postmax} for every A3$^\ast$ setting. Over 300 blocks the design bound is loose, while the structural bound is
 \val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. At 50\%, where every
 attacked block is rejected, the drift guard lowered $D_K$ to \val{ret.p8e05guard.DK} by pulling both
 runs toward the pre-trained weights (the clean memory moved \val{ret.p8e05guard.movcln} instead of
@@ -964,10 +1040,13 @@ Receiver & \thead{See-\\ds} & \thead{Clean\\SER} & \thead{Excess SER\\{}[95\% CI
 \end{tabular}
 \end{table}
 None of the further baselines resists A1 (Table~\ref{tab:baselines}); at their default settings
-their excess SERs lie between \val{p2.exmin} and \val{p2.exmax}. Robust statistics do not help
-against a perturbation spread over all pilots of a block: Huber-robust LMMSE \val{p2.lmmserobust.excess},
-median-of-means gradient \val{p2.medbndeepsic.excess}. Anchoring to the pre-trained weights trades
-protection for adaptation: L2-SP limits the damage in proportion to its weight, down to
+their excess SERs lie between \val{p2.exmin} and \val{p2.exmax}. Robust statistics give little protection
+against a perturbation spread over all pilots of a block: Huber-robust LMMSE has
+\val{p2.lmmserobust.excess} against \val{p2.lmmse.excess} for LMMSE, and the median-of-means gradient
+\val{p2.medbndeepsic.excess} against \val{p1.online_deepsic.wb0.excess} for online DeepSIC
+(Table~\ref{tab:p1}). Anchoring to the pre-trained weights trades protection for adaptation: L2-SP
+limits the damage more as its weight grows, from \val{p2.l2spw0001.excess}, \val{p2.l2spdeepsic.excess}
+and \val{p2.l2spw01.excess} at weights 0.001, 0.01 (the default) and 0.1 down to
 \val{p2.l2spw1.excess} at weight 1, the smallest excess of any baseline, with a clean SER of
 \val{p2.l2spw1.clean}. The EATA-style filter never fired, because the attacked receiver is
 confidently wrong: its mean data entropy stayed at or below \val{eata.maxent}\,nats against a
@@ -981,7 +1060,7 @@ single-memory receiver with the fast learner of Citadel-Rx and no gates
 \begin{table}[t]
 \centering\caption{Ablations under white-box A1 at SIR 0\,dB, test seeds 10--14.}\label{tab:ablate}
 \scriptsize
-\begin{tabular}{@{}L{22mm}ccccc@{}}
+\begin{tabular}{@{}L{20mm}ccccc@{}}
 \toprule
 Configuration & \thead{See-\\ds} & \thead{Clean\\SER} & \thead{Excess SER\\{}[95\% CI]} & Rej. & \thead{False\\rej.}\\
 \midrule
@@ -990,7 +1069,7 @@ Configuration & \thead{See-\\ds} & \thead{Clean\\SER} & \thead{Excess SER\\{}[95
 \end{tabular}
 \end{table}
 Table~\ref{tab:ablate} removes one part at a time; on the same seeds the complete receiver has an
-excess of \val{ab.complete.excess} and a clean SER of \val{ab.complete.clean}. Without the slow
+excess of \val{ab.complete.excess} \val{ab.complete.ci} and a clean SER of \val{ab.complete.clean}. Without the slow
 levels ($K=1$, gates, rollback and fallback to the last accepted weights kept) the excess is
 \val{ab.K1.excess}: the receiver fails like CRC-Rollback, for the reason of
 Section~\ref{sec:c1}, and it also rejects \val{ab.K1.frej} of the clean blocks. Two levels, $C=(1,8)$,
@@ -1014,7 +1093,7 @@ measured robustness.
 and two cheaper variants, white-box A1 at SIR 0\,dB, test seeds 10--14 (seeds per row); wall time
 per block of single-threaded runs on the laptop.}\label{tab:scen}
 \scriptsize
-\begin{tabular}{@{}L{14mm}L{12mm}ccccc@{}}
+\begin{tabular}{@{}L{12mm}L{9mm}ccccc@{}}
 \toprule
 Setting & Receiver & \thead{See-\\ds} & Clean & \thead{Excess SER\\{}[95\% CI]} & Rej. & \thead{s/\\block}\\
 \midrule
@@ -1029,7 +1108,14 @@ $N_p\in\{32,100\}$ the excess of Citadel-Rx stays between \val{sc.bl.citexmin} a
 fractions noisier, and the clean false rejection rises to \val{sc.citadelnd1000np32.frej} at
 $N_d=1000$, $N_p=32$. The SED profile $e^{-|i-j|}$ puts 99\% of the channel energy of an $8\times32$
 array on 9 antennas, so the larger arrays use it stretched over the array, $e^{-|iU/N-j|}$, which
-keeps the structure of the interference and spreads the energy over 31 of 32 antennas. With
+keeps the structure of the interference and spreads the energy over 31 of 32 antennas. The stretched profile was adopted after test runs with
+the unstretched one (\val{sc.unstr.citadel8x32.n} seeds at $8\times32$, \val{sc.unstr.citadel4x16.n}
+at $4\times16$), which are not in Table~\ref{tab:scen}. In those runs Citadel-Rx had an excess of
+\val{sc.unstr.citadel8x32.excess} (clean SER \val{sc.unstr.citadel8x32.clean},
+\val{sc.unstr.citadel8x32.rejk} poisoned blocks rejected), online DeepSIC
+\val{sc.unstr.onlinedeepsic8x32.excess} and LMMSE \val{sc.unstr.lmmse8x32.excess} at $8\times32$, and
+\val{sc.unstr.citadel4x16.excess}, \val{sc.unstr.onlinedeepsic4x16.excess} and
+\val{sc.unstr.lmmse4x16.excess} at $4\times16$. With
 $4\times16$ antennas the excess of Citadel-Rx is \val{sc.citadel4x16.excess}, with
 \val{sc.citadel4x16.rej} of the poisoned blocks rejected, against \val{sc.onlinedeepsic4x16.excess}
 for online DeepSIC and \val{sc.lmmse4x16.excess} for LMMSE; with eight users and $8\times32$
@@ -1041,9 +1127,16 @@ Citadel-Rx fails at 16-QAM and 20\,dB. There the pre-trained network passes a fr
 \val{qam.passnn} of the CRCs on clean blocks and the LMMSE reference \val{qam.passref}, so the
 relative gates reject \val{qam.frej}\% of the clean blocks, the network hardly ever adapts, and the
 clean SER (\val{sc.citadelqam16.clean}) is worse than that of online DeepSIC
-(\val{sc.onlinedeepsicqam16.clean}) and of LMMSE (\val{sc.lmmseqam16.clean}). The CRC selection keeps
+(\val{sc.onlinedeepsicqam16.clean}) and of LMMSE (\val{sc.lmmseqam16.clean}). The network is also
+narrower here than the width rule would give (256 hidden units, against $64\cdot16=1024$), which may
+contribute to its weak clean pass fraction; a wider network was not tested. The CRC selection keeps
 the gate's choice in the sub-blocks where nothing passes, so it does not recover the better LMMSE
-decisions, and under attack the receiver is no better protected (\val{sc.citadelqam16.excess}). The
+decisions. Under attack it is not protected either: its excess SER, \val{sc.citadelqam16.excess}
+\val{sc.citadelqam16.ci}, is below those of online DeepSIC (\val{sc.onlinedeepsicqam16.excess}) and
+LMMSE (\val{sc.lmmseqam16.excess}) but far above the \val{p1.citadel.wb0.excess} of the headline cell
+(QPSK, 10\,dB). The gates reject a smaller fraction of the poisoned blocks
+(\val{sc.citadelqam16.rej}) than of the clean ones (\val{sc.citadelqam16.frej}), because the attack also degrades the LMMSE reference against
+which the relative gates judge the network, and the gates loosen with it. The
 relative gates presuppose a network that is at least as good as the model-based reference on clean
 blocks; when it is not, a persistent clean false rejection is the symptom, and falling back to the
 reference is the obvious remedy, not evaluated here.
@@ -1082,8 +1175,8 @@ white-box A1 at SIR 0\,dB the excess SER of Citadel-Rx is \val{d8.citadel.excess
 \val{d8.onlinedeepsic.excess} for online training and \val{d8.crcrollback.excess} for CRC-Rollback,
 which rejects \val{d8.crcrollback.rejk} of them. The joint detector is the weaker network on this
 channel (clean SER \val{d8.onlinedeepsic.clean} with online training), and the price is paid on
-clean blocks: Citadel-Rx rejects \val{d8.citadel.frejk} of them, against
-\val{p1.citadel.wb0.frej} on DeepSIC, while its clean SER, \val{d8.citadel.clean}, stays below that
+clean blocks: Citadel-Rx rejects \val{d8.citadel.frejk} (\val{d8.citadel.frej}) of them, against
+\val{ab.complete.frej} with DeepSIC on the same seeds (Table~\ref{tab:ablate}), while its clean SER, \val{d8.citadel.clean}, stays below that
 of online training on the same backbone. The levels and gates do not depend on DeepSIC's structure,
 but how often they let the network adapt depends on how good the network is.
 
@@ -1093,7 +1186,7 @@ but how often they let the network adapt depends on how good the network is.
 antenna, a user's maximum power, white-box), test seeds 10--14; the SIR follows from the geometry
 (median over the drops). BLER: code-block error rate after decoding.}\label{tab:umi}
 \scriptsize
-\begin{tabular}{@{}L{12mm}L{14mm}ccccc@{}}
+\begin{tabular}{@{}L{11mm}L{12mm}ccccc@{}}
 \toprule
 Attacker & Receiver & \thead{See-\\ds} & \thead{Clean\\BLER} & \thead{Excess BLER\\{}[95\% CI]} & \thead{Excess\\SER} & Rej.\\
 \midrule
@@ -1124,11 +1217,11 @@ the CRC gate uses the virtual pass fraction of Section~\ref{sec:gates}.
 
 The coded scene is where the defence fails (Table~\ref{tab:umi}), and the records show why. It is
 the first channel of this paper whose phases rotate from block to block, and the networks,
-pre-trained on the first block, do not follow it: the clean BLER of online DeepSIC rises from
-\val{d23m.onlinedeepsic.blerfirst} over the first 20 blocks to \val{d23m.onlinedeepsic.blerlast}
-over the last 20, and CRC-Rollback, which reverts every update that fails its test, ends at
-\val{d23m.crcrollback.blerlast}. LMMSE re-estimates the channel on every block and decodes every code
-block of the last 20. For Citadel-Rx this is the regime of 16-QAM (Section~\ref{sec:scen}): on clean
+pre-trained on the first block, do not follow it: over blocks 5--99 the clean BLER of online DeepSIC
+is \val{d23.onlinedeepsic.d75bler.clean}, against \val{d23.lmmse.d75bler.clean} for LMMSE, which
+re-estimates the channel on every block. CRC-Rollback, which reverts every update that fails its
+test, ends at \val{d23m.crcrollback.blerlast} over the last 20 blocks, in which LMMSE decodes every
+code block. For Citadel-Rx this is the regime of 16-QAM (Section~\ref{sec:scen}): on clean
 blocks its fast level passes a virtual fraction \val{d23m.d75.nncln} of the checks against
 \val{d23m.d75.refcln} for the reference, so \val{d23.citadel.d75.frejk} clean blocks are rejected
 and the receiver runs on the anchor and on LMMSE through the CRC selection; its clean BLER,
@@ -1145,14 +1238,16 @@ with those of online DeepSIC (\val{d23.onlinedeepsic.d35bler.raw}, \val{d23.onli
 \val{d23.lmmse.d75bler.raw}, \val{d23.lmmse.d150bler.raw}): no receiver here is protected. The
 principle protects a memory that is worth protecting; when the network cannot track the channel the
 memory is not, and the receiver is left with the model-based reference, which the attacker reaches.
-At a user's maximum power the attacker is also stronger than in the rest of the paper: at the
-median drop its SIR is \val{d23.d35.sirmed}\,dB at 35\,m and \val{d23.d75.sirmed}\,dB at 75\,m,
-against 0\,dB at the headline cell.
+At a user's maximum power the attacker at 35 and 75\,m is also stronger than at the headline cell
+(0\,dB): at the median drop its SIR is \val{d23.d35.sirmed}\,dB at 35\,m, below the $-10$\,dB of the
+strongest attack in Table~\ref{tab:p1}, and \val{d23.d75.sirmed}\,dB at 75\,m.
 
 \subsection{Sensitivity}\label{sec:sens}
 \begin{table}[t]
 \centering\caption{One-at-a-time sensitivity, white-box A1 at SIR 0\,dB, test seed 10: excess SER with
-each setting multiplied by 0.5, 0.75, 1.5 and 2, and the largest clean false rejection over the four.}\label{tab:sens}
+each setting multiplied by 0.5, 0.75, 1.5 and 2, and the largest clean false rejection over the four.
+At the chosen settings ($\times1$) seed 10 has an excess of \val{sens.ref} and a clean SER of
+\val{sens.refclean}\ifval{sens.reffrejk}{, with \val{sens.reffrejk} clean blocks falsely rejected}{}.}\label{tab:sens}
 \scriptsize
 \begin{tabular}{@{}L{25mm}ccccc@{}}
 \toprule
@@ -1163,38 +1258,73 @@ Setting & $\times0.5$ & $\times0.75$ & $\times1.5$ & $\times2$ & \thead{Max fals
 \end{tabular}
 \end{table}
 Multiplying any one of eight settings by 0.5, 0.75, 1.5 or 2 (Table~\ref{tab:sens}, seed 10) keeps the clean SER
-between \val{sens.cleanmin} and \val{sens.cleanmax}, the excess between \val{sens.exmin} and
-\val{sens.exmax}, and the clean false rejection at or below \val{sens.frejmax}; no setting of the
-gates or of the memory is critical within a factor of two. Changing the CRC slack and the G1 slack
+between \val{sens.cleanmin} and \val{sens.cleanmax} and the excess between \val{sens.exmin} and
+\val{sens.exmax} (\val{sens.refclean} and \val{sens.ref} at the chosen settings), with a clean false
+rejection of at most \val{sens.frejmax}. That largest value, at half the CRC relative slack,
+and the one at twice the tightening exceed the $2\%$ cap of the calibration rule
+(Section~\ref{sec:setup}); for the excess SER none of these eight settings is critical within a
+factor of two. Changing the CRC slack and the G1 slack
 together, by 0.5 or 2 each (the \val{sens.grid.n} corners), gives \val{sens.grid.exmin} to \val{sens.grid.exmax}
 at a false rejection of at most \val{sens.grid.frejmax}. The test uses one seed and four
 multipliers per setting, so it shows the absence of a cliff near the chosen values, not an optimum.
 
 \section{Discussion}\label{sec:discussion}
 \textit{What the results support.} A test-time receiver can be protected against pilot poisoning
-by an update rule alone, without detecting the attacker, if what it keeps is checked against
-something the attacker cannot reach. In Citadel-Rx that is the slow memory, through the anchor
-detector, and the CRC of the data; CRC-Rollback has the same test but judges against LMMSE on the
-poisoned pilots, and fails for that reason. What remains under attack, an excess of
-\val{p1.citadel.wb0.excess} at the headline cell, is the price of rejecting: forty blocks detected
-with a memory that did not adapt to them. The ordering holds for the \val{atk.cit0.n} attacks at
-SIR 0\,dB built against the defence, with shorter blocks, with eight users and 32 antennas and with a
-second network backbone, and over 2000 clean blocks the receiver neither drifts nor rejects
-(\val{d7.citadel.frejk} clean blocks rejected). A slow drift kept small
-enough to be accepted is the case the retention bounds address: under A3$^\ast$ at 5\% it moved
-the slowest level within the structural bound, over 300 and over 900 blocks, and cost
-\val{ret.p8e005.excess} in SER. The gain without attack is mostly the CRC selection, which any
+without locating the attacker if what it keeps is checked against something the attacker cannot
+reach, in Citadel-Rx the slow memory, through the anchor detector, and the CRC of the data, and if
+the blocks it rejects are detected with that memory: without this fallback the excess is
+\val{ab.nofallback.excess} instead of \val{ab.complete.excess} (seeds 10--14). CRC-Rollback, a CRC test at a fixed slack with rollback, judges
+against LMMSE on the poisoned pilots alone and fails, and so does Citadel-Rx with its own gates,
+slack and CRC selection but a single memory (\val{ab.K1.excess}): the failure comes from the
+reference, not from the looser slack. What remains under attack, an excess of
+\val{p1.citadel.wb0.excess} at the headline cell, is the price of rejecting: in the forty attacked blocks
+the receiver detects with a memory that did not adapt to them, and the CRC selection loses most of
+its gain, because its LMMSE alternative uses the poisoned estimate (its pass fraction falls from
+\val{gate.lmmsecln} to \val{gate.lmmseatt}); without the selection the excess is
+\val{ab.noselect.excess}, against \val{ab.complete.excess} on seeds 10--14. Under the \val{atk.cit0.n} attack variants of
+Table~\ref{tab:attacks} at SIR 0\,dB, those adapted to the defence or its feedback, the physical
+attackers and the signal-referenced budget, the excess stays between \val{atk.cit0.exmin} and
+\val{atk.cit0.exmax}; the ordering holds for the \val{atk.onl0.n} of them also run against online
+DeepSIC, with shorter blocks, with eight users and 32 antennas and with a second network backbone
+(where the gates reject \val{d8.citadel.frejk} clean blocks). Over 2000 clean blocks
+(\val{d7.citadel.n} seeds) the SER of Citadel-Rx does not drift (\val{d7.citadel.first} over blocks
+5--499, \val{d7.citadel.last} over the last 500), and \val{d7.citadel.frejk} clean blocks are
+rejected. A slow drift kept small
+enough to be accepted is the case the retention bounds address: under A3$^\ast$ at 5\% (\val{ret.p8e005.rejk} attacked
+blocks rejected) it left a paired displacement of \val{ret.p8e005.DK} in the slowest level over 300
+blocks, against a clean movement of \val{ret.p8e005.movcln} and a design bound of
+\val{ret.p8e005.design} (over 900 blocks \val{ret.b5.DK}, against \val{ret.b5.movcln} and
+\val{ret.b5.design}), and cost \val{ret.p8e005.excess} in SER. The gain without attack is mostly the CRC selection, which any
 receiver with a CRC can use.
 
 \textit{Where it fails.} The defence is only as good as its references and its network. An
-attacker that also perturbs the data degrades the references and gets more poisoned blocks accepted
-(A4); neither version of the abstain state answers it, and the final version abstains after some
-legitimate redraws. Where the network is worse than LMMSE, the relative gates reject nearly every
-clean block and the receiver runs on LMMSE: at 16-QAM it is then worse than both alternatives, and
-in the coded 3GPP scene, whose rotating channel phases the networks do not track, it inherits
-LMMSE's exposure to poisoned pilots and no receiver is protected. Strong poisoning during a
-legitimate change denies adaptation for as long as it lasts; streak recovery shortens the cost but
-does not remove it. Per-user gating does not isolate an attack on one user, because the block-level
+attacker that also perturbs the data (A4) degrades the references, so that more poisoned blocks are
+accepted (only \val{a4.025.rejk} rejected at $\alpha=0.25$), and its perturbation of the data also
+harms the detection of the blocks that are rejected: when the final abstain state abstains on every
+attacked block, A4 at $\alpha=0.75$ still costs \val{h3.a4075.excess}, against \val{h3.a1.excess}
+for A1; neither version of the abstain state answers it, and the final version abstains after some
+legitimate redraws. Where the network passes far fewer CRCs than the reference on clean blocks
+(\val{qam.passnn} against \val{qam.passref} at 16-QAM, a virtual \val{d23m.d75.nncln} against
+\val{d23m.d75.refcln} in the coded scene), the relative gates reject nearly every
+clean block and the receiver runs on its anchor and, through the CRC selection, on LMMSE where LMMSE
+passes. At 16-QAM the sub-blocks where nothing passes keep the anchor's decisions, so its clean SER
+(\val{sc.citadelqam16.clean}) is worse than that of online DeepSIC (\val{sc.onlinedeepsicqam16.clean})
+and of LMMSE (\val{sc.lmmseqam16.clean}), and under attack all three fail, Citadel-Rx with the
+smallest excess (\val{sc.citadelqam16.excess} against \val{sc.onlinedeepsicqam16.excess} and
+\val{sc.lmmseqam16.excess}). In the coded 3GPP scene, whose rotating channel phases the networks do not track, it inherits
+LMMSE's exposure to poisoned pilots: its excess BLER (\val{d23.citadel.d35bler.excess},
+\val{d23.citadel.d75bler.excess} and \val{d23.citadel.d150bler.excess} at 35, 75 and 150\,m) exceeds
+that of undefended online DeepSIC (\val{d23.onlinedeepsic.d35bler.excess},
+\val{d23.onlinedeepsic.d75bler.excess}, \val{d23.onlinedeepsic.d150bler.excess}) at every distance,
+with disjoint intervals at 35\,m only, and no receiver is protected. Strong poisoning during a
+legitimate change denies adaptation while it lasts, and its cost outlasts it (excess
+\val{b3.citadel.win} in the window, \val{b3.citadel.post} in the ten blocks after it); streak
+recovery lowers the cost (\val{b3.citadelstreak.win} and \val{b3.citadelstreak.post}) but does not
+remove it. Without attack, the gates slow legitimate change: after a channel redraw they reject a
+fraction \val{deny.citadel.frej} of the clean blocks, and the SER over the remaining blocks is
+\val{deny.citadel.after} against \val{deny.onlinedeepsic.after} for online DeepSIC; on the weaker
+second backbone they reject \val{d8.citadel.frejk} clean blocks. Per-user gating does not isolate an
+attack on one user, because the block-level
 gates still reject the block. The gates do not address jamming, which at the same SIR harms every
 receiver more than poisoning harms Citadel-Rx.
 
@@ -1202,14 +1332,17 @@ receiver more than poisoning harms Citadel-Rx.
 scrambling over stochastic 3GPP urban-micro drops (not a ray-traced scene) with four antennas, one
 narrowband channel per slot, ideal power control and hard-decision decoding; the other experiments
 use CRC-8 sub-blocks over the SED model with cosine fading (COST2100 traces enter the calibration
-only). The headline cell has ten test seeds and most other experiments five; the optimised drift
-and the long clean horizon have two (the 900-block drift \val{ret.b5.n}) and the sensitivity test
+only). The headline cell has ten test seeds and most other experiments five; the optimised drift,
+the first abstain version and the long clean horizon have two (the 900-block drift \val{ret.b5.n}) and the sensitivity test
 one, so seed-level tests are possible only at the headline cell (with five seeds the smallest
 attainable two-sided $p$ is $0.0625$). The theory bounds the displacement of the slowest level, not
 the error rate; the design bound holds for any attacker but is coarse, and the structural bound needs
 the paired clean run, so it is a diagnostic of an experiment, not a run-time certificate. All results
 of the first version used the consolidation rule corrected in Section~\ref{sec:citadel} and are
-superseded by this evaluation. Times were measured on CPUs with several runs in parallel and are
+superseded by this evaluation, except the clean G1 statistics of Section~\ref{sec:theory}, from
+clean runs, on which the two rules coincide unless the verdicts of a period sum to less than one,
+and the first Lipschitz probes of Remark~\ref{rem:contraction}, which concern only the fast learner,
+unchanged by the revision. Times were measured on CPUs with several runs in parallel and are
 complemented by multiply-accumulate counts; no GPU measurement is reported.
 
 \section{Conclusion}\label{sec:conclusion}
@@ -1217,16 +1350,23 @@ A test-time neural receiver resists pilot poisoning when it consolidates into pe
 what a label-free physical check verifies, and when the check judges every update against that
 memory. Citadel-Rx realises this with gated, clipped consolidation into two slow levels, a fallback
 to the slow memory and per-sub-block CRC selection, and a clip that bounds how far any attacker can
-move the slowest level. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by
+move the slowest level per consolidation. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by
 \val{p1.citadel.wb0.excess} against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and
-\val{p1.crc_rollback.wb0.excess} for CRC-Rollback, which has the same test but no protected
-reference; attacks built against the gates left this excess unchanged within its intervals, the
-ordering held on a second backbone and on larger arrays, and a slow drift that the gates accepted
-moved the slowest level only within its structural bound. The open problems are the ones the
-evaluation exposed: references an attacker cannot degrade through the data, an abstain statistic
+\val{p1.crc_rollback.wb0.excess} for CRC-Rollback, a CRC test with rollback judged against LMMSE
+alone (Citadel-Rx's own gates with a single memory: \val{ab.K1.excess} on seeds 10--14); attacks adapted to the gates or their feedback left this excess unchanged within its
+intervals, and the ordering held on a second backbone and on larger arrays. An attack that also
+perturbs the data (A4, \val{a4.025.excess}) and poisoning during a legitimate channel redraw (A1 at
+SIR 0\,dB: \val{b3.citadel.win} in the window and \val{b3.citadel.post} after it; the
+channel-estimate spoof at 10\,dB: \val{deny.citadel.excess}) raised the excess. A slow drift that the gates accepted
+(A3$^\ast$ at 5\%, \val{ret.p8e005.rejk} blocks rejected) cost \val{ret.p8e005.excess} in SER and left
+a paired displacement of \val{ret.p8e005.DK} in the slowest level, against a clean movement of
+\val{ret.p8e005.movcln} and a design bound of \val{ret.p8e005.design}. The open problems are the ones the
+evaluation exposed: references an attacker cannot degrade through the data, adaptation to a legitimate change while
+poisoned blocks are rejected, an abstain statistic
 that survives legitimate change (a per-user verified residual is the next candidate), networks that
-track channels whose phases rotate, and a fallback for networks weaker than the model-based
-detector, without which the coded 3GPP link is not protected.
+track channels whose phases rotate, without which the coded 3GPP link is not protected (there the
+receiver already runs on its anchor and on LMMSE, which the attacker reaches), and a fallback for
+networks weaker than the model-based detector, which the clean 16-QAM results call for.
 
 \section*{Acknowledgment}
 The COST2100 traces are those released with \cite{raviv2023}.
