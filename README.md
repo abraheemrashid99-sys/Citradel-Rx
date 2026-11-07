@@ -108,3 +108,11 @@ above. The 38.901 UMi drops are in `resources/umi/` (`python scripts/make_umi_ch
 regenerates them). How the second campaign was actually split over machines is in
 `docs/REVISION_PLAN.md`; the analysis pairs every attacked run with the clean twin from the machine
 that ran it.
+
+Submission package: `make submission` writes `submission/Citadel-Rx_latex.zip` (standalone LaTeX sources,
+compiles as is, e.g. in Overleaf) and `submission/Citadel-Rx_paper.pdf`.
+
+Records still on a laptop: `python scripts/archive_machine_results.py --machine windows` moves any run
+records not on GitHub into `results_archive/windows/` (never read by the analysis, so the paper's numbers
+cannot change) and pushes them. Level snapshots (`*.levels.npz`) are not in the repository; see
+`docs/SNAPSHOTS.md`.
