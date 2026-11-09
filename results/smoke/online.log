@@ -1,0 +1,9 @@
+[smoke_online seed=0] block    0 ser=0.0170 ber=0.0023     t_rx=3.36s
+[smoke_online seed=0] block    5 ser=0.0165 ber=0.0023     t_rx=2.00s
+[smoke_online seed=0] block   10 ser=0.0689 ber=0.0102     t_rx=2.51s
+[smoke_online seed=0] block   15 ser=0.0944 ber=0.0144     t_rx=2.93s
+[smoke_online seed=0] block   20 ser=0.1022 ber=0.0161     t_rx=3.17s
+[smoke_online seed=0] block   25 ser=0.0721 ber=0.0106     t_rx=3.16s
+[smoke_online seed=0] block   29 ser=0.0871 ber=0.0128     t_rx=3.79s
+saved results/smoke/smoke_online_s0_1a50d3e3cd8c.json
+== smoke_online seed 0: ser_mean=0.0679 ser_median=0.0792

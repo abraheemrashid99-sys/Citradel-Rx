@@ -1,0 +1,30 @@
+== cal_V0_clean seed 0: ser_mean=0.0310 ser_median=0.0273
+== cal_V3_clean seed 0: ser_mean=0.0173 ser_median=0.0123
+== cal_V1_clean seed 0: ser_mean=0.0154 ser_median=0.0119
+== cal_V2_clean seed 0: ser_mean=0.0153 ser_median=0.0119
+== cal_V4_clean seed 0: ser_mean=0.0154 ser_median=0.0119
+== cal_V0_a1sir0 seed 0: ser_mean=0.0307 ser_median=0.0271 ser_pre=0.0400 ser_attack=0.0241 ser_post=0.0303
+== cal_V2_a1sir0 seed 0: ser_mean=0.0200 ser_median=0.0128 ser_pre=0.0234 ser_attack=0.0234 ser_post=0.0121
+== cal_V1_a1sir0 seed 0: ser_mean=0.0201 ser_median=0.0125 ser_pre=0.0238 ser_attack=0.0233 ser_post=0.0121
+== cal_V3_a1sir0 seed 0: ser_mean=0.0274 ser_median=0.0159 ser_pre=0.0280 ser_attack=0.0378 ser_post=0.0130
+== cal_V4_a1sir0 seed 0: ser_mean=0.0204 ser_median=0.0127 ser_pre=0.0238 ser_attack=0.0242 ser_post=0.0118
+== cal_V0_cost seed 0: ser_mean=0.0006 ser_median=0.0004 ser_pre=0.0004 ser_attack=0.0010 ser_post=0.0004
+== cal_V1_cost seed 0: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+== cal_V2_cost seed 0: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+== cal_V3_cost seed 0: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0001
+== cal_V0_clean seed 1: ser_mean=0.0300 ser_median=0.0298
+== cal_V4_cost seed 0: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+== cal_V1_clean seed 1: ser_mean=0.0149 ser_median=0.0117
+== cal_V2_clean seed 1: ser_mean=0.0149 ser_median=0.0118
+== cal_V3_clean seed 1: ser_mean=0.0165 ser_median=0.0122
+== cal_V4_clean seed 1: ser_mean=0.0149 ser_median=0.0117
+== cal_V0_a1sir0 seed 1: ser_mean=0.0299 ser_median=0.0256 ser_pre=0.0386 ser_attack=0.0238 ser_post=0.0293
+== cal_V1_a1sir0 seed 1: ser_mean=0.0197 ser_median=0.0142 ser_pre=0.0228 ser_attack=0.0231 ser_post=0.0121
+== cal_V2_a1sir0 seed 1: ser_mean=0.0212 ser_median=0.0143 ser_pre=0.0228 ser_attack=0.0266 ser_post=0.0124
+== cal_V3_a1sir0 seed 1: ser_mean=0.0226 ser_median=0.0139 ser_pre=0.0269 ser_attack=0.0268 ser_post=0.0127
+== cal_V4_a1sir0 seed 1: ser_mean=0.0198 ser_median=0.0139 ser_pre=0.0228 ser_attack=0.0237 ser_post=0.0118
+== cal_V0_cost seed 1: ser_mean=0.0006 ser_median=0.0003 ser_pre=0.0003 ser_attack=0.0010 ser_post=0.0004
+== cal_V1_cost seed 1: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000
+== cal_V2_cost seed 1: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+== cal_V3_cost seed 1: ser_mean=0.0001 ser_median=0.0000 ser_pre=0.0000 ser_attack=0.0002 ser_post=0.0000
+== cal_V4_cost seed 1: ser_mean=0.0001 ser_median=0.0001 ser_pre=0.0000 ser_attack=0.0003 ser_post=0.0000

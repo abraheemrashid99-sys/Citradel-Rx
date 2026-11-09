@@ -29,3 +29,6 @@ test:
 
 dry:
 	$(PY) scripts/revision_fast.py --dry
+
+submission: paper
+	bash scripts/make_submission.sh
