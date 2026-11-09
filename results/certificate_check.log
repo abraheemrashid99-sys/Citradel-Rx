@@ -1,0 +1,18 @@
+{
+ "G_grad_max": 2.962862124659403,
+ "G_grad_mean": 0.827101972943387,
+ "eps": 1.0457924500523776,
+ "G_adapt_max": 5.211420059204102,
+ "G_adapt_mean": 3.127166673541069,
+ "L_theta_max": 0.8566527366638184,
+ "L_theta_mean": 0.7587461546063423,
+ "L_a_max": 0.3478773534297943,
+ "L_a_mean": 0.32387303933501244
+}
+NOTE: L_theta + L_a >= 1: no measured contraction; the certificate uses the injection count only
+| C_K | eta_K | p_rej (measured) | Delta_f | certificate slope eta_K Delta_f / C_K | measured slope | max_W measured / certificate |
+|---|---|---|---|---|---|---|
+| 8 | 0.5 | 0.00 | 1627.758 | 102.0752 | 0.0842 | 0.333 |
+| 32 | 0.5 | 0.00 | 1625.948 | 25.4904 | 0.0293 | 0.079 |
+| 128 | 0.5 | 0.00 | 1625.948 | 6.3726 | 0.0083 | 0.007 |
+wrote docs/figures/fig_e5_certificate_bound.png

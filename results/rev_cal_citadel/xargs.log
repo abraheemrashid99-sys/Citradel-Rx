@@ -1,0 +1,8 @@
+== cand_derived_select_clip__clean seed 0: ser_mean=0.0153 ser_median=0.0124
+== cand_derived_select_clip__clean seed 2: ser_mean=0.0150 ser_median=0.0113
+== cand_derived_select_clip__clean seed 1: ser_mean=0.0148 ser_median=0.0116
+== cand_derived_select_clip__a1 seed 0: ser_mean=0.0204 ser_median=0.0127 ser_pre=0.0234 ser_attack=0.0243 ser_post=0.0120
+== cand_derived_select_clip__a1 seed 1: ser_mean=0.0202 ser_median=0.0143 ser_pre=0.0228 ser_attack=0.0246 ser_post=0.0119
+== cand_derived_select_clip__a1 seed 2: ser_mean=0.0215 ser_median=0.0150 ser_pre=0.0231 ser_attack=0.0276 ser_post=0.0116
+xargs: sh: terminated by signal 15
+xargs: sh: terminated by signal 15

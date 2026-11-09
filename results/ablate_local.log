@@ -1,0 +1,5 @@
+4 jobs x 3 seeds
+OK   == ablate_reject_keep seed 2: ser_mean=0.0307 ser_median=0.0266 ser_pre=0.0406 ser_attack=0.0252 ser_post=0.0281
+OK   == ablate_no_fallback seed 2: ser_mean=0.1152 ser_median=0.0526 ser_pre=0.0406 ser_attack=0.2364 ser_post=0.0283
+OK   == ablate_jump_anchor seed 2: ser_mean=0.0407 ser_median=0.0353 ser_pre=0.0556 ser_attack=0.0302 ser_post=0.0399
+OK   == ablate_no_anchor seed 2: ser_mean=0.0453 ser_median=0.0439 ser_pre=0.0553 ser_attack=0.0314 ser_post=0.0539
