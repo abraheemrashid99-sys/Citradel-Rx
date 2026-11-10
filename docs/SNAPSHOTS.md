@@ -29,7 +29,8 @@ The script downloads only the parts it needs (into a temporary folder next to th
 size of what is restored), joins them and checks the sha256 of every file before it puts it in place. A
 different file already in that place is kept beside it as `<name>.local`. With the snapshots in place, `make paper` recomputes the stored displacements from them
 and the records, tables and figures come out unchanged (checked on a fresh clone for P4, seeds 10-14 from
-three machines, and for the drift-guard runs H5; only the creation date inside the PDF figures differs).
+three machines, for the drift-guard runs H5 and for the long drift runs B5, seeds 10-11 from two machines;
+only the creation date inside the PDF figures differs).
 
 ## Cloning without the archive
 
@@ -51,13 +52,19 @@ stored is refused unless `--replace` is given.
 
 ## What is on the branch
 
-<!-- tables from the manifests on the snapshots branch at 0a9bcef1b148 -->
+Every level snapshot of the revision is there (24 files). The machines that are not listed (pool3,
+pool6-pool11 and the helper machine) held no snapshot and no file missing from `main`, only their
+pretrain caches, which were not archived: the first run of a configuration writes its cache again.
+
+<!-- tables from the manifests on the snapshots branch at e6920801cf5c -->
 | machine | level snapshots | MB | pretrain caches | MB | other files | MB |
 |---|---|---|---|---|---|---|
 | cloud | 14 | 1249 | 54 | 98 | 0 | 0.0 |
 | pool1 | 3 | 107 | 16 | 35 | 5 | 0.2 |
 | pool2 | 3 | 107 | 15 | 31 | 5 | 0.2 |
-| **all** | **20** | **1462** | **85** | **164** | **10** | **0.4** |
+| pool4 | 2 | 714 | 27 | 42 | 3 | 0.1 |
+| pool5 | 2 | 714 | 27 | 42 | 3 | 0.1 |
+| **all** | **24** | **2891** | **139** | **248** | **16** | **0.7** |
 
 | machine | file | MB | sha256 |
 |---|---|---|---|
@@ -81,6 +88,10 @@ stored is refused unless `--replace` is given.
 | pool2 | `results/rev_clean_pool2/clean_3b3e8e4941_s14_14920dfb07cb.levels.npz` | 36 | `6dfe85b9281b073837cb614c8d1e3878a09d103d3916194dc0d4a774c8d19a91` |
 | pool2 | `results/rev_p4_paired/p4_citadel__sir0_s14_ef13c0b5a1f7.levels.npz` | 36 | `7eea94997c422fa053fb708a00f5e845084460e3b3c83d940fcfc46c9092adec` |
 | pool2 | `results/rev_p4_paired/p4_citadel__sir10_s14_2d7c3fd28fbe.levels.npz` | 36 | `edde1052e60dafe2a8d9882d5d97228afb78752949f360972c2a3ea3da29a2b2` |
+| pool4 | `results/rev2_drift_long/b5_a3star_e0.05__long1000_s10_3a5da08a3aa0.levels.npz` | 357 | `06c76eb25d039f21378d487a7066d1a7cf725bb6bc3eecb40e685712cfe31941` |
+| pool4 | `results/rev_clean_pool4/clean_a14ebcbf4c_s10_59377215eaa6.levels.npz` | 357 | `4ec39eea2ed3c296acf6d50715be395b32ff4d57cc7dd74969484562e18dbf04` |
+| pool5 | `results/rev2_drift_long/b5_a3star_e0.05__long1000_s11_283ff7dccd8d.levels.npz` | 357 | `03285e7238217b27958af4f9cbb90058c9c9dc7ceb94f7f6f419ac8c2e51946d` |
+| pool5 | `results/rev_clean_pool5/clean_a14ebcbf4c_s11_28a68942c633.levels.npz` | 357 | `b7a4ff6a8ad4e7e0c0db2051a61a7188f19531973240c886fafc6b56b32451c5` |
 
 | machine | file kept under `results_archive/<machine>/` | bytes |
 |---|---|---|
@@ -94,3 +105,9 @@ stored is refused unless `--replace` is given.
 | pool2 | `docs/figures/pool2_paired_rev_p4_paired_a1_sir0_clip.png` | 82803 |
 | pool2 | `docs/figures/pool2_paired_rev_p4_paired_a1_sir10_clip.pdf` | 19455 |
 | pool2 | `docs/figures/pool2_paired_rev_p4_paired_a1_sir10_clip.png` | 84434 |
+| pool4 | `docs/PAIRED_DISP_rev2_drift_long.md` | 290 |
+| pool4 | `docs/figures/pool4_paired_rev2_drift_long_a3star_sir0_e0.05_clip.pdf` | 55611 |
+| pool4 | `docs/figures/pool4_paired_rev2_drift_long_a3star_sir0_e0.05_clip.png` | 81222 |
+| pool5 | `docs/PAIRED_DISP_rev2_drift_long.md` | 290 |
+| pool5 | `docs/figures/pool5_paired_rev2_drift_long_a3star_sir0_e0.05_clip.pdf` | 55702 |
+| pool5 | `docs/figures/pool5_paired_rev2_drift_long_a3star_sir0_e0.05_clip.png` | 80833 |
