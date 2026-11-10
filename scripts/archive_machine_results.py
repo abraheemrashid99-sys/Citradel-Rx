@@ -10,8 +10,13 @@ logs) into results_archive/<machine>/, which scripts/revision_numbers.py never r
 commits and pushes. Nothing is deleted: a file that differs from the one on GitHub is kept in the
 archive next to the original.
 
+Level snapshots (*.levels.npz) and the pretrained-weight cache are too large for main and are not
+touched here: scripts/archive_machine_snapshots.py stores them, and anything else the clone holds
+that is not on GitHub, on the branch `snapshots` (docs/SNAPSHOTS.md). Run it after this script.
+
     python scripts/archive_machine_results.py --machine windows        # on the laptop, in the repository
     python scripts/archive_machine_results.py --machine windows --dry  # list what would be archived
+    python scripts/archive_machine_snapshots.py --machine windows      # then: snapshots, caches, the rest
 """
 from __future__ import annotations
 
@@ -23,6 +28,9 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BRANCH = "main"
+NEXT = ("level snapshots (*.levels.npz), the pretrain cache and other files that are not on GitHub are stored on the "
+        "snapshots branch by:\n    python scripts/archive_machine_snapshots.py --machine {m} --dry    (list)\n"
+        "    python scripts/archive_machine_snapshots.py --machine {m}          (store)")
 
 
 def git(*args, check=True, capture=True):
@@ -42,12 +50,13 @@ def main() -> None:
     paths = []
     for line in status:
         code, path = line[:2], line[3:].strip().strip('"')
-        if code.strip() in ("??", "M", "A", "AM", "MM") and (path.endswith((".json", ".jsonl", ".log", ".md", ".npz"))):
+        if code.strip() in ("??", "M", "A", "AM", "MM") and (path.endswith((".json", ".jsonl", ".log", ".md"))):
             paths.append(path)
     print(f"{len(paths)} new or changed files under results/ and logs/")
     if args.dry or not paths:
         for p in paths[:50]:
             print("  ", p)
+        print(NEXT.format(m=args.machine))
         return
     dest_root = os.path.join("results_archive", args.machine)
     big = []
@@ -72,6 +81,7 @@ def main() -> None:
     git("commit", "-q", "-m", f"Archive of the run records held by the {args.machine} machine (not read by the analysis)", check=False)
     r = git("push", "origin", f"HEAD:{args.branch}", check=False, capture=False)
     print("pushed" if r.returncode == 0 else "push failed: log in to GitHub on this machine and run: git push origin HEAD:" + args.branch)
+    print(NEXT.format(m=args.machine))
 
 
 if __name__ == "__main__":
