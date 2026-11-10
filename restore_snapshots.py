@@ -6,7 +6,8 @@ the branch `snapshots` of this repository, the large ones cut into parts of 90 M
 cloud machine) and manifests/<machine>.json (every other machine) on that branch list every file with
 its size, its sha256, its parts and the machine that wrote it. This script downloads the parts it needs,
 joins them, checks the sha256 of every file and writes it to its place. A file that is already in place
-with the right sha256 is left alone; a file whose sha256 does not match is an error and is not written.
+with the right sha256 is left alone; a different file found in that place is kept beside it as
+<name>.local; a download whose sha256 does not match the manifest is an error and is not written.
 
     python scripts/restore_snapshots.py                  # in a clone of main: every level snapshot
     python scripts/restore_snapshots.py --list           # only list what is on the branch
@@ -62,12 +63,12 @@ def rmtree(path: str) -> None:
 def _inside(rel: str) -> bool:
     """A relative path that stays inside the folder it is joined to (a manifest must never write elsewhere)."""
     parts = rel.split("/")
-    return bool(rel) and not rel.startswith("/") and "\\" not in rel and ":" not in parts[0] and all(p not in ("", ".", "..") for p in parts)
+    return bool(rel) and not rel.startswith("/") and "\\" not in rel and ":" not in rel and all(p not in ("", ".", "..") for p in parts)
 
 
 def load_manifests(src: str) -> list[dict]:
     out = []
-    for p in [os.path.join(src, "MANIFEST.json")] + sorted(glob.glob(os.path.join(src, "manifests", "*.json"))):
+    for p in [os.path.join(src, "MANIFEST.json")] + sorted(glob.glob(os.path.join(glob.escape(src), "manifests", "*.json"))):
         if os.path.exists(p):
             with open(p, encoding="utf-8") as f:
                 out += json.load(f)
@@ -93,32 +94,51 @@ def select(manifest: list[dict], only: str | None, machine: str | None) -> list[
     return out
 
 
-def run(*cmd, cwd=None, data=None) -> bool:
-    return subprocess.run(cmd, cwd=cwd, input=data).returncode == 0
+def run(*cmd, cwd=None) -> bool:
+    return subprocess.run(cmd, cwd=cwd).returncode == 0
+
+
+NOCONV = ["-c", "core.autocrlf=false", "-c", "core.eol=lf"]   # the files must come out byte for byte (Git for Windows converts text by default)
+
+
+def _sparse(tmp: str, paths: list[str]) -> None:
+    """Limit the checkout of tmp to the manifests and `paths` (one anchored pattern per file)."""
+    esc = lambda p: "/" + "".join("\\" + c if c in "*?[\\!# " else c for c in p)
+    info = os.path.join(tmp, ".git", "info")
+    os.makedirs(info, exist_ok=True)
+    with open(os.path.join(info, "sparse-checkout"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("/.gitattributes\n/MANIFEST.json\n/manifests/*.json\n" + "".join(esc(p) + "\n" for p in paths))
 
 
 def download(url: str, tmp: str, want) -> None:
-    """Fetch the branch into tmp. First only the manifests, then only the parts that `want` selects; if this
-    git cannot do a partial clone, the whole branch."""
-    partial = run("git", "clone", "-q", "--depth", "1", "--single-branch", "--branch", BRANCH, "--filter=blob:none",
-                  "--no-checkout", url, tmp)
+    """Fetch the branch into tmp: first only the manifests, then only the parts that `want` selects (a partial
+    clone with a sparse checkout). If this git cannot do that, the whole branch."""
+    partial = run("git", "clone", "-q", *NOCONV, "--depth", "1", "--single-branch", "--branch", BRANCH,
+                  "--filter=blob:none", "--no-checkout", url, tmp)
     if partial:
-        pats = "/MANIFEST.json\n/manifests/*.json\n"
-        partial = (run("git", "sparse-checkout", "set", "--no-cone", "--stdin", cwd=tmp, data=pats.encode())
+        _sparse(tmp, [])
+        partial = (run("git", "config", "core.sparseCheckout", "true", cwd=tmp)
+                   and run("git", "config", "core.sparseCheckoutCone", "false", cwd=tmp)
                    and run("git", "checkout", "-q", BRANCH, cwd=tmp))
     if partial:
-        parts = [p for m in want(load_manifests(tmp)) for p in m["parts"]]
-        esc = lambda p: "/" + "".join("\\" + c if c in "*?[\\!#" else c for c in p)
-        pats += "".join(esc(p) + "\n" for p in parts)
+        sel = want(load_manifests(tmp))
+        parts = [p for m in sel for p in m["parts"]]
         if parts:
-            print(f"downloading {len(parts)} files of the branch '{BRANCH}' ...", flush=True)
-        if not run("git", "sparse-checkout", "set", "--no-cone", "--stdin", cwd=tmp, data=pats.encode()):
-            partial = False
+            need = 2 * sum(m["bytes"] for m in sel) + 2 ** 29   # the download holds every part twice until it is joined
+            free = shutil.disk_usage(tmp).free
+            if free < need:
+                sys.exit(f"not enough free space in {os.path.dirname(tmp)}: about {need / 2 ** 30:.1f} GB needed, "
+                         f"{free / 2 ** 30:.1f} GB free. Restore one machine at a time (--machine), or free some space.")
+            print(f"downloading {len(parts)} files of the branch '{BRANCH}' ({sum(m['bytes'] for m in sel) / 2 ** 20:.0f} MB) ...", flush=True)
+            _sparse(tmp, parts)
+            if not run("git", "read-tree", "-mu", "HEAD", cwd=tmp):
+                partial = False
     if not partial:
-        rmtree(tmp)
+        if os.path.isdir(tmp):
+            rmtree(tmp)
         print(f"downloading the whole branch '{BRANCH}' (several GB) ...", flush=True)
-        if not run("git", "clone", "-q", "--depth", "1", "--single-branch", "--branch", BRANCH, url, tmp):
-            sys.exit("download failed")
+        if not run("git", "clone", "-q", *NOCONV, "--depth", "1", "--single-branch", "--branch", BRANCH, url, tmp):
+            sys.exit(f"download failed (it needs free space in {os.path.dirname(tmp)}; is the repository reachable?)")
 
 
 def main() -> None:
@@ -141,10 +161,15 @@ def main() -> None:
     tmp = None
     try:
         if src is None:
-            url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=dst or HERE, capture_output=True, text=True).stdout.strip()
+            r = subprocess.run(["git", "remote", "get-url", "origin"], cwd=dst or HERE, capture_output=True, text=True)
+            url = r.stdout.strip()
             if not url:
-                sys.exit("no git remote 'origin' here; clone the snapshots branch yourself and pass --from")
-            tmp = tempfile.mkdtemp(prefix="citadel_snapshots_")
+                sys.exit("cannot read the git remote 'origin' here" + (": " + r.stderr.strip() if r.stderr.strip() else "")
+                         + "\nclone the snapshots branch yourself and pass it with --from")
+            try:      # next to the clone: the system temp directory is often too small for several GB
+                tmp = tempfile.mkdtemp(prefix=".citadel_snapshots_", dir=os.path.dirname(os.path.abspath(dst)) if dst else None)
+            except OSError:
+                tmp = tempfile.mkdtemp(prefix="citadel_snapshots_")
             download(url, tmp, (lambda man: []) if args.list else want)
             src = tmp
         todo = want(load_manifests(src))
@@ -164,21 +189,34 @@ def main() -> None:
             os.makedirs(os.path.dirname(out), exist_ok=True)
             part = out + ".restoring"
             h = hashlib.sha256()
-            with open(part, "wb") as w:
-                for p in m["parts"]:
-                    with open(os.path.join(src, *p.split("/")), "rb") as f:
-                        for chunk in iter(lambda: f.read(1 << 22), b""):
-                            h.update(chunk)
-                            w.write(chunk)
-            if h.hexdigest() != m["sha256"] or os.path.getsize(part) != m["bytes"]:
-                os.remove(part)
-                sys.exit(f"sha256 mismatch for {m['path']}: the download is damaged, nothing written for this file")
-            os.replace(part, out)
+            try:
+                with open(part, "wb") as w:
+                    for p in m["parts"]:
+                        q = os.path.join(src, *p.split("/"))
+                        if not os.path.exists(q):
+                            sys.exit(f"{p} is missing from {src}: the checkout of the snapshots branch is incomplete")
+                        with open(q, "rb") as f:
+                            for chunk in iter(lambda: f.read(1 << 22), b""):
+                                h.update(chunk)
+                                w.write(chunk)
+                        if tmp:
+                            os.remove(q)             # our own download: free the space as soon as a part is joined
+                if h.hexdigest() != m["sha256"] or os.path.getsize(part) != m["bytes"]:
+                    sys.exit(f"sha256 mismatch for {m['path']}: the download is damaged, nothing written for this file")
+                if os.path.exists(out):              # a different file is already there (a re-run on this machine?): keep it
+                    if os.path.exists(out + ".local"):
+                        sys.exit(f"{m['path']} and {m['path']}.local both exist and differ from the archive; move one away first")
+                    os.replace(out, out + ".local")
+                    print(f"kept the different file that was there as {m['path']}.local")
+                os.replace(part, out)
+            finally:
+                if os.path.exists(part):
+                    os.remove(part)
             written += 1
             print(f"restored {m['path']} ({m['bytes'] / 2 ** 20:.0f} MB)", flush=True)
         print(f"{written} files restored, {kept} already in place, all sha256 verified")
     finally:
-        if tmp:
+        if tmp and os.path.isdir(tmp):
             rmtree(tmp)
 
 

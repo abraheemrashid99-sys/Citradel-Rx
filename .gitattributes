@@ -1,3 +1,4 @@
+* -text
 *.npz -delta -diff binary
 *.part[0-9][0-9] -delta -diff binary
 *.pt -delta -diff binary
