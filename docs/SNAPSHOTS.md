@@ -25,8 +25,9 @@ same kind of machine writes it again.
     python scripts/restore_snapshots.py --only pretrain_cache --machine cloud   # a machine's pretrained weights
     python scripts/restore_snapshots.py --only machine_file                     # the other files, into results_archive/<machine>/
 
-The script downloads only the parts it needs, joins them and checks the sha256 of every file before it
-puts it in place. With the snapshots in place, `make paper` recomputes the stored displacements from them
+The script downloads only the parts it needs (into a temporary folder next to the clone, about twice the
+size of what is restored), joins them and checks the sha256 of every file before it puts it in place. A
+different file already in that place is kept beside it as `<name>.local`. With the snapshots in place, `make paper` recomputes the stored displacements from them
 and the records, tables and figures come out unchanged (checked on a fresh clone for P4, seeds 10-14 from
 three machines, and for the drift-guard runs H5; only the creation date inside the PDF figures differs).
 
@@ -45,6 +46,8 @@ branch. `git pull origin main` fetches `main` only.
 stores everything the clone on that machine holds that is not on GitHub (untracked, ignored or modified
 files: level snapshots, the pretrain cache, figures, logs) under `machines/<machine>/` on the branch, with
 `manifests/<machine>.json`. It does not change the clone and does not download what is already archived.
+Run again later, it adds what is new and keeps the earlier entries; content that changed since it was
+stored is refused unless `--replace` is given.
 
 ## What is on the branch
 
