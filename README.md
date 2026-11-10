@@ -23,6 +23,8 @@ decision was made.
 ## Install
 
 ```bash
+git clone --single-branch --branch main https://github.com/abraheemrashid99-sys/Citradel-Rx   # main only; see docs/SNAPSHOTS.md
+cd Citradel-Rx
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt          # CPU is enough for the synthetic / COST2100 experiments
 pip install -e .
@@ -114,5 +116,11 @@ compiles as is, e.g. in Overleaf) and `submission/Citadel-Rx_paper.pdf`.
 
 Records still on a laptop: `python scripts/archive_machine_results.py --machine windows` moves any run
 records not on GitHub into `results_archive/windows/` (never read by the analysis, so the paper's numbers
-cannot change) and pushes them. Level snapshots (`*.levels.npz`) are not in the repository; see
-`docs/SNAPSHOTS.md`.
+cannot change) and pushes them; `python scripts/archive_machine_snapshots.py --machine windows` then stores
+whatever else that clone holds and GitHub does not (level snapshots, the pretrain cache) on the archive
+branch.
+
+Level snapshots (`*.levels.npz`, the raw parameter trajectories behind the paired displacements) and the
+pretrained-weight caches are not on `main`: they are on the branch `snapshots`, in parts of 90 MB, and
+`python scripts/restore_snapshots.py` puts them back with their sha256 checked. The paper does not need
+them. See `docs/SNAPSHOTS.md`.
