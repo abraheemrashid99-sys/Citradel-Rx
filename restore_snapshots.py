@@ -48,9 +48,15 @@ def sha256(path: str) -> str:
     return h.hexdigest()
 
 
-def _rm(func, path, _exc):          # Windows: git marks its object files read-only
-    os.chmod(path, stat.S_IWRITE)
-    func(path)
+def rmtree(path: str) -> None:
+    """Remove a directory tree; git marks its object files read-only, which stops a plain rmtree on Windows."""
+    def fix(func, p, _exc):
+        os.chmod(p, stat.S_IWRITE)
+        func(p)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=fix)
+    else:
+        shutil.rmtree(path, onerror=fix)
 
 
 def _inside(rel: str) -> bool:
@@ -109,7 +115,7 @@ def download(url: str, tmp: str, want) -> None:
         if not run("git", "sparse-checkout", "set", "--no-cone", "--stdin", cwd=tmp, data=pats.encode()):
             partial = False
     if not partial:
-        shutil.rmtree(tmp, onerror=_rm)
+        rmtree(tmp)
         print(f"downloading the whole branch '{BRANCH}' (several GB) ...", flush=True)
         if not run("git", "clone", "-q", "--depth", "1", "--single-branch", "--branch", BRANCH, url, tmp):
             sys.exit("download failed")
@@ -173,7 +179,7 @@ def main() -> None:
         print(f"{written} files restored, {kept} already in place, all sha256 verified")
     finally:
         if tmp:
-            shutil.rmtree(tmp, onerror=_rm)
+            rmtree(tmp)
 
 
 if __name__ == "__main__":

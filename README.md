@@ -37,9 +37,9 @@ with the manifest.
 
 ## Adding the files of another machine
 
-`tools/archive_machine.py` stores everything a machine's clone holds that is not on GitHub (untracked,
+`tools/archive_machine.py` (on `main`: `scripts/archive_machine_snapshots.py`) stores everything a machine's clone holds that is not on GitHub (untracked,
 ignored or modified files) under `machines/<machine>/` and pushes it, without downloading what is
-already here and without changing the clone. Its docstring has the three commands to run.
+already here and without changing the clone: `python3 archive_machine.py --machine <name> --repo /path/to/Citradel-Rx`.
 
 ## Do I need this?
 

@@ -9,13 +9,22 @@ stores all of them on the `snapshots` branch under `machines/<machine>/`, the la
 of 90 MB, writes `manifests/<machine>.json` (size, sha256 and parts of every file) and pushes. It never
 changes the clone it reads from, and it does not download the files that are already on the branch.
 
-Run it in an empty directory of its own, not inside the clone:
+One command, from anywhere (python3 or python):
 
-    mkdir snaparch && cd snaparch && git init -q . \
+    python3 archive_machine.py --machine pool4 --repo /path/to/Citradel-Rx          # add --dry to only list
+
+In a clone of main the same script is scripts/archive_machine_snapshots.py and --repo defaults to that
+clone. On a machine that has only the clone, fetch the script from the branch without downloading the
+branch:
+
+    git init -q snaparch && cd snaparch \
       && git remote add origin https://github.com/abraheemrashid99-sys/Citradel-Rx \
       && git fetch -q --depth 1 --filter=blob:none origin snapshots \
       && git show FETCH_HEAD:tools/archive_machine.py > archive_machine.py
-    python3 archive_machine.py --machine pool4 --repo /path/to/Citradel-Rx          # add --dry to only list
+
+The script works in a staging directory of its own (a small git repository next to the clone, or the
+current directory if that already is one with the remote `origin`), which it removes when everything is
+verified on the branch.
 
 How it works: every file (or part) is written as a git blob with `git hash-object`; the tree of the
 branch tip is read into a private index (only tree objects are needed, the blobs of the other machines
@@ -32,6 +41,8 @@ import fnmatch
 import hashlib
 import json
 import os
+import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -47,12 +58,26 @@ FAST = ["-c", "core.compression=0", "-c", "core.looseCompression=0", "-c", "pack
         "-c", "http.postBuffer=1048576000"]
 
 
+WORK = None                    # the staging repository; set in main()
+
+
 def git(*args, cwd=None, data=None, check=True, env=None, quiet=True):
-    r = subprocess.run(["git", *FAST, *args], cwd=cwd, input=data, env=env,
+    r = subprocess.run(["git", *FAST, *args], cwd=cwd or WORK, input=data, env=env,
                        stdout=subprocess.PIPE, stderr=subprocess.PIPE if quiet else None)
     if check and r.returncode != 0:
         sys.exit(f"git {' '.join(args[:3])} ... failed:\n{(r.stderr or b'').decode(errors='replace')}")
     return r
+
+
+def rmtree(path: str) -> None:
+    """Remove a directory tree; git marks its object files read-only, which stops a plain rmtree on Windows."""
+    def fix(func, p, _exc):
+        os.chmod(p, stat.S_IWRITE)
+        func(p)
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=fix)
+    else:
+        shutil.rmtree(path, onerror=fix)
 
 
 def skip(rel: str) -> bool:
@@ -124,20 +149,33 @@ def push_group(entries: dict[str, str], message: str) -> str:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--machine", required=True, help="the name of this machine, e.g. pool4, helper, windows")
-    ap.add_argument("--repo", required=True, help="the clone of Citradel-Rx on this machine (read only)")
+    here = os.path.dirname(os.path.abspath(__file__))
+    default_repo = os.path.dirname(here) if os.path.isdir(os.path.join(os.path.dirname(here), "citadel_rx")) else None
+    ap.add_argument("--repo", default=default_repo, required=default_repo is None,
+                    help="the clone of Citradel-Rx on this machine (read only)")
+    ap.add_argument("--workdir", default=None, help="staging directory (default: next to the clone)")
     ap.add_argument("--dry", action="store_true", help="list what would be stored and stop")
     ap.add_argument("--trailer", default="", help="text appended to the commit messages (attribution lines)")
     args = ap.parse_args()
     repo = os.path.abspath(args.repo)
-    if not os.path.isdir(os.path.join(repo, ".git")):
+    if not os.path.exists(os.path.join(repo, ".git")):
         sys.exit(f"{repo} is not a git clone")
-    if os.path.abspath(os.getcwd()).startswith(repo + os.sep) or os.path.abspath(os.getcwd()) == repo:
-        sys.exit("run this in a directory of its own, not inside the clone")
-    if not all(c.isalnum() or c in "-_" for c in args.machine):
-        sys.exit("--machine: letters, digits, - and _ only")
+    if not all(c.isalnum() or c in "-_" for c in args.machine) or args.machine == "cloud":
+        sys.exit("--machine: letters, digits, - and _ only (and not 'cloud', the coordinating machine)")
 
-    if git("remote", "get-url", "origin", check=False).returncode != 0:
-        sys.exit("run this in a git directory of its own whose remote 'origin' is the repository (see the docstring)")
+    global WORK
+    inside = lambda d: os.path.abspath(d) == repo or os.path.abspath(d).startswith(repo + os.sep)
+    cwd = os.getcwd()
+    if args.workdir:
+        WORK = os.path.abspath(args.workdir)
+    elif (os.path.isdir(os.path.join(cwd, ".git")) and not inside(cwd)
+          and subprocess.run(["git", "remote", "get-url", "origin"], cwd=cwd, capture_output=True).returncode == 0):
+        WORK = cwd                                           # an existing staging repository (see the docstring)
+    else:
+        WORK = os.path.join(os.path.dirname(repo), f".snaparch_{args.machine}")
+    ours = WORK == os.path.join(os.path.dirname(repo), f".snaparch_{args.machine}")   # removed once all is verified
+    if inside(WORK):
+        sys.exit("the staging directory must be outside the clone")
     if not git("branch", "-r", "--contains", "HEAD", cwd=repo, check=False).stdout.strip():
         print("WARNING: the clone has commits that are on no remote branch; push them, this script only stores "
               "files that are untracked, ignored or modified", flush=True)
@@ -150,6 +188,14 @@ def main() -> None:
         for f in files:
             print(f"  {os.path.getsize(os.path.join(repo, f)):>11d}  {kind_and_path(f, args.machine)[0]:14s} {f}")
         return
+
+    if not os.path.isdir(os.path.join(WORK, ".git")):
+        url = subprocess.run(["git", "remote", "get-url", "origin"], cwd=repo, capture_output=True, text=True).stdout.strip()
+        if not url:
+            sys.exit(f"{repo} has no remote 'origin'")
+        os.makedirs(WORK, exist_ok=True)
+        git("init", "-q", ".")
+        git("remote", "add", "origin", url)
 
     manifest, blobs = [], []                                 # blobs: (stored path, blob sha, bytes)
     for rel in files:
@@ -203,6 +249,8 @@ def main() -> None:
     kinds = {}
     for m in manifest:
         kinds[m["kind"]] = kinds.get(m["kind"], 0) + 1
+    if ours:
+        rmtree(WORK)
     print(f"VERIFIED {args.machine}: {len(manifest)} files ({', '.join(f'{v} {k}' for k, v in sorted(kinds.items()))}), "
           f"{total / 2 ** 20:.0f} MB in {len(blobs)} blobs on {BRANCH} at {tip[:12]}")
 
