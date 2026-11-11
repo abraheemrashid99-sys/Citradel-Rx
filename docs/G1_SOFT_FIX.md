@@ -55,12 +55,19 @@ Pairing with clean twins:
   (`results/rev_clean_<machine>`; the A3\* twins save level snapshots, and `scripts/paired_disp.py`
   writes the paired displacements into the attacked records on that machine).
 * `a4`: the attacked run carries `pairs_as`, the machine that ran the record it replaces, and is paired
-  with that machine's stored clean twin. This rests on a check: every cloud container gives
-  bit-identical runs. The clean twins of seeds 10-14 re-run on `pool12` and `pool13` equal those of
-  `cloud` and `pool1`-`pool5` block for block (per-block SER), while the MacBook's differ. Each machine
-  that uses `pairs_as` first repeats a stored cloud clean run and writes the comparison to
-  `results/g1fix_probe/<machine>.json`; `scripts/revision_numbers.py` honours `pairs_as` only if that
-  probe found identical runs.
+  with that machine's stored clean twin. Two checks support this:
+  1. Every pair is checked on its own. Before the attack window starts, an attacked run follows its
+     clean twin exactly (the attacker draws from its own random generators), so on machines that give
+     identical runs the per-block SER and gate verdict before the window agree bit for bit. This holds
+     for all 42 stored A4 and soft-gate pairs (13 to 42 blocks each, machines cloud, pool1-5, pool9,
+     pool10, pool12, pool13). `revision_numbers.cell` keeps a `pairs_as` pair only if it holds
+     (`same_before_window`).
+  2. The machines agree in general. The clean twins of seeds 10-14 re-run on `pool12` and `pool13`
+     equal those of `cloud` and `pool1`-`pool5` block for block, while the MacBook's differ; each
+     machine that uses `pairs_as` also repeats a stored cloud clean run (`--probe-only`) and writes
+     the comparison to `results/g1fix_probe/<machine>.json`. (The probe of the first script version
+     compared raw settings and so found no stored record to compare with; it was fixed in 2a184c2 and
+     repeated.)
 
 `scripts/revision_numbers.py` (`with_g1fix`) switches an experiment to its re-runs only when every one
 of its seeds has been re-run, so no table cell mixes the two attack versions.

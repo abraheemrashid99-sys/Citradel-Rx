@@ -121,12 +121,14 @@ def machine(r: dict):
     """Which machine ran a record: second-campaign records carry it; a first-campaign record is placed
     by its folder (the cloud ran P4, the reference-degradation runs and the calibration; the MacBook
     the rest). A re-run of scripts/rerun_g1fix.py that carries `pairs_as` is paired with the clean twin
-    of the machine that ran the record it replaces, if its own machine repeated a stored cloud run
-    bit for bit (results/g1fix_probe/<machine>.json)."""
-    if r.get("pairs_as"):
-        if probe_ok(r.get("machine", "")):
-            return MACHINE_GROUP.get(r["pairs_as"], r["pairs_as"])
-        print(f"   {os.path.basename(r.get('_file', ''))}: no identical probe for machine {r.get('machine')}, not paired")
+    of the machine that ran the record it replaces; cell() keeps the pair only if the blocks before the
+    attack agree bit for bit with that twin (same_before_window), and results/g1fix_probe/<machine>.json
+    records a repeated stored cloud run on the re-running machine."""
+    if r.get("pairs_as"):   # cell() then checks the blocks before the attack against the twin (same_before_window)
+        if not probe_ok(r.get("machine", "")):
+            print(f"   {os.path.basename(r.get('_file', ''))}: machine {r.get('machine')} has no identical probe;"
+                  " paired only if its blocks before the attack equal the twin's")
+        return MACHINE_GROUP.get(r["pairs_as"], r["pairs_as"])
     if r.get("machine"):
         return MACHINE_GROUP.get(r["machine"], r["machine"])
     folder = os.path.basename(os.path.dirname(r.get("_file", "")))
@@ -170,6 +172,16 @@ def rejections(r: dict, attacked: Optional[bool], skip: int = 5) -> Tuple[int, i
 
 
 # ------------------------------------------------------------------------------------ one cell
+def same_before_window(a: dict, c: dict) -> bool:
+    """Before the attack starts an attacked run follows its clean twin exactly (the attacker draws from its
+    own generators), so on machines that give identical runs the blocks before the window agree bit for bit
+    (checked on every stored pair of the A4 and soft-gate experiments). A re-run paired through `pairs_as`
+    with the twin of another machine is accepted only if this holds."""
+    w0, _ = window(a)
+    keys = ("ser", "gamma")
+    return w0 > 0 and all([b.get(k) for b in a["blocks"][:w0]] == [b.get(k) for b in c["blocks"][:w0]] for k in keys)
+
+
 def cell(folder: str, name: str, clean: List[str], metric: str = "ser", seeds=None) -> Optional[dict]:
     """Attacked configuration `name` in `folder`, paired with its clean twins (same seed, settings, machine);
     `seeds`: only these test seeds."""
@@ -178,6 +190,9 @@ def cell(folder: str, name: str, clean: List[str], metric: str = "ser", seeds=No
     for r in load(folder):
         if r["name"] == name and r["config"]["attack"]["type"] != "none" and (seeds is None or r["seed"] in seeds):
             c = twin_of(tw, r)
+            if c is not None and r.get("pairs_as") and not same_before_window(r, c):
+                print(f"   {os.path.basename(r['_file'])}: blocks before the attack differ from its twin, not paired")
+                c = None
             if c is not None:
                 prs.append((r, c))
     if not prs:
