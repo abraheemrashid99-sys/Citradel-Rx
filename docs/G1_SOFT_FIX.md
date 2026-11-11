@@ -112,6 +112,7 @@ Same settings, seeds and clean twins; only the soft G1 term differs. Excess SER 
 | A3\*, 50 % | +0.0097 | +0.0109 | 600/600 | 599/600 |
 | A3\*, 50 %, drift guard | +0.0101 | +0.0110 | 600/600 | 599/600 |
 | A3\*, 5 %, drift guard | +0.0019 | +0.0017 | 2/600 | 2/600 |
+| A3\*, 5 %, 1000 blocks | +0.0019 | +0.0016 | 2/1800 | 1/1800 |
 
 In these runs the A4 attacker with 6 PGD steps was rejected more often and did less damage than before
 the fix; with 20 steps it was rejected about as often as with 6 and did more damage. Why the corrected
