@@ -252,7 +252,7 @@ transformation, EOT \cite{athalye2018eot}). The soft-gate objective is the data 
 level, whose decisions the receiver emits if it accepts the block, times a differentiable surrogate
 of the probability that its gates accept, plus a reward for acceptance. The surrogate models the
 gates G1 (against LMMSE only) and G2 of Section~\ref{sec:gates}, not G3, with the defence's running
-statistics, untightened thresholds and soft-step widths, a soft CRC pass rate and posterior-mean
+statistics, the references of the unperturbed block, untightened thresholds and soft-step widths, a soft CRC pass rate and posterior-mean
 symbols; it replaces the hard gates on the forward and the backward pass, where the backward-pass
 differentiable approximation (BPDA) \cite{athalye2018obfuscated} keeps the exact forward pass.
 \item \emph{A2, targeted}: A1 with the objective replaced by the post-adaptation loss of one user
@@ -752,7 +752,7 @@ differences of a few $10^{-3}$ between attacks lie within the intervals; what th
 
 When the gates reject nearly every attacked block, the excess depends on the power of the pilot
 perturbation (SIR 0 against 10\,dB), not on how it was optimised: it is the price of rejecting a
-block with poisoned pilots; an attack that also reaches the data costs more
+block with poisoned pilots; an attack that also reaches the data and gets more blocks accepted costs more
 (Section~\ref{sec:refdeg}). The data of the window are detected with the anchor, which has not adapted to the
 block, and the LMMSE alternative of the CRC selection uses the poisoned channel estimate (its pass
 fraction falls from \val{gate.lmmsecln} on the clean twin to \val{gate.lmmseatt} on attacked
@@ -829,9 +829,9 @@ reference passes \val{a4.025.refatt} of the CRCs on attacked blocks (\val{a4.025
 clean twin), close enough to the poisoned fast level (\val{a4.025.nnatt}) that only
 \val{a4.025.rejk} attacked blocks are rejected, and the excess SER is \val{a4.025.excess}, against
 \val{h7.citadela1.excess} to \val{ab.complete.excess} for A1 on the same seeds; with three quarters on the pilots it is
-\val{a4.075.excess}. More optimisation does not make it stronger: with 20 PGD steps instead of 6 the
+\val{a4.075.excess}. More optimisation raises the excess, with overlapping intervals: with 20 PGD steps instead of 6 the
 excess at $\alpha=0.25$ is \val{b2.a4pgd20.excess} and \val{b2.a4pgd20.rejk} attacked blocks are
-rejected, against \val{a4.025.rejk} with 6 steps. Further ascent on the attacker's objective thus lost acceptances, which suggests that the objective does not follow the gates it attacks: its surrogate models G1 against LMMSE only and G2, with untightened thresholds, and omits G3. The A4 rows therefore bound this attacker, not every joint attacker; one with an exact model of the gates was not run. An attacker that reaches the data does far more harm by jamming them: the same data power as
+rejected, against \val{a4.025.excess} and \val{a4.025.rejk} with 6 steps, so the 6-step rows may understate this attacker. Its surrogate models G1 against LMMSE only and G2, with untightened thresholds, and omits G3. The A4 rows therefore describe this attacker, not every joint attacker; more than 20 PGD steps and an attacker with an exact model of the gates were not run. An attacker that reaches the data does far more harm by jamming them: the same data power as
 noise raises the SER by \val{a4.jam025} and \val{a4.jam075} for $\alpha=0.25$ and $0.75$.
 
 The abstain state is meant to answer A4. Its first version did not work: its running statistics
@@ -844,11 +844,11 @@ in either run). The final version (Section~\ref{sec:citadel}) does not trip on c
 the fresh seeds 15--19 and on \val{h3.snrdrop.abstk} of the blocks after a 6\,dB SNR drop (after the
 drop no slot is verified for every user, so there the statistic is that of the LMMSE decisions). It abstains on
 every attacked block of A1 and of A4 at $\alpha=0.75$, whose energy on the pilots inflates the noise
-estimate, but on only \val{h3.a4025.abst}\% of those of A4 at $\alpha=0.25$ on seeds 10--14
-(\val{h3x.a4025.abst}\% on seeds 15--19), and it does not lower
-the excess of A4 beyond the intervals: \val{h3.a4025.excess} and \val{h3.a4075.excess} on seeds
-10--14, against \val{a4.025.excess} and \val{a4.075.excess} without it (on seeds 15--19,
-\val{h3x.a4025.excess} and \val{h3x.a4075.excess}). After a legitimate redraw it abstains on
+estimate, and on \val{h3.a4025.abst}\% of those of A4 at $\alpha=0.25$ on seeds 10--14
+(\val{h3x.a4025.abst}\% on seeds 15--19). It lowers the excess of A4, with overlapping intervals, to near
+that of A1 with the same state: \val{h3.a4025.excess} and \val{h3.a4075.excess} on seeds
+10--14, against \val{a4.025.excess} and \val{a4.075.excess} without it and \val{h3.a1.excess} for A1 (on seeds 15--19,
+\val{h3x.a4025.excess} and \val{h3x.a4075.excess}, against \val{h3x.a1.excess} for A1). After a legitimate redraw it abstains on
 \val{h3.redraw.abst} of the 50 remaining blocks on average (\val{h3.redraw.n} seeds) and on all of
 them on \val{h3.redraw.nall}: when the
 CRCs of one user fail after the redraw, no symbol slot is verified for every user (the verified
@@ -1238,11 +1238,10 @@ receiver with a CRC can use.
 
 \textit{Where it fails.} The defence is only as good as its references and its network. An
 attacker that also perturbs the data (A4) degrades the references, so that more poisoned blocks are
-accepted (only \val{a4.025.rejk} rejected at $\alpha=0.25$), and its perturbation of the data also
-harms the detection of the blocks that are rejected: when the final abstain state abstains on every
-attacked block, A4 at $\alpha=0.75$ still costs \val{h3.a4075.excess}, against \val{h3.a1.excess}
-for A1; neither version of the abstain state answers it, and the final version abstains after some
-legitimate redraws. Where the network passes far fewer CRCs than the reference on clean blocks
+accepted (only \val{a4.025.rejk} rejected at $\alpha=0.25$, \val{b2.a4pgd20.rejk} with 20 PGD steps), at an excess of up to
+\val{b2.a4pgd20.excess}. The final abstain state brings the excess of A4 near that of A1 (\val{h3.a4025.excess} and
+\val{h3.a4075.excess} at $\alpha=0.25$ and $0.75$, against \val{h3.a1.excess}, with overlapping intervals), but it abstains
+after some legitimate redraws, and its first version rejects every block of its clean runs. Where the network passes far fewer CRCs than the reference on clean blocks
 (\val{qam.passnn} against \val{qam.passref} at 16-QAM, a virtual \val{d23m.d75.nncln} against
 \val{d23m.d75.refcln} in the coded scene), the relative gates reject nearly every
 clean block and the receiver runs on its anchor and, through the CRC selection, on LMMSE where LMMSE
@@ -1290,7 +1289,7 @@ what a label-free physical check verifies, and that the check should judge every
 memory. Citadel-Rx realises this with gated, clipped consolidation into two slow levels, a fallback
 to the slow memory and per-sub-block CRC selection, and a clip that bounds how far any attacker can
 move the slowest level per consolidation. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by \val{p1.citadel.wb0.excess}, against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and \val{p1.crc_rollback.wb0.excess} for CRC-Rollback, a CRC test with rollback judged against LMMSE alone. Citadel-Rx's own gates with a single memory gave \val{ab.K1.excess} on seeds 10--14. Attacks adapted to the gates or their feedback left the excess of the complete receiver unchanged within its intervals, and the ordering held on a second backbone and on larger arrays. An attack that also
-perturbs the data (A4, \val{a4.025.excess}) and poisoning during a legitimate channel redraw (A1 at
+perturbs the data (A4: \val{a4.025.excess} with 6 PGD steps and \val{b2.a4pgd20.excess} with 20) and poisoning during a legitimate channel redraw (A1 at
 SIR 0\,dB: \val{b3.citadel.win} in the window and \val{b3.citadel.post} after it; the
 channel-estimate spoof at 10\,dB: \val{deny.citadel.excess}) raised the excess. A slow small-budget attack that the gates accepted
 (A3$^\ast$ at 5\%, \val{ret.p8e005.rejk} blocks rejected) cost \val{ret.p8e005.excess} in SER, and the paired displacement

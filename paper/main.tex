@@ -74,7 +74,7 @@ signal-to-interference ratio raises the symbol error rate of Citadel-Rx by \val{
 against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC; the gates reject \val{p1.citadel.wb0.rejpct}\% of the poisoned blocks at a \val{p1.citadel.wb0.frejpct}\% false-rejection rate.
 Attacks adapted to the gates or their feedback leave the excess unchanged within its intervals, and the
 ordering holds with a second backbone and with $8\times32$ arrays. Attacks on the references
-or during a channel change raise the excess, and the receiver fails at 16-QAM and in an NR LDPC link
+or during a channel change can raise the excess, and the receiver fails at 16-QAM and in a coded 5G link
 over 3GPP urban-micro channels, where its network passes far fewer CRCs than LMMSE on clean blocks.
 \end{abstract}
 
@@ -157,7 +157,7 @@ The contributions of this paper are as follows.
 \item \textbf{A receiver that consolidates only what physics verifies} (Section~\ref{sec:citadel}):
 gated, clipped consolidation into two slow levels, an anchor fallback and CRC selection.
 In the ablation, a slow level, the fallback and a decision-level gate are necessary (excess SER
-\val{ab.K1.excess}, \val{ab.K2.excess} and \val{ab.complete.excess} with no, one and two slow levels).
+\val{ab.K1.excess}, \val{ab.nofallback.excess} and \val{ab.g3.excess} without each, against \val{ab.complete.excess}).
 \item \textbf{Retention bounds for the algorithm as implemented} (Section~\ref{sec:theory}): a design
 bound on the slowest level with no measured quantity under any attacker and a structural bound for
 unequal verdicts, after correcting the consolidation rule of an earlier version of this receiver (the
@@ -254,8 +254,8 @@ The soft-gate objective is
 with $\ell^{\rm d}$ the cross-entropy on the true data of 64 random sub-blocks $\mathcal J_b$ (all for
 A4), $\tilde F$ a soft pass fraction, and $\tilde v_1$, $\tilde v_2$ soft verdicts of G1, against LMMSE
 only on posterior-mean symbols, and of G2 with $\tilde F$ for $F_{\rm nn}$, from
-\eqref{eq:g1}--\eqref{eq:softstep} with untightened thresholds; G3 is not modeled. The soft verdicts replace
-the hard gates on the forward and the backward pass. The same soft verdicts enter A4 and A3$^\ast$.
+\eqref{eq:g1}--\eqref{eq:softstep} with untightened thresholds and references from the unattacked block; G3 is not modeled. The soft verdicts, also used by A4 and A3$^\ast$, replace
+the hard gates on the forward and backward pass.
 A4, with 6 PGD steps, splits the budget,
 \begin{equation}\label{eq:a4}
 \|\bm E^{\rm p}_b\|_F\le\sqrt{\alpha}\,\epsilon_b,\qquad \|\bm E^{\rm d}_b\|_F\le\sqrt{1-\alpha}\,\epsilon^{\rm d}_b,
@@ -300,7 +300,7 @@ Jamming & Gaussian noise on the data at the same SIR (control) & --\\
 \subsection{Metrics}
 The SER counts the data slots in which any user is wrong \cite{shlezinger2021,raviv2023,wu2024}. For
 $S$ seeds with attack windows $\mathcal W_h$, and primes for the clean twin (same configuration, seed,
-channel draws and machine, attack disabled), the SER, the excess SER, and the rejection and
+channel draws and machine, attack disabled; for A4, a run on another machine that matches the attacked run block for block before the window), the SER, the excess SER, and the rejection and
 false-rejection rates are
 \begin{align}
 \mathrm{SER}_b&=\frac{1}{N_d}\sum_{t=1}^{N_d}\mathbf 1\{\hat{\bm s}_t\ne\bm s_t\},\nonumber\\
@@ -533,8 +533,8 @@ $\mathrm{CRC}_{u,j}(\bm c_{u,j})=1$, or $\hat{\bm s}_\gamma$ if none passes; all
 computed for the gates. Optional mechanisms are evaluated with the attacks they answer. Streak
 recovery re-fits from the anchor on CRC-verified data after five consecutive rejections and keeps the
 re-fit if it verifies better than the reference. An abstain state, which sets $\gamma_b=0$ and skips
-the buffer when the residual on CRC-verified slots leaves its running range, did not lower the A4
-excess beyond the intervals (extended version).
+the buffer when the residual on CRC-verified slots leaves its running range, lowered the A4
+excess, with overlapping intervals, but abstained after some legitimate redraws (extended version).
 
 \subsection{Design Rule for the CRC Gate}\label{sec:crcrule}
 With i.i.d.\ symbol errors of probability $p$ and a $B$-bit CRC whose syndrome is uniform on error, a
@@ -683,7 +683,7 @@ resamples of seeds and, within each seed, circular stretches of twice the decorr
 Wilcoxon signed-rank tests \cite{wilcoxon1945} on per-seed values, whose smallest attainable p-value is
 $2^{1-S}$ (0.0625 with five seeds), Holm-adjusted over the four baselines
 \cite{holm1979}. Wilson intervals treat pooled blocks as independent and are too narrow if consecutive
-verdicts are correlated. Every attacked run is paired with the clean twin of its own machine; times
+verdicts are correlated. Every attacked run is paired with its clean twin; times
 (single-threaded runs on an Apple M4 laptop) compare receivers only roughly, so multiply-accumulates
 are also counted.
 
@@ -816,8 +816,8 @@ A1, redraw & + streak recovery & \val{b3.citadelstreak.win} & \val{b3.citadelstr
 A4 degrades the references with the fast level (Table~\ref{tab:refdeg}): at $\alpha=0.25$ the reference
 passes \val{a4.025.refatt} of the CRCs (\val{a4.025.refcln} on the clean twin), near enough to the
 poisoned fast level (\val{a4.025.nnatt}) that only \val{a4.025.rejk} attacked blocks are rejected. With
-20 PGD steps instead of 6, more blocks are rejected (\val{b2.a4pgd20.rej} against \val{a4.025.rej}),
-which suggests that the objective, whose surrogate omits G3 and the tightening, does not follow the gates; these rows bound this attacker, not every joint attacker, and one with an exact model of the gates was
+20 PGD steps instead of 6, about as many blocks are rejected (\val{b2.a4pgd20.rej} against \val{a4.025.rej})
+and the excess is higher, with overlapping intervals, so 6 steps may understate this attacker; these rows do not cover every joint attacker, and one with an exact model of the gates was
 not run. Without attack, a legitimate channel redraw at block 50 makes the gates reject
 \val{deny.citadel.frej} of the clean blocks (SER after it \val{deny.citadel.after} against
 \val{deny.onlinedeepsic.after} for online DeepSIC), so the gates slow re-adaptation. The spoof acted as an
@@ -980,16 +980,16 @@ reach, here the slow memory and the CRC, and if rejected blocks are detected wit
 failure of rollback with one memory comes from the reference, not the slack, and the clean gain comes
 mostly from the CRC selection, which any receiver with a CRC can use.
 
-\textit{Where it fails.} A4 harms
-rejected blocks through the data (at $\alpha=0.75$ the gates reject \val{a4.075.rej} of its blocks,
-and it still costs \val{a4.075.excess} against \val{h7.citadela1.excess} for A1); a network weaker than LMMSE on clean blocks
+\textit{Where it fails.} A4 degrades
+the references through the data (at $\alpha=0.25$ the gates reject only \val{a4.025.rej} of its blocks,
+and it costs \val{a4.025.excess} against \val{h7.citadela1.excess} for A1); a network weaker than LMMSE on clean blocks
 makes the gates reject nearly every clean block; poisoning during a legitimate change denies
 adaptation; and the gates do not address jamming, which at the same SIR harms every receiver more than
 poisoning harms Citadel-Rx.
 
 \textit{Assumptions.} Channel: link level, stochastic UMi drops (not ray-traced) with ideal power control, one
 narrowband channel per slot and hard-decision LDPC decoding, elsewhere CRC-8
-over SED. Seeds: ten at the headline cell, five elsewhere, two for A3$^\ast$ and the long horizon.
+over SED. Seeds: ten at the headline cell, five elsewhere, two for A3$^\ast$ and the long horizon, one for the sensitivity test.
 Theory: the bounds limit the displacement of the slowest level, not the error rate. Cost: CPU times
 only, far from real time.
 
@@ -1000,7 +1000,7 @@ selection. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by
 \val{p1.citadel.wb0.excess}, against
 \val{p1.online_deepsic.wb0.excess} for online DeepSIC and \val{p1.crc_rollback.wb0.excess} for
 CRC-Rollback. Adapted attacks left the excess unchanged within its intervals, while A4
-(\val{a4.025.excess}), A1 during a redraw (\val{b3.citadel.win}) and the spoof
+(\val{a4.025.excess}; \val{b2.a4pgd20.excess} with 20 PGD steps), A1 during a redraw (\val{b3.citadel.win}) and the spoof
 (\val{deny.citadel.excess}) raised it; A3$^\ast$ at 5\%, which the gates accepted
 (\val{ret.p8e005.rejk} blocks rejected), cost \val{ret.p8e005.excess} in SER and left $D_K$ at
 \val{ret.p8e005.DK}, against a clean movement of \val{ret.p8e005.movcln} and a design bound of \val{ret.p8e005.design}. Two lessons follow. First, a gate protects a memory only if it
