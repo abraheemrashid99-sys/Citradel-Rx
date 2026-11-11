@@ -342,7 +342,8 @@ L_a = 0.35 (mean 0.32), A3 budget ε = 1.05 per block, single-gradient constant 
   0.40 / 0.38, L_a 0.35 / 0.54 / 0.82 / 1.01. Anchoring lowers the state sensitivity exactly as
   it raises the anchor sensitivity: L_θ + L_a ≈ 1 is structural (the fast map converges toward
   the anchor), so the contraction branch of Theorem 1 cannot be bought with λ and the paper
-  claims the structural branch plus the injection-count bound (THEORY.md, remark (e)).
+  claims the design bound and the structural bound of its Theorem 1 (Section IV of
+  paper/main.tex; docs/THEORY.md records the first version and is superseded).
   Side result worth a sentence in the paper: λ = 1 roughly halves the input sensitivity G_Φ
   of the fast level (5.2 → 1.5) — a stronger prior makes the per-block fit less steerable by
   the pilots, clean or poisoned.

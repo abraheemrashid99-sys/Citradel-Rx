@@ -1,10 +1,13 @@
 # Theory: statements and proofs
 
-This document states and proves the guarantees of the implemented algorithm
-(`citadel_rx/receivers/citadel.py`). Every constant that appears in a bound is
-either a configuration value or is *measured* by the code
-(`citadel_rx/theory/bound.py`, `scripts/certificate_check.py`); the measured
-values are in `docs/certificate_constants.json` and `docs/RESULTS.md`.
+**SUPERSEDED.** This document records the theory of the first version of the receiver
+(consolidation rule with max(1, sum gamma), Theorem 1 under equal verdicts, the regret bound of
+Theorem 2). It is not the theory of the paper; the revised rule, Lemma 1, Theorem 1 and Remark 1
+are in Section IV of `paper/main.tex`. The proof of Lemma 2 below does not hold for
+sum gamma < 1, Theorem 2 is withdrawn because the measured L_theta + L_a exceeds one, and
+remark (e) and Propositions 1-2 claim more than the paper does. The item numbers are kept because
+other files cite them (`citadel_rx/theory/bound.py`, `scripts/certificate_check.py`); the constants
+were measured by that code and are in `docs/certificate_constants.json` and `docs/RESULTS.md`.
 
 Notation. Blocks b = 1, 2, …; U users, pilot observation Y_b (the received
 pilot matrix), data observation Y_b^d. The adaptable parameters form a vector

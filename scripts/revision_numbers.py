@@ -338,7 +338,7 @@ def group_rows(folder: str, clean: List[str], spec: List[Tuple[str, str, str]], 
 def adaptive() -> None:
     spec = [("p3_citadel_unroll10__sir0", "Unroll 10", "Citadel-Rx"), ("p3_citadel_unroll50__sir0", "Unroll 50", "Citadel-Rx"),
             ("p3_citadel_pgd100_r5__sir0", "PGD 100, 5 restarts", "Citadel-Rx"),
-            ("p3_citadel_softgate__sir0", "Soft gates (BPDA), unroll 10", "Citadel-Rx"),
+            ("p3_citadel_softgate__sir0", "Soft gates, unroll 10", "Citadel-Rx"),
             ("p3_citadel_strongest__sir0", "Combined$^{a}$", "Citadel-Rx"), ("p3_online_strongest__sir0", "Combined$^{b}$", "Online DeepSIC"),
             ("p3_citadel_unroll10__sir10", "Unroll 10, SIR 10 dB", "Citadel-Rx"),
             ("p3_citadel_softgate__sir10", "Soft gates, SIR 10 dB", "Citadel-Rx"),
@@ -624,6 +624,7 @@ def retention() -> None:
             continue
         put(key + ".nsnap", str(len(snap)))
         DK, des, ext, anc, mv = [], [], [], [], []
+        DKrun, DKend, desrun = [], [], []   # whole run: D_K also rises after the window (bounds are evaluated in the window)
         for a, cl in snap:
             cfg = a["config"]["citadel"]
             K = len(a["paired_disp"])
@@ -635,6 +636,8 @@ def retention() -> None:
             clip = cfg.get("consol_clip") or []
             DK.append(max(a["paired_disp"][K - 1][w0:w1]))
             des.append(2 * clip[K - 2] * ncons if len(clip) >= K - 1 else float("nan"))
+            DKrun.append(max(a["paired_disp"][K - 1])); DKend.append(a["paired_disp"][K - 1][n - 1])
+            desrun.append(2 * clip[K - 2] * int(np.floor(n / CK) - np.floor(w0 / CK)) if len(clip) >= K - 1 else float("nan"))
             eta_K = cfg["level_lr"][K - 2]
             ext.append(float(extended_bound(a, cl, np.array(a["paired_disp"][K - 2]), eta_K, K, w0, w1).max()))
             anc.append(max(a["paired_anchor"][w0:w1]))
@@ -648,6 +651,11 @@ def retention() -> None:
             put(key + ".movpct", f"{100 * np.mean([m[0] / m[1] for m in mv]):.0f}")
         put(key + ".DK", f"{np.mean(DK):.2f}"); put(key + ".design", f"{np.mean(des):.1f}")
         put(key + ".struct", f"{np.mean(ext):.1f}"); put(key + ".anchor", f"{np.mean(anc):.2f}")
+        # largest D_K over all blocks of the run, D_K at its last block, and the design bound with the
+        # level-K consolidations counted from the window start to the end of the run
+        put(key + ".DKrun", f"{np.mean(DKrun):.2f}"); put(key + ".DKend", f"{np.mean(DKend):.2f}")
+        put(key + ".designrun", f"{np.mean(desrun):.1f}")
+        assert all(d <= b for d, b in zip(DKrun, desrun) if b == b), f"{key}: D_K above the design bound of the run"
         nn = f"{c['n']}" if len(snap) == c["n"] else f"{c['n']} ({len(snap)})"   # (seeds with level snapshots)
         rows.append(f"{lab} & {nn} & {f_sig(c['excess'])} {f_ci(c['ci'])} & {f_rate(c['rej'])} & {np.mean(DK):.2f} & "
                     f"{np.mean(ext):.1f} & {np.mean(des):.1f}\\\\")
