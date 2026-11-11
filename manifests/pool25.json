@@ -1,0 +1,74 @@
+[
+ {
+  "path": "cache/pretrain/citadel_02d2dc1651b8567569f47268.pt",
+  "kind": "pretrain_cache",
+  "machine": "pool25",
+  "source": "cache/pretrain/citadel_02d2dc1651b8567569f47268.pt",
+  "bytes": 2214781,
+  "sha256": "16e84bad6d0600fe5ea314874880245ac7a1a115d94fc1c5d07a22ce949d053d",
+  "parts": [
+   "machines/pool25/cache/pretrain/citadel_02d2dc1651b8567569f47268.pt"
+  ]
+ },
+ {
+  "path": "results_archive/pool25/docs/PAIRED_DISP_rev2_drift_long_more.md",
+  "kind": "machine_file",
+  "machine": "pool25",
+  "source": "docs/PAIRED_DISP_rev2_drift_long_more.md",
+  "bytes": 290,
+  "sha256": "7edb1312dfad047f2baace933f764e8bc4535fe7bdfd9029a36c2d3f539cb772",
+  "parts": [
+   "machines/pool25/docs/PAIRED_DISP_rev2_drift_long_more.md"
+  ]
+ },
+ {
+  "path": "results_archive/pool25/docs/figures/pd1_a3star_sir0_e0.05_clip.pdf",
+  "kind": "machine_file",
+  "machine": "pool25",
+  "source": "docs/figures/pd1_a3star_sir0_e0.05_clip.pdf",
+  "bytes": 55393,
+  "sha256": "1fbcd3d7d30c7f000ac23d9f174f7e585349ebc02585e6f44537f424452f2f3d",
+  "parts": [
+   "machines/pool25/docs/figures/pd1_a3star_sir0_e0.05_clip.pdf"
+  ]
+ },
+ {
+  "path": "results_archive/pool25/docs/figures/pd1_a3star_sir0_e0.05_clip.png",
+  "kind": "machine_file",
+  "machine": "pool25",
+  "source": "docs/figures/pd1_a3star_sir0_e0.05_clip.png",
+  "bytes": 83877,
+  "sha256": "f2a2d564d7eb50d00036ccd2f66f70d509356088f2b63647c28ddfb36d905d45",
+  "parts": [
+   "machines/pool25/docs/figures/pd1_a3star_sir0_e0.05_clip.png"
+  ]
+ },
+ {
+  "path": "results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz",
+  "kind": "snapshot",
+  "machine": "pool25",
+  "source": "results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz",
+  "bytes": 374654752,
+  "sha256": "996f26fa39c04b3ffe1c09de5c6301d4b571b9c6edf8284d831d7023b763fa44",
+  "parts": [
+   "machines/pool25/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz.part00",
+   "machines/pool25/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz.part01",
+   "machines/pool25/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz.part02",
+   "machines/pool25/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s13_5ea3c1071583.levels.npz.part03"
+  ]
+ },
+ {
+  "path": "results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz",
+  "kind": "snapshot",
+  "machine": "pool25",
+  "source": "results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz",
+  "bytes": 374677450,
+  "sha256": "4d601e4029abaafc880a1bf15d475db317418376d805e7502943e6adf480f019",
+  "parts": [
+   "machines/pool25/results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz.part00",
+   "machines/pool25/results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz.part01",
+   "machines/pool25/results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz.part02",
+   "machines/pool25/results/rev_clean_pool25/ext_twin_b1000_8b400816_s13_45a526d3a917.levels.npz.part03"
+  ]
+ }
+]
