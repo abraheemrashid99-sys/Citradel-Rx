@@ -145,3 +145,34 @@ class LMMSEReceiver(Receiver):
         probs = lmmse_soft_symbols(y_d, H, nv, self.mod)
         pt = torch.as_tensor(probs, dtype=torch.float32, device=self.device)
         return BlockOutput(probs_data=pt, idx_hat=hard_from_probs(probs), stats={"noise_var_hat": nv})
+
+
+class MLReceiver(LMMSEReceiver):
+    """Exhaustive maximum-likelihood detection with the regularized LS channel estimate of the pilots
+    (a model-based reference: no adaptation, no memory). Per-user posteriors are max-log marginals,
+    p(s_u = c) proportional to exp(-min over the other users' symbols of ||y - H s||^2 / nv)."""
+
+    def process_block(self, b, y_p, idx_p, y_d, aux=None) -> BlockOutput:
+        import itertools
+        s_p = self.mod.modulate_indices(idx_p)
+        H = ls_channel_estimate(y_p, s_p, self.noise_var)
+        nv = max(float(estimate_noise_var(y_p, s_p, H)), 1e-12)
+        U, order = H.shape[1], self.mod.order
+        hyp = np.array(list(itertools.product(range(order), repeat=U)))      # (order^U, U)
+        S = self.mod.modulate_indices(hyp)                                   # (order^U, U)
+        Y0 = S @ H.T                                                          # (order^U, N) noiseless outputs
+        n = y_d.shape[0]
+        logp = np.empty((n, U, order))
+        idx = np.empty((n, U), dtype=int)
+        for a in range(0, n, 2048):
+            yb = y_d[a:a + 2048]
+            d = (np.abs(yb[:, None, :] - Y0[None, :, :]) ** 2).sum(axis=2) / nv   # (n_b, order^U)
+            idx[a:a + 2048] = hyp[np.argmin(d, axis=1)]
+            for u in range(U):
+                for c in range(order):
+                    logp[a:a + 2048, u, c] = -d[:, hyp[:, u] == c].min(axis=1)
+        logp -= logp.max(axis=2, keepdims=True)
+        probs = np.exp(logp)
+        probs /= probs.sum(axis=2, keepdims=True)
+        pt = torch.as_tensor(probs, dtype=torch.float32, device=self.device)
+        return BlockOutput(probs_data=pt, idx_hat=idx, stats={"noise_var_hat": nv})
