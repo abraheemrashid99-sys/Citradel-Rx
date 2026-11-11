@@ -35,6 +35,9 @@ def make_receiver(cfg, device):
         rx = OnlineDeepSIC(c, device)
         rx.name = t
         return rx
+    if t == "ml":
+        from .lmmse import MLReceiver
+        return MLReceiver(cfg, device)
     if t == "lmmse_robust":
         import copy
         from .lmmse import LMMSEReceiver

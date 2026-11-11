@@ -194,6 +194,12 @@ class AttackConfig:
     start_mode: str = "fixed"         # fixed | random
     random_lo: int = 10
     random_hi: int = 50
+    # exact-gate attacker: the optimised perturbation is scaled by each factor, every candidate is run
+    # through an exact copy of the victim receiver (its gates, thresholds, references, fallback and CRC
+    # selection), and the one whose emitted decisions have the highest SER on the block is sent
+    oracle_scales: Optional[List[float]] = None
+    oracle_mode: str = "max_ser"      # max_ser: highest SER on the block | accepted: highest SER among the
+                                      # candidates the gates accept (poisoning), else highest SER
 
 
 @dataclass

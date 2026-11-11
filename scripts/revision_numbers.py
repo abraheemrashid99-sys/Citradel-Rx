@@ -59,8 +59,10 @@ def load(folder: str) -> List[dict]:
             if r["config"]["frame"].get("coding") == "ldpc" and not r["summary"].get("ldpc_scrambled"):
                 continue   # first coded-scene version without NR scrambling (superseded by d23s_*)
             out.append(r)
-        if not folder.endswith("_g1fix") and os.path.isdir(os.path.join(RES, g1fix_folder(folder))):
+        if not folder.endswith(("_g1fix", "_more")) and os.path.isdir(os.path.join(RES, g1fix_folder(folder))):
             out = with_g1fix(folder, out)
+        if not folder.endswith(("_g1fix", "_more")) and os.path.isdir(os.path.join(RES, folder + "_more")):
+            out = out + load(folder + "_more")   # further seeds (scripts/extend_seeds.py), each with its own twin
         _cache[folder] = out
     return _cache[folder]
 
@@ -101,7 +103,7 @@ MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
 # every clean-twin folder any driver writes (scripts/revision_fast.py CLEAN_DIR), so a new machine cannot be missed
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 21)]   # pool12-20: the re-runs of scripts/rerun_g1fix.py
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 41)]   # pool12-20: scripts/rerun_g1fix.py; pool21-40: scripts/extend_seeds.py
 
 
 _probe: Dict[str, bool] = {}
@@ -395,6 +397,8 @@ def adaptive() -> None:
     spec = [("p3_citadel_unroll10__sir0", "Unroll 10", "Citadel-Rx"), ("p3_citadel_unroll50__sir0", "Unroll 50", "Citadel-Rx"),
             ("p3_citadel_pgd100_r5__sir0", "PGD 100, 5 restarts", "Citadel-Rx"),
             ("p3_citadel_softgate__sir0", "Soft gates, unroll 10", "Citadel-Rx"),
+            ("p3_citadel_oracle_maxser__sir0", "Exact gates, highest SER", "Citadel-Rx"),
+            ("p3_citadel_oracle_acc__sir0", "Exact gates, accepted only", "Citadel-Rx"),
             ("p3_citadel_strongest__sir0", "Combined$^{a}$", "Citadel-Rx"), ("p3_online_strongest__sir0", "Combined$^{b}$", "Online DeepSIC"),
             ("p3_citadel_unroll10__sir10", "Unroll 10, SIR 10 dB", "Citadel-Rx"),
             ("p3_citadel_softgate__sir10", "Soft gates, SIR 10 dB", "Citadel-Rx"),
@@ -412,7 +416,8 @@ def adaptive() -> None:
             ("p3_online_deepsic_sigbudget__sir0", "Signal-referenced budget", "Online DeepSIC")]
     rows, rng = [], {}
     for name, l1, l2 in spec:
-        folder = "rev_p3_adaptive" if any(t in name for t in ("unroll", "softgate", "strongest", "pgd")) else \
+        folder = "rev_p3_oracle" if "oracle" in name else \
+            "rev_p3_adaptive" if any(t in name for t in ("unroll", "softgate", "strongest", "pgd")) else \
             ("rev2_phys" if name.startswith("b1_") else ("rev_p3_phys" if "_M" in name else "rev_p3_know"))
         c = cell(folder, name, CLEAN_ALL)
         put_cell("atk." + re.sub(r"[^A-Za-z0-9]", "", name.replace("p3_", "")), c)
@@ -427,6 +432,35 @@ def adaptive() -> None:
     write_table("attacks", rows)
 
 
+def model_refs() -> None:
+    """Reference receivers at the headline cell (scripts/extra_baselines.py): ML with the LS channel
+    estimate, and the pre-trained DeepSIC that never adapts; each run paired with its own machine's twin."""
+    for rx in ("ml", "frozen_deepsic"):
+        put_cell(f"p1.{rx}.wb0", cell("rev_p1", f"p1_{rx}__wb_sir0", CLEAN_ALL))
+
+
+def oracle_stats() -> None:
+    """Exact-gate attacker (scripts/oracle_runs.py): per experiment, the share of attacked blocks in
+    which at least one candidate passed the gates, the share in which the sent perturbation was
+    accepted, and the mean scale of the sent perturbation."""
+    recs = load("rev_p3_oracle")
+    for name, key in (("p3_citadel_oracle_maxser__sir0", "orc.maxser"), ("p3_citadel_oracle_acc__sir0", "orc.acc"),
+                      ("b2_a4_a0.25_pgd20_oracle_acc__sir0", "orc.a4")):
+        blks = [b for r in recs if r["name"] == name for b in r["blocks"] if b.get("attacked") and b.get("oracle_n")]
+        if not blks:
+            continue
+        anyacc = sum(1 for b in blks if b["oracle_n_accepted"] > 0)
+        sent = sum(1 for b in blks if b.get("gamma") is not None and b["gamma"] >= 0.5)
+        exact = sum(1 for b in blks if b.get("oracle_gamma") == b.get("gamma"))
+        put(f"{key}.anyacc", f"{anyacc}/{len(blks)}")
+        put(f"{key}.anyaccpct", f"{100 * anyacc / len(blks):.0f}")
+        put(f"{key}.sentacc", f"{sent}/{len(blks)}")
+        put(f"{key}.scale", f"{np.mean([b['oracle_scale'] for b in blks]):.2f}")
+        put(f"{key}.exact", f"{exact}/{len(blks)}")
+        put(f"{key}.nseeds", str(len({r['seed'] for r in recs if r['name'] == name})))
+    put("orc.ncand", "8")
+
+
 def refdeg() -> None:
     rows = []
     for a in ("0.25", "0.75"):
@@ -436,6 +470,7 @@ def refdeg() -> None:
                     ("rev2_abstain_v3", f"h3v_a4_a{a}__sir0", "abstain, 15--19", None)]
         if a == "0.25":
             variants.append(("rev2_a4_pgd20", "b2_a4_a0.25_pgd20__sir0", "20 PGD steps", None))
+            variants.append(("rev_p3_oracle", "b2_a4_a0.25_pgd20_oracle_acc__sir0", "20 steps, exact gates", "orc.a4"))
         for folder, name, state, key in variants:
             sd = set(range(15, 20)) if state.endswith("15--19") else (set(range(10, 15)) if state == "abstain" else None)
             c = cell(folder, name, CLEAN_ALL, seeds=sd)
@@ -1066,7 +1101,7 @@ def campaign_size() -> None:
 def main() -> None:
     for name in NCOLS:   # every table file exists, so the paper always compiles
         write_table(name, [])
-    p1(); adaptive(); refdeg(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras(); g1_mismatch(); lipschitz(); campaign2()
+    p1(); model_refs(); adaptive(); refdeg(); oracle_stats(); deny(); baselines(); ablations(); scenarios(); sensitivity(); tuning(); retention(); extras(); g1_mismatch(); lipschitz(); campaign2()
     campaign_size()
     lines = ["% generated by scripts/revision_numbers.py -- do not edit",
              "\\makeatletter"]
