@@ -136,23 +136,39 @@ def plan(family: str, seeds, machine: str, shard):
     return jobs
 
 
+def norm_key(cfg: dict) -> str:
+    """Settings a clean twin must share (as revision_numbers.mkey): options added to the code after a
+    record was written are filled in at their defaults, so records of different code versions compare."""
+    from citadel_rx.config import Config
+    try:
+        cfg = Config.from_dict(cfg).to_dict()
+    except KeyError:
+        pass
+    return mkey(cfg)
+
+
 def run_probe(machine: str) -> str:
-    """Repeat one stored cloud clean run and compare it block for block."""
+    """Repeat one stored clean run and compare it block for block with the stored cloud runs of the
+    same settings and seed (and with the pool13 re-run, which equals them)."""
     from citadel_rx.config import Config
     from citadel_rx.eval import run_experiment
     ref_fn = sorted(glob.glob(os.path.join(RES, "rev_clean_pool13", "g1fix_twin_citadel_s10_*.json")))[0]
     ref = json.load(open(ref_fn))
+    key = norm_key(ref["config"])
     cloud = [(f, json.load(open(f))) for f in sorted(glob.glob(os.path.join(PROBE_REF, "*.json")))]
-    cloud = [(f, r) for f, r in cloud if r["seed"] == 10 and mkey(r["config"]) == mkey(ref["config"])]
+    cloud = [(f, r) for f, r in cloud if r.get("seed") == 10 and norm_key(r["config"]) == key]
     rec = run_experiment(Config.from_dict(ref["config"]), seed=10, save=False, verbose=False)
     keys = ("ser", "gamma", "attacked")
     same = lambda a, b: all([blk.get(k) for blk in a["blocks"]] == [blk.get(k) for blk in b["blocks"]] for k in keys)
-    out = {"machine": machine, "identical": bool(cloud) and all(same(rec, c) for _, c in cloud) and same(rec, ref),
+    to_ref, to_cloud = same(rec, ref), [same(rec, c) for _, c in cloud]
+    out = {"machine": machine, "identical": bool(to_ref and to_cloud and all(to_cloud)),
+           "identical_to_pool13_rerun": bool(to_ref), "identical_to_cloud": to_cloud,
            "compared_with": [os.path.relpath(ref_fn, ROOT)] + [os.path.relpath(f, ROOT) for f, _ in cloud],
-           "n_cloud_records": len(cloud), "fields": list(keys), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+           "fields": list(keys), "blocks": len(rec["blocks"]), "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     os.makedirs(os.path.join(RES, "g1fix_probe"), exist_ok=True)
     json.dump(out, open(os.path.join(RES, "g1fix_probe", f"{machine}.json"), "w"), indent=1)
-    return f"probe: {'IDENTICAL' if out['identical'] else 'MISMATCH'} to the stored cloud run ({len(cloud)} cloud record(s))"
+    return (f"probe: {'IDENTICAL' if out['identical'] else 'MISMATCH'} (pool13 re-run: {to_ref}; "
+            f"{sum(to_cloud)}/{len(cloud)} stored cloud record(s) equal)")
 
 
 def run_one(job):
@@ -190,6 +206,7 @@ def main() -> None:
     ap.add_argument("--shard", default=None, help="k/n: the k-th of n balanced parts (pairs_as family)")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--dry", action="store_true")
+    ap.add_argument("--probe-only", action="store_true", help="only repeat the stored clean run (pairs_as check)")
     a = ap.parse_args()
     machine = os.environ.get("CITADEL_MACHINE", "")
     if not machine and not a.dry:
@@ -197,6 +214,9 @@ def main() -> None:
     shard = tuple(int(x) for x in a.shard.split("/")) if a.shard else None
     os.environ.setdefault("CITADEL_PRETRAIN_CACHE", os.path.join(ROOT, "cache", "pretrain"))
     os.environ["CITADEL_THREADS"] = "1"
+    if a.probe_only:
+        print(time.strftime("%H:%M:%S"), run_one({"kind": "probe"}), flush=True)
+        return
     jobs = plan(a.family, a.seeds, machine or "DRY", shard)
     total = sum(j["est"] for j in jobs) / 60
     for j in jobs:
