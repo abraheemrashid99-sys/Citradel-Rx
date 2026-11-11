@@ -81,3 +81,36 @@ of its seeds has been re-run, so no table cell mixes the two attack versions.
 
 (The soft-gate runs of pool12 and pool13 were made with the first version of the script, which wrote
 them to `results/rev_p3_g1fix`; the folder was renamed afterwards.)
+
+## What changed in the results
+
+Same settings, seeds and clean twins; only the soft G1 term differs. Excess SER over the clean twin
+(window mean, mean over seeds) and the fraction of attacked blocks the gates rejected. Values from
+`paper/numbers.tex` before and after the switch (the paper reports the right-hand values).
+
+| experiment | excess before | excess after | rejected before | rejected after |
+|---|---|---|---|---|
+| soft gates, SIR 0 dB | +0.0190 | +0.0193 | 200/200 | 200/200 |
+| soft gates, SIR 10 dB | +0.0099 | +0.0103 | 200/200 | 200/200 |
+| combined attack, SIR 0 dB | +0.0196 | +0.0197 | 200/200 | 200/200 |
+| A4, alpha 0.25 | +0.0531 | +0.0337 | 110/200 | 152/200 |
+| A4, alpha 0.25, 20 PGD steps | +0.0447 | +0.0478 | 165/200 | 155/200 |
+| A4, alpha 0.75 | +0.0448 | +0.0276 | 195/200 | 197/200 |
+| A4, alpha 0.25, first abstain state | +0.0233 | +0.0102 | | |
+| A4, alpha 0.75, first abstain state | +0.0250 | +0.0126 | | |
+| A4, alpha 0.25, abstain state (seeds 10-14) | +0.0479 | +0.0213 | 147/200 | 192/200 |
+| A4, alpha 0.25, abstain state (seeds 15-19) | +0.0367 | +0.0214 | 188/200 | 191/200 |
+| A4, alpha 0.75, abstain state (seeds 10-14) | +0.0384 | +0.0249 | | |
+| A4, alpha 0.75, abstain state (seeds 15-19) | +0.0347 | +0.0242 | | |
+
+In these runs the A4 attacker with 6 PGD steps was rejected more often and did less damage than before
+the fix; with 20 steps it was rejected about as often as with 6 and did more damage. Why the corrected
+surrogate gives the weaker 6-step attack was not analysed. The soft-gate and combined attacks on the
+pilots alone, which the gates reject in every block either way, are unchanged within their intervals.
+
+Code versions. Between the code versions that wrote the replaced A4 and soft-gate records and the fix,
+the attack code changed only for the physical attacker with CSI error and the 3GPP scene (commits
+6dff477, efbce92), which these runs do not use. Receiver changes in that period are behind options
+that default to the earlier behavior (for example `citadel.abstain_mode = legacy`, the first abstain
+state); the clean twins re-run with the current code equal the stored ones block for block, and every
+re-run equals its twin before the attack window.
