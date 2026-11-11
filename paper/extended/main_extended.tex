@@ -53,21 +53,17 @@
 \maketitle
 
 \begin{abstract}
-Neural receivers that learn at test time train on the pilots of every block, which an
-adversary can write to. This paper argues that such a receiver should consolidate into persistent
-memory only what a label-free physical check
-verifies against that memory, not only against references the attacker reaches. Citadel-Rx realises the
-principle in a DeepSIC receiver with a fast level fitted per block and two slow levels
-updated through a gated, clipped average of the faster states; the clip bounds how far any
-attacker can move the slowest level per consolidation. With a single memory, a cyclic redundancy check (CRC) test with rollback fails, as do the gates of Citadel-Rx: the only reference, a linear minimum mean-square error (LMMSE) detector on the poisoned pilots,
-degrades with the attack. On ten held-out seeds, white-box poisoning at 0\,dB signal-to-interference ratio raises the symbol
-error rate of Citadel-Rx by \val{p1.citadel.wb0.excess} over its clean run, against
-\val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC, with \val{p1.citadel.wb0.rejpct}\% of
-the poisoned blocks rejected at a \val{p1.citadel.wb0.frejpct}\% false-rejection rate. Attacks
-adapted to the gates or their feedback leave this excess unchanged within its intervals, and the ordering holds with a second
-backbone and with eight users and 32 antennas. Attacks that degrade the references or coincide
-with a legitimate channel change raise the excess, and the receiver fails where its network passes far fewer CRCs than LMMSE on clean blocks: at 16-QAM, and in an NR
-LDPC link over 3GPP urban-micro channels, which the networks do not track.
+A neural receiver that learns at test time trains on pilots an adversary can write to. This paper argues that it should consolidate into persistent memory only what a label-free physical check verifies against that memory.
+Citadel-Rx applies this to DeepSIC with a fast level fitted per block and two slow levels updated by a
+gated, clipped average of faster states; the clip bounds how far any attacker moves the slowest
+level per consolidation. With a single memory, a cyclic redundancy check (CRC) test with rollback fails, as do the gates
+of Citadel-Rx: their only reference, linear minimum mean-square error (LMMSE) detection on the
+poisoned pilots, degrades too. On ten held-out seeds of the stationary benchmark channel, white-box poisoning (A1) at 0\,dB
+signal-to-interference ratio raises the symbol error rate (SER) of Citadel-Rx by \val{p1.citadel.wb0.excess}, against
+\val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC; the gates reject \val{p1.citadel.wb0.rej} of the poisoned and \val{p1.citadel.wb0.frej} of the clean blocks, \val{deny.citadel.frej} after a legitimate channel redraw (SER \val{b3.citadel.after}, online DeepSIC \val{b3.onlinedeepsic.after}).
+The adapted attacks tested, all at full budget and rejected on nearly every block, gave an excess not distinguishable from plain A1 with five seeds; for plain A1 the
+ordering holds with a second backbone and $8\times32$ arrays. The worst attack found without a channel change, A4 (pilots and data, 20 gradient steps), gives \val{b2.a4pgd20.excess}; poisoning during one also raises the excess. Citadel-Rx fails at 16-QAM and in a coded 5G link
+over 3GPP urban-micro channels, where its network is weaker than LMMSE on clean blocks.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -159,17 +155,15 @@ any attacker, and a structural bound for unequal gate verdicts computed from the
 trajectories. An error in the consolidation rule of an earlier version of this receiver (the first version below), which broke the convexity the
 bounds rely on, is corrected.
 \item \textbf{Relative physics gates with a CRC design rule} (Section~\ref{sec:gates}): three
-label-free ratio tests and a design rule for the CRC threshold. Two tests compare the model residual and the CRC pass fraction of the fast level with those of the better of LMMSE and the anchor detector on the same block; the third compares the channel innovation with its running level. The CRC threshold is set by a target excess symbol-error probability over that reference. Calibration chose the relative slack with a floor of $2\cdot10^{-3}$ over a slack derived from the pass-fraction statistics, which follows the block length (Table~\ref{tab:cal}).
+label-free ratio tests and a design rule for the CRC threshold. Two tests compare the model residual and the CRC pass fraction of the fast level with those of the better of LMMSE and the anchor detector on the same block; the third compares the channel innovation with its running level. The rule sets the CRC threshold by a target excess symbol-error probability over that reference. The evaluated receiver uses the relative slack with a floor of $2\cdot10^{-3}$, which calibration chose over a slack derived from the pass-fraction statistics that follows the block length (Table~\ref{tab:cal}); the derived rule is therefore an analysis, not what was evaluated.
 \item \textbf{An evaluation with tuned baselines and attacks adapted to the defence} (Sections~\ref{sec:setup}--\ref{sec:results}).
 The baselines, among them CRC-Rollback and anchored, decision-directed, EATA-style and CoTTA-style
 receivers, use the optimiser setting tuned for online DeepSIC and their own settings at default
-values, except the L2-SP weight, which is swept. The attacks are built against the defence or its
-feedback (soft gates, deep unrolling, restarts, expectation over noise, joint pilot and data
+values, except the L2-SP weight, which is swept. The attacks are built against the defence (soft gates, deep unrolling, restarts, expectation over noise, joint pilot and data
 poisoning of the references, denial of adaptation, a slow small-budget attack optimised to be
-accepted, a grey-box surrogate and a query attacker) and include a physical attacker with one, two
-or four antennas. The scenarios include an NR LDPC link over 3GPP urban-micro drops with the
-attacker placed in the scene, a second network backbone, eight users with 32 antennas and 2000 clean
-blocks. Settings are fixed on calibration seeds by rules stated in advance, with two exceptions
+accepted, a grey-box surrogate and a query attacker that did not converge) and include a physical attacker with one, two
+or four antennas. The adapted attacks tested, all at full budget and rejected on nearly every attacked block, gave an excess not distinguishable from plain white-box poisoning (A1) with five seeds; the worst attack found without a channel change, a joint pilot and data attack (A4, Section~\ref{sec:refdeg}) with 20 gradient steps, gave \val{b2.a4pgd20.excess}, against \val{h7.citadela1.excess} for plain A1 on the same seeds. The scenarios include an NR LDPC link over 3GPP urban-micro drops with the
+attacker placed in the scene, 2000 clean blocks and, for plain A1 only, a second network backbone and eight users with 32 antennas. Settings are fixed on calibration seeds by rules stated in advance, with two exceptions
 stated in Table~\ref{tab:hyper} (the abstain statistic and the channel profile of the larger
 arrays). Results are reported on held-out seeds with randomised attack windows, as the excess SER
 over a matched clean run with block-bootstrap intervals and seed-level tests. The failures that the
@@ -549,6 +543,8 @@ threshold $1+0.7(\tau_1-1)$, so G1 can reject a clean block of this channel when
 
 \section{Experimental Protocol}\label{sec:setup}
 
+\textit{Benchmark channel.} The SED channel of the DeepSIC literature (Table~\ref{tab:setup}) is real-valued with deterministic fades, identical for every seed: the seeds change the noise, the symbols and the attack window, and pre-training uses its block-0 matrix at several SNRs. The test seeds therefore do not test a new channel.
+
 \textit{Receivers.} The receivers compared are LMMSE on the least-squares pilot estimate and a Huber-robust version
 \cite{huber1964}; online DeepSIC \cite{shlezinger2021}; Meta-DeepSIC \cite{raviv2023};
 \emph{CRC-Rollback}, online DeepSIC with the CRC gate G2 at a fixed absolute slack of $0.01$ ($\tau_2=0.99^{L}$, tightened under surprise as in
@@ -610,7 +606,7 @@ seeds is $0.002$, Holm-corrected over the four baselines of a column \cite{holm1
 
 \textit{Reproducibility.} The first campaign ran on an Apple M4 laptop (ten cores, eight runs at a
 time) and a 4-core cloud machine, the second on 4-core cloud machines, every run single-threaded,
-with disjoint sets of runs; every attacked run is paired with the clean twin from its own machine. Times per block come from the M4 runs and compare receivers only roughly;
+with disjoint sets of runs. Runs used PyTorch 2.14.1, NumPy 2.5.3 and SciPy 1.18.1 with one CPU thread per run; each attacked run and its clean twin ran on one machine (or, for re-runs, on a machine that reproduces the twin block for block before the window). Times per block come from the M4 runs and compare receivers only roughly;
 machine-independent costs are counted in multiply-accumulates. Every record stores its configuration,
 seed, code version and timings.
 Pre-training is cached by configuration, seed, code and random-number state, and a cached run reproduces the uncached run exactly (the repository's tests compare the two). Three commands re-run the two campaigns, and
@@ -747,8 +743,8 @@ Every attack of Table~\ref{tab:attacks} was built against the defence, white-box
 its NACK feedback), and run on test seeds 10--14. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks, among them the rank-4 physical attacker, which is plain A1 (see the caption), give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, with rejection rates between \val{atk.cit0.rejmin} and 1. Plain A1 on the same seeds gives \val{h7.citadela1.excess} to \val{ab.complete.excess} (two sets of runs, on different machines). Deeper unrolling, more steps and restarts, the soft-gate objective with the thresholds and running statistics of G1 and G2 (G3 and the tightening are not modelled), expectation over noise, a Citadel-Rx surrogate, a search on the NACK feedback (one query per attacked block, so not a converged search; Table~\ref{tab:knowledge}) and a budget on the users' signal energy alone get about as few poisoned blocks accepted as plain A1 (rejection at least \val{atk.citadelsigbudgetsir0.rej}, against \val{ab.complete.rej} and \val{h7.citadela1.rej} for A1). So does a physical attacker with two or four antennas, also when its channel estimate is in error (at least \val{atk.b1citadelM2csi001sir0.rej}). A physical attacker with a single antenna gets more poisoned blocks accepted (\val{atk.citadelM1sir0.rejk} rejected) and gives the lowest excess at SIR 0\,dB (\val{atk.citadelM1sir0.excess}). At SIR 10\,dB the excess is
 \val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The \val{atk.onl0.n} of these attacks that were also run against online DeepSIC (Combined$^{b}$ in place of
 Combined$^{a}$) raise its SER by
-\val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With five seeds,
-differences of a few $10^{-3}$ between attacks lie within the intervals; what the table shows is that none of these attacks brings Citadel-Rx near the excess of the undefended receivers.
+\val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. All used their full budget, and with five seeds
+their excess is not distinguishable from plain A1; what the table shows is that none of these attacks brings Citadel-Rx near the excess of the undefended receivers.
 
 When the gates reject nearly every attacked block, the excess depends on the power of the pilot
 perturbation (SIR 0 against 10\,dB), not on how it was optimised: it is the price of rejecting a
@@ -957,8 +953,8 @@ runs towards the pre-trained weights (the clean memory moved \val{ret.p8e05guard
 \val{ret.p8e05.movcln}), at an excess of \val{ret.p8e05guard.excess}. Against the accepted 5\% perturbation,
 the case it is meant for, the perturbation was still accepted (\val{ret.h5.rejk} attacked blocks rejected),
 both memories moved less (\val{ret.h5.movadv} instead of \val{ret.p8e005.movadv}) and $D_K$ fell from
-\val{ret.p8e005.DK} to \val{ret.h5.DK} (structural bound \val{ret.h5.struct}), but the excess SER was
-unchanged (\val{ret.h5.excess}, \val{ret.h5.post} after the window): the guard shrinks what an
+\val{ret.p8e005.DK} to \val{ret.h5.DK} (structural bound \val{ret.h5.struct}), but the excess SER did
+not fall (\val{ret.h5.excess} against \val{ret.p8e005.excess} without the guard, \val{ret.h5.post} after the window): the guard shrinks what an
 accepted perturbation leaves in the memory without lowering its cost. Over 900 attacked blocks of 1000
 (A3$^\ast$ at 5\%, \val{ret.b5.n} seeds) the perturbation was again accepted (\val{ret.b5.rejk} attacked
 blocks rejected), $D_K$ reached \val{ret.b5.DK}, below the structural bound (\val{ret.b5.struct}) and
@@ -1016,9 +1012,9 @@ excess of \val{ab.complete.excess} \val{ab.complete.ci} and a clean SER of \val{
 levels ($K=1$, gates, rollback and fallback to the last accepted weights kept) the excess is
 \val{ab.K1.excess}: the receiver fails like CRC-Rollback, for the reason of
 Section~\ref{sec:c1}, and it also rejects \val{ab.K1.frej} of the clean blocks. Two levels, $C=(1,8)$,
-give \val{ab.K2.excess}. Without the fallback, a rejected block is still reverted but its data are
+give \val{ab.K2.excess}, not distinguishable from three levels with five seeds. Without the fallback, a rejected block is still reverted but its data are
 detected with the rejected update: \val{ab.nofallback.excess}. Without gates the excess is
-\val{ab.nogate.excess}. Either decision-level gate suffices on its own here (G1
+\val{ab.nogate.excess}. With either decision-level gate alone the excess is not distinguishable from that of the complete receiver with five seeds (G1
 \val{ab.g1.excess}, G2 \val{ab.g2.excess}); the channel-prior gate G3 does not
 (\val{ab.g3.excess}, rejecting \val{ab.g3.rej} of the poisoned blocks). Removing the proximal pull
 to the anchor lowers the excess to \val{ab.noanchor.excess} only because the clean twin is worse
@@ -1026,8 +1022,8 @@ to the anchor lowers the excess to \val{ab.noanchor.excess} only because the cle
 selection the clean SER doubles (\val{ab.noselect.clean}) and the excess nearly vanishes
 (\val{ab.noselect.excess}): the selection is most of what the receiver gives up while it rejects.
 The clip was active in \val{clip.cln} consolidations of the clean twins and \val{clip.att} of the
-attacked runs at the headline cell, and removing it leaves the excess unchanged
-(\val{ab.noclip.excess}); it provides the guarantee of Theorem~\ref{thm:retention}(i), not the
+attacked runs at the headline cell, and without it the excess
+(\val{ab.noclip.excess}) is not distinguishable with five seeds; it provides the guarantee of Theorem~\ref{thm:retention}(i), not the
 measured robustness. Three parts kept from the first version are not ablated here, so their necessity is not established: the reversion of a rejected update (the row without fallback still reverts), the delta-rule decay (Section~\ref{sec:sens} varies $\delta$ by a factor of two only) and the surprise-modulated step size.
 
 \subsection{Block Length, Arrays, Modulation and Cost}\label{sec:scen}
@@ -1222,10 +1218,10 @@ the receiver detects with a memory that did not adapt to them, and the CRC selec
 its gain, because its LMMSE alternative uses the poisoned estimate (its pass fraction falls from
 \val{gate.lmmsecln} to \val{gate.lmmseatt}); without the selection the excess is
 \val{ab.noselect.excess}, against \val{ab.complete.excess} on seeds 10--14. Under the \val{atk.cit0.n} attack variants of
-Table~\ref{tab:attacks} at SIR 0\,dB, those adapted to the defence or its feedback, the physical
-attackers and the signal-referenced budget, the excess stays between \val{atk.cit0.exmin} and
-\val{atk.cit0.exmax}; the ordering holds for the \val{atk.onl0.n} of them also run against online
-DeepSIC, with shorter blocks, with eight users and 32 antennas and with a second network backbone. Over 2000 clean blocks
+Table~\ref{tab:attacks} at SIR 0\,dB, those adapted to the defence, the physical
+attackers and the signal-referenced budget, all at full budget and rejected on nearly every attacked block, the excess stays between \val{atk.cit0.exmin} and
+\val{atk.cit0.exmax}, not distinguishable from plain A1 with five seeds; the ordering holds for the \val{atk.onl0.n} of them also run against online
+DeepSIC and, for plain A1, with shorter blocks, with eight users and 32 antennas and with a second network backbone. Over 2000 clean blocks
 (\val{d7.citadel.n} seeds) the SER of Citadel-Rx does not drift (\val{d7.citadel.first} over blocks
 5--499, \val{d7.citadel.last} over the last 500), and \val{d7.citadel.frejk} clean blocks are
 rejected. A slow perturbation kept small
@@ -1266,7 +1262,7 @@ attack on one user, because the block-level
 gates still reject the block. The gates do not address jamming, which at the same SIR harms every
 receiver more than poisoning harms Citadel-Rx.
 
-\textit{Scope.} The evaluation is link-level. The coded experiment uses NR LDPC code blocks with
+\textit{Scope and limitations.} The evaluation is link-level simulation only. The SED benchmark channel is real-valued with deterministic fades and identical for every seed, so the test seeds do not test a new channel (Section~\ref{sec:setup}). On this channel, maximum-likelihood detection with the LS estimate has a lower clean SER (\val{p1.ml.wb0.clean}, Table~\ref{tab:p1}) than every deep receiver, so the evaluation tests the protection of an adapting memory, not the case for deep receivers. The A4 surrogate holds its references at their values on the unattacked block; with the soft-gate objective, A3$^\ast$ does not steer toward a target model; the channel tracker and the surprise statistic are updated on rejected blocks too, so attacks on the gates' own state were not evaluated. Five seeds and marginal intervals support ``not distinguishable'', not equivalence. The coded experiment uses NR LDPC code blocks with
 scrambling over stochastic 3GPP urban-micro drops (not a ray-traced scene) with four antennas, one
 narrowband channel per slot, ideal power control and hard-decision decoding; the other experiments
 use CRC-8 sub-blocks over the SED model with cosine fading (COST2100 traces enter the calibration
@@ -1288,8 +1284,8 @@ This paper argued that a test-time neural receiver under pilot poisoning should 
 what a label-free physical check verifies, and that the check should judge every update against that
 memory. Citadel-Rx realises this with gated, clipped consolidation into two slow levels, a fallback
 to the slow memory and per-sub-block CRC selection, and a clip that bounds how far any attacker can
-move the slowest level per consolidation. On held-out seeds, white-box poisoning at SIR 0\,dB raised its SER by \val{p1.citadel.wb0.excess}, against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and \val{p1.crc_rollback.wb0.excess} for CRC-Rollback, a CRC test with rollback judged against LMMSE alone. Citadel-Rx's own gates with a single memory gave \val{ab.K1.excess} on seeds 10--14. Attacks adapted to the gates or their feedback left the excess of the complete receiver unchanged within its intervals, and the ordering held on a second backbone and on larger arrays. An attack that also
-perturbs the data (A4: \val{a4.025.excess} with 6 PGD steps and \val{b2.a4pgd20.excess} with 20) and poisoning during a legitimate channel redraw (A1 at
+move the slowest level per consolidation. On held-out seeds of the stationary benchmark channel, white-box poisoning (A1) at SIR 0\,dB raised its SER by \val{p1.citadel.wb0.excess}, against \val{p1.online_deepsic.wb0.excess} for tuned online DeepSIC and \val{p1.crc_rollback.wb0.excess} for CRC-Rollback, a CRC test with rollback judged against LMMSE alone, at a false-rejection rate of \val{p1.citadel.wb0.frej}; after a legitimate channel redraw the false-rejection rate was \val{deny.citadel.frej} and the SER \val{b3.citadel.after}, against \val{b3.onlinedeepsic.after} for online DeepSIC. Citadel-Rx's own gates with a single memory gave \val{ab.K1.excess} on seeds 10--14. The adapted attacks tested, all at full budget and rejected on nearly every attacked block, gave an excess not distinguishable from plain A1 with five seeds, and for plain A1 the ordering held on a second backbone and on larger arrays. An attack that also
+perturbs the data (A4: \val{a4.025.excess} with 6 PGD steps and \val{b2.a4pgd20.excess} with 20, the worst attack found without a channel change) and poisoning during a legitimate channel redraw (A1 at
 SIR 0\,dB: \val{b3.citadel.win} in the window and \val{b3.citadel.post} after it; the
 channel-estimate spoof at 10\,dB: \val{deny.citadel.excess}) raised the excess. A slow small-budget attack that the gates accepted
 (A3$^\ast$ at 5\%, \val{ret.p8e005.rejk} blocks rejected) cost \val{ret.p8e005.excess} in SER, and the paired displacement
