@@ -947,11 +947,11 @@ displacement reached \val{ret.p8e005.DK}, below the structural bound (\val{ret.p
 below the design bound (\val{ret.p8e005.design}). The accepted perturbation cost \val{ret.p8e005.excess} in
 SER during the attack and \val{ret.p8e005.post} in the 30 blocks after it. At 20\% the gates reject
 \val{ret.p8e02.rejk} attacked blocks (excess \val{ret.p8e02.excess}, $D_K=\val{ret.p8e02.DK}$ against a
-structural bound of \val{ret.p8e02.struct}); at 50\% they reject all of them, the attacked memory
+structural bound of \val{ret.p8e02.struct}); at 50\% they reject \val{ret.p8e05.rejk}, the attacked memory
 nearly stands still (it moved \val{ret.p8e05.movpct}\% as far as the clean one), and
 $D_K=\val{ret.p8e05.DK}$ is again a lag, not a push. In the 30 blocks after the attack the excess is at
 most \val{ret.p8.postmax} for every A3$^\ast$ setting. Over 300 blocks the design bound is loose, while the structural bound is
-\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. At 50\%, where every
+\val{ret.p8.ratiomin} to \val{ret.p8.ratiomax} times the measured displacement. At 50\%, where nearly every
 attacked block is rejected, the drift guard lowered $D_K$ to \val{ret.p8e05guard.DK} by pulling both
 runs towards the pre-trained weights (the clean memory moved \val{ret.p8e05guard.movcln} instead of
 \val{ret.p8e05.movcln}), at an excess of \val{ret.p8e05guard.excess}. Against the accepted 5\% perturbation,
