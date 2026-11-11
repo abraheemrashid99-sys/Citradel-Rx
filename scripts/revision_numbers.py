@@ -338,7 +338,7 @@ def group_rows(folder: str, clean: List[str], spec: List[Tuple[str, str, str]], 
 def adaptive() -> None:
     spec = [("p3_citadel_unroll10__sir0", "Unroll 10", "Citadel-Rx"), ("p3_citadel_unroll50__sir0", "Unroll 50", "Citadel-Rx"),
             ("p3_citadel_pgd100_r5__sir0", "PGD 100, 5 restarts", "Citadel-Rx"),
-            ("p3_citadel_softgate__sir0", "Soft gates (BPDA), unroll 10", "Citadel-Rx"),
+            ("p3_citadel_softgate__sir0", "Soft gates, unroll 10", "Citadel-Rx"),
             ("p3_citadel_strongest__sir0", "Combined$^{a}$", "Citadel-Rx"), ("p3_online_strongest__sir0", "Combined$^{b}$", "Online DeepSIC"),
             ("p3_citadel_unroll10__sir10", "Unroll 10, SIR 10 dB", "Citadel-Rx"),
             ("p3_citadel_softgate__sir10", "Soft gates, SIR 10 dB", "Citadel-Rx"),

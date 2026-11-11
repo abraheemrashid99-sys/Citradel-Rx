@@ -213,3 +213,13 @@ IEEE Trans. Signal Process.) are listed as in press by repositories and were not
 * Every record in this file was confirmed from search results on the authoritative domains, not from opened pages, except pypi.org (fetched). arxiv.org, 3gpp.org, etsi.org, ieeexplore.ieee.org, dblp.org, proceedings.mlr.press, github.com (third-party repositories) and weizmann.ac.il are outside the session's allowed network domains.
 * Acknowledgment: it still says the COST2100 traces were released with `raviv2023`; the project's notes trace
   them to the public code released with `raviv2024`. The sentence was left for the author (see ref-raviv2023-ack above).
+
+## Final read (2026-11-11)
+
+* The Acknowledgment and Table `tab:setup` now credit the COST2100 traces to the public code released with
+  `raviv2024` (finding ref-raviv2023-ack), in agreement with Table `tab:hyper`; the notes above that say the
+  Acknowledgment "still says `raviv2023`" describe the state before this change.
+* The reference list is now numbered in order of first citation (59 entries, all cited; entry texts unchanged).
+  The declaration of Table `tab:setup` was moved below the paragraph "Receivers." so that the source order of
+  the citations is the order in which they appear on the page (same page and position in the PDF).
+* The month of `raviv2024` and `sagduyu2021` and the volume of `rdumb2023` remain omitted: not confirmed on a record.

@@ -130,7 +130,7 @@ established physical-layer threat \cite{zhou2012pilot,kapetanovic2015}, with det
 flag it \cite{kapetanovic2013,tugnait2015}, but that work has no learning receiver to protect. Decision-directed
 training on decoded data verified by the code is the closest precedent for using the code check
 to decide what a receiver learns from \cite{viterbinet2020,schibisch2018}, and Meta-DeepSIC was proposed with it \cite{raviv2023}; it verifies labels, not what enters a
-persistent memory. In deep receivers, drift detection decides when, and which module, to re-train \cite{uzlaner2024}, and Bayesian tracking replaces the multi-step fit of a block by a single-step update of a posterior over the weights \cite{gusakov2025}; both address channel variation, not an adversary. In vision, test-time adaptation filters, anchors or restores what enters the
+persistent memory. In deep receivers, drift detection decides when, and which module, to re-train \cite{uzlaner2024}, and Bayesian tracking replaces the multi-step fit of a block by a single-step update of a posterior over the weights \cite{gusakov2025}; both address channel variation, not an adversary. In vision, test-time adaptation (TTA) filters, anchors or restores what enters the
 adapted weights \cite{eata2022,cotta2022,sar2023,rotta2023,persistent2024}, anchors fine-tuning to a
 prior, as transfer and continual learning do \cite{l2sp2018,ewc2017}, or averages a teacher, as semi-supervised learning does \cite{meanteacher2017}. It has its own
 poisoning problem \cite{wu2023tta,cong2024}, smaller when the attacker sees neither the online weights nor other users' samples \cite{su2025}, with robust-statistics defences \cite{medbn}; a periodic reset to the pre-trained weights matches or betters continual adaptation over long streams \cite{rdumb2023}. These methods
@@ -218,7 +218,7 @@ $D_k(b)$ & paired displacement of level $k$ after block $b$ (attacked minus clea
 \end{table}
 
 The receiver is DeepSIC \cite{shlezinger2021}: $Q$ soft-interference-cancellation iterations,
-each a per-user multilayer perceptron that maps the received vector and the other users' soft
+each a per-user multilayer perceptron (MLP) that maps the received vector and the other users' soft
 decisions to a posterior over the user's symbol. Its parameters are adapted on the pilots of
 every block, $\theta_b=\Phi(\theta_{b-1};\bm Y_b)$, by $T$ steps of a first-order optimiser on the
 pilot cross-entropy, and the adapted networks then detect the data. Online DeepSIC starts every block from
@@ -548,23 +548,6 @@ threshold $1+0.7(\tau_1-1)$, so G1 can reject a clean block of this channel when
 
 \section{Experimental Protocol}\label{sec:setup}
 
-\begin{table}[t]
-\centering\caption{Simulation setup.}\label{tab:setup}
-\scriptsize
-\begin{tabular}{@{}L{14mm}L{71mm}@{}}
-\toprule
-System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$ and $8\times32$ with the SED profile stretched over the array; 16-QAM at 20\,dB (MLP width kept at 256)\\
-Block & $N_p=100$ pilot and $N_d=24\,992$ data symbols per user; $N_d=992$ and $4\,992$ (nominally 1000 and 5000), $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
-CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
-Channel & SED with per-user cosine fading, gain $0.8+0.2\cos(2\pi b/T_j)$ with $T_j=51,39,33,21$ blocks (users 5--8: 47, 29, 43, 23) \cite{shlezinger2021}; COST2100 traces of \cite{raviv2023,liu2012cost} in calibration\\
-Run & 100 blocks (400 and 1000 for A3$^\ast$, 2000 clean); unless stated, a 40-block attack window starting at a block drawn uniformly from 10--50 per seed; fixed windows: 30--69 for calibration and retention, 40--89 for denial, 30--329 and 30--929 for A3$^\ast$\\
-Seeds & calibration 0--2; test 10--19 (headline cell, final abstain state), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
-Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h; one block per 1\,ms slot (15\,kHz, 150 PRBs); NR LDPC code blocks (base graph 2, $k=520$, $n=1000$), each with a CRC-24A \cite{ts38212}, scrambled \cite{ts38211}\\
-Attacker & A1, after \cite{wu2024}: PGD \cite{madry2018}, 20 steps of $0.25\epsilon$, through 2 unrolled steps, unless stated\\
-\bottomrule
-\end{tabular}
-\end{table}
-
 \textit{Receivers.} The receivers compared are LMMSE on the least-squares pilot estimate and a Huber-robust version
 \cite{huber1964}; online DeepSIC \cite{shlezinger2021}; Meta-DeepSIC \cite{raviv2023};
 \emph{CRC-Rollback}, online DeepSIC with the CRC gate G2 at a fixed absolute slack of $0.01$ ($\tau_2=0.99^{L}$, tightened under surprise as in
@@ -572,7 +555,7 @@ Section~\ref{sec:gates}), judged against LMMSE only, without CRC selection, and 
 last accepted weights, and the same with all three gates (the $K=1$ ablation, Section~\ref{sec:ablate},
 has Citadel-Rx's gates and selection); online DeepSIC with the CRC selection of Citadel-Rx, which separates
 the selection gain from the memory; L2-SP \cite{l2sp2018}, elastic weight consolidation (EWC) with the Fisher information of the pre-training data \cite{ewc2017} and an exponential-moving-average (EMA) teacher \cite{meanteacher2017}; CRC-verified
-decision-directed training, which adds the CRC-passing data symbols to the pilots \cite{schibisch2018,viterbinet2020};
+decision-directed training, which adds the CRC-passing data symbols to the pilots \cite{viterbinet2020,schibisch2018};
 an EATA-style receiver (entropy filter and Fisher anchor) \cite{eata2022} and a CoTTA-style receiver (teacher and stochastic restore) \cite{cotta2022}; a drift-detection receiver after \cite{uzlaner2024}, with a simpler statistic, that adapts a user's
 modules only when that user's pilot loss, standardised by its running mean and spread, exceeds 2; a
 median-of-means gradient receiver (coordinate-wise median of the gradients of four disjoint pilot
@@ -581,7 +564,24 @@ Citadel-Rx and no slow levels \cite{behrouz2025titans}. All DeepSIC receivers sh
 architecture and the pre-training. A second backbone replaces DeepSIC in Citadel-Rx, online
 training and CRC-Rollback: a fully connected network with one hidden layer of 512 units that
 classifies the joint symbol of all users ($4^U=256$ classes) from the received vector, without
-interference cancellation \cite{samuel2019,oshea2017}; detection uses its per-user marginals.
+interference cancellation \cite{oshea2017,samuel2019}; detection uses its per-user marginals.
+
+\begin{table}[t]
+\centering\caption{Simulation setup.}\label{tab:setup}
+\scriptsize
+\begin{tabular}{@{}L{14mm}L{71mm}@{}}
+\toprule
+System & $U\times N=4\times4$, QPSK, SNR $10$\,dB; $4\times16$ and $8\times32$ with the SED profile stretched over the array; 16-QAM at 20\,dB (MLP width kept at 256)\\
+Block & $N_p=100$ pilot and $N_d=24\,992$ data symbols per user; $N_d=992$ and $4\,992$ (nominally 1000 and 5000), $N_p\in\{32,100\}$ in Section~\ref{sec:scen}\\
+CRC & CRC-8 of \cite{ts36212}, $D^8+D^7+D^4+D^3+D+1$; $L=32$; $n=781$ sub-blocks per user and block\\
+Channel & SED with per-user cosine fading, gain $0.8+0.2\cos(2\pi b/T_j)$ with $T_j=51,39,33,21$ blocks (users 5--8: 47, 29, 43, 23) \cite{shlezinger2021}; COST2100 traces \cite{liu2012cost} from the code released with \cite{raviv2024}, in calibration\\
+Run & 100 blocks (400 and 1000 for A3$^\ast$, 2000 clean); unless stated, a 40-block attack window starting at a block drawn uniformly from 10--50 per seed; fixed windows: 30--69 for calibration and retention, 40--89 for denial, 30--329 and 30--929 for A3$^\ast$\\
+Seeds & calibration 0--2; test 10--19 (headline cell, final abstain state), up to 10--14 elsewhere (every table states its seeds), 10 (sensitivity)\\
+Coded scene & TR 38.901 UMi at 3.5\,GHz, 1$\times$4 array at 10\,m, users at 20--150\,m with ideal slow power control, 3\,km/h; one block per 1\,ms slot (15\,kHz, 150 PRBs); NR LDPC code blocks (base graph 2, $k=520$, $n=1000$), each with a CRC-24A \cite{ts38212}, scrambled \cite{ts38211}\\
+Attacker & A1, after \cite{wu2024}: PGD \cite{madry2018}, 20 steps of $0.25\epsilon$, through 2 unrolled steps, unless stated\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \textit{Calibration and tuning, fixed in advance.} Online DeepSIC and Meta-DeepSIC are tuned over
 300, 100 and 30 adaptation epochs, learning rates $10^{-3}$ and $5\cdot10^{-3}$ and weight decay 0
@@ -731,7 +731,7 @@ memory, and it can only do so because it judges against the memory.
 $^{a}$Soft gates, unroll 10, PGD 50, 2 restarts, EOT over 2 noise draws; $^{b}$the same without soft
 gates, which online DeepSIC does not have. With as many antennas as the receiver, the rank-4 physical
 attacker reaches every perturbation: it is A1, and its runs are identical to those of the A1 row of
-Table~\ref{tab:peruser}.}\label{tab:attacks}
+Table~\ref{tab:peruser}. CSI: channel state information.}\label{tab:attacks}
 \scriptsize\setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{@{}L{20mm}L{12mm}cccc@{}}
 \toprule
@@ -743,7 +743,7 @@ Attack & Receiver & Seeds & \thead{Excess SER\\{}[95\% CI]} & \thead{Window\\SER
 \end{table}
 Every attack of Table~\ref{tab:attacks} was built against the defence, white-box unless stated
 (the grey-box attacker knows the defence and its settings, not its weights; the query attacker only
-its NACK feedback), and run on test seeds 10--14. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks, among them the rank-4 physical attacker, which is plain A1 (see the caption), give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, with rejection rates between \val{atk.cit0.rejmin} and 1. Plain A1 on the same seeds gives \val{h7.citadela1.excess} to \val{ab.complete.excess} (two sets of runs, on different machines). Deeper unrolling, more steps and restarts, the soft-gate objective with the thresholds and running statistics of G1 and G2 (G3 and the tightening are not modelled), expectation over noise, a Citadel-Rx surrogate, a search on the NACK feedback and a budget on the users' signal energy alone get about as few poisoned blocks accepted as plain A1 (rejection at least \val{atk.citadelsigbudgetsir0.rej}, against \val{ab.complete.rej} and \val{h7.citadela1.rej} for A1). So does a physical attacker with two or four antennas, also when its channel estimate is in error (at least \val{atk.b1citadelM2csi001sir0.rej}). A physical attacker with a single antenna gets more poisoned blocks accepted (\val{atk.citadelM1sir0.rejk} rejected) and gives the lowest excess at SIR 0\,dB (\val{atk.citadelM1sir0.excess}). At SIR 10\,dB the excess is
+its NACK feedback), and run on test seeds 10--14. Against Citadel-Rx at SIR 0\,dB the \val{atk.cit0.n} attacks, among them the rank-4 physical attacker, which is plain A1 (see the caption), give excess SERs between \val{atk.cit0.exmin} and \val{atk.cit0.exmax}, with rejection rates between \val{atk.cit0.rejmin} and 1. Plain A1 on the same seeds gives \val{h7.citadela1.excess} to \val{ab.complete.excess} (two sets of runs, on different machines). Deeper unrolling, more steps and restarts, the soft-gate objective with the thresholds and running statistics of G1 and G2 (G3 and the tightening are not modelled), expectation over noise, a Citadel-Rx surrogate, a search on the NACK feedback (one query per attacked block, so not a converged search; Table~\ref{tab:knowledge}) and a budget on the users' signal energy alone get about as few poisoned blocks accepted as plain A1 (rejection at least \val{atk.citadelsigbudgetsir0.rej}, against \val{ab.complete.rej} and \val{h7.citadela1.rej} for A1). So does a physical attacker with two or four antennas, also when its channel estimate is in error (at least \val{atk.b1citadelM2csi001sir0.rej}). A physical attacker with a single antenna gets more poisoned blocks accepted (\val{atk.citadelM1sir0.rejk} rejected) and gives the lowest excess at SIR 0\,dB (\val{atk.citadelM1sir0.excess}). At SIR 10\,dB the excess is
 \val{atk.cit10.exmin} to \val{atk.cit10.exmax}. The \val{atk.onl0.n} of these attacks that were also run against online DeepSIC (Combined$^{b}$ in place of
 Combined$^{a}$) raise its SER by
 \val{atk.onl0.exmin} (rank-1 physical attacker) to \val{atk.onl0.exmax}. With five seeds,
@@ -971,7 +971,7 @@ with \val{d7.citadel.frejk} blocks falsely rejected; that of tuned online DeepSI
 
 \subsection{Other Baselines}\label{sec:baselines}
 \begin{table}[t]
-\centering\caption{Further baselines under white-box A1 at SIR 0\,dB, test seeds 10--14.}\label{tab:baselines}
+\centering\caption{Further baselines under white-box A1 at SIR 0\,dB, test seeds 10--14. DD: decision-directed.}\label{tab:baselines}
 \scriptsize
 \begin{tabular}{@{}L{22mm}cccc@{}}
 \toprule
@@ -996,7 +996,7 @@ threshold of \val{eata.thr}\,nats, so the EATA-style receiver coincides with EWC
 decision-directed training still adapts on the poisoned pilots (\val{p2.dddeepsic.excess}); the
 CoTTA-style teacher with stochastic restore keeps \val{p2.cottadeepsic.excess}, and the
 single-memory receiver with the fast learner of Citadel-Rx and no gates
-\val{p2.titanssingle.excess}, so the fast learner is not what protects Citadel-Rx. Without attack, no baseline closes most of the clean gap between tuned online DeepSIC (\val{p1.online_deepsic.wb0.clean}, Table~\ref{tab:p1}) and Citadel-Rx (\val{ab.complete.clean}): the lowest clean SERs are \val{p2.dddeepsic.clean} for CRC-verified decision-directed training and \val{p2.cottadeepsic.clean} for the CoTTA-style receiver, and L2-SP and EWC raise the clean SER. Citadel-Rx without the CRC selection has \val{ab.noselect.clean} (Table~\ref{tab:ablate}), above four of the baselines: its clean gain comes with the selection, to which the slow memory contributes the anchor detection as a candidate, not from the memory or the anchor alone.
+\val{p2.titanssingle.excess}, so the fast learner is not what protects Citadel-Rx. Without attack, none of the baselines of Table~\ref{tab:baselines} closes most of the clean gap between tuned online DeepSIC (\val{p1.online_deepsic.wb0.clean}, Table~\ref{tab:p1}) and Citadel-Rx (\val{ab.complete.clean}): the lowest clean SERs are \val{p2.dddeepsic.clean} for CRC-verified decision-directed training and \val{p2.cottadeepsic.clean} for the CoTTA-style receiver, and L2-SP and EWC raise the clean SER. Citadel-Rx without the CRC selection has \val{ab.noselect.clean} (Table~\ref{tab:ablate}), above four of the baselines: its clean gain comes with the selection, to which the slow memory contributes the anchor detection as a candidate, not from the memory or the anchor alone.
 
 \subsection{Ablations}\label{sec:ablate}
 \begin{table}[t]
@@ -1136,9 +1136,9 @@ Attacker & Receiver & Seeds & \thead{Clean\\BLER} & \thead{Excess BLER\\{}[95\% 
 \end{tabular}
 \end{table}
 Each test seed is one drop of the TR 38.901 urban-micro street-canyon model \cite{tr38901}, generated
-with Sionna \cite{sionna}, which implements the parameter tables of V19.2 of the report (Table~\ref{tab:setup}): path loss, line-of-sight probability and shadow
+with Sionna \cite{sionna} (Table~\ref{tab:setup}), which implements the parameter tables of V19.2 of the report: path loss, line-of-sight probability and shadow
 fading of the standard, a narrowband channel per 1\,ms slot, the users moving at 3\,km/h. Slow
-power control aims every user at the mean received power of a cell-edge user (150\,m, NLoS, no
+power control aims every user at the mean received power of a cell-edge user (150\,m, non-line-of-sight, no
 shadowing); a user that cannot reach it at maximum power arrives weaker. The attacker is one
 static antenna at 35, 75 or 150\,m from the base station, transmitting at a user's maximum power,
 with its channel from the same drop, so its SIR is not a setting: over the five drops it ranges from
@@ -1303,7 +1303,7 @@ receiver already runs on its anchor and on LMMSE, which the attacker reaches), a
 networks weaker than the model-based detector, which the clean 16-QAM results call for.
 
 \section*{Acknowledgment}
-The COST2100 traces are those released with \cite{raviv2023}.
+The COST2100 traces are those of the public code released with \cite{raviv2024}.
 
 \scriptsize\begin{thebibliography}{60}
 % every entry checked against the publisher, proceedings, arXiv or standards record: docs/REFERENCES_VERIFIED.md
@@ -1314,58 +1314,58 @@ The COST2100 traces are those released with \cite{raviv2023}.
 \bibitem{shlezinger2021} N.~Shlezinger, R.~Fu, and Y.~C. Eldar, ``DeepSIC: Deep soft interference cancellation for multiuser MIMO detection,'' \emph{IEEE Trans. Wireless Commun.}, vol.~20, no.~2, pp. 1349--1362, Feb. 2021.
 \bibitem{raviv2023} T.~Raviv, S.~Park, O.~Simeone, Y.~C. Eldar, and N.~Shlezinger, ``Online meta-learning for hybrid model-based deep receivers,'' \emph{IEEE Trans. Wireless Commun.}, vol.~22, no.~10, pp. 6415--6431, Oct. 2023.
 \bibitem{wu2024} K.~Wu, W.~Jiang, D.~Niyato, Y.~Li, and C.~Luo, ``Transfer-based adversarial poisoning attacks for online (MIMO-)deep receviers,'' arXiv:2409.02430, Sep. 2024.
-\bibitem{zhou2012pilot} X.~Zhou, B.~Maham, and A.~Hj{\o}rungnes, ``Pilot contamination for active eavesdropping,'' \emph{IEEE Trans. Wireless Commun.}, vol.~11, no.~3, pp. 903--907, Mar. 2012.
-\bibitem{kapetanovic2015} D.~Kapetanovi\'c, G.~Zheng, and F.~Rusek, ``Physical layer security for massive MIMO: An overview on passive eavesdropping and active attacks,'' \emph{IEEE Commun. Mag.}, vol.~53, no.~6, pp. 21--27, Jun. 2015.
 \bibitem{kapetanovic2013} D.~Kapetanovi\'c, G.~Zheng, K.-K. Wong, and B.~Ottersten, ``Detection of pilot contamination attack using random training and massive MIMO,'' in \emph{Proc. IEEE 24th Annu. Int. Symp. Pers., Indoor, Mobile Radio Commun. (PIMRC)}, 2013, pp. 13--18.
 \bibitem{tugnait2015} J.~K. Tugnait, ``Self-contamination for detection of pilot contamination attack in multiple antenna systems,'' \emph{IEEE Wireless Commun. Lett.}, vol.~4, no.~5, pp. 525--528, Oct. 2015.
 \bibitem{viterbinet2020} N.~Shlezinger, N.~Farsad, Y.~C. Eldar, and A.~J. Goldsmith, ``ViterbiNet: A deep learning based Viterbi algorithm for symbol detection,'' \emph{IEEE Trans. Wireless Commun.}, vol.~19, no.~5, pp. 3319--3331, May 2020.
 \bibitem{schibisch2018} S.~Schibisch, S.~Cammerer, S.~D{\"o}rner, J.~Hoydis, and S.~ten~Brink, ``Online label recovery for deep learning-based communication through error correcting codes,'' in \emph{Proc. 15th Int. Symp. Wireless Commun. Syst. (ISWCS)}, 2018, pp. 1--5.
-\bibitem{uzlaner2024} N.~Uzlaner, T.~Raviv, N.~Shlezinger, and K.~Todros, ``Asynchronous online adaptation via modular drift detection for deep receivers,'' arXiv:2407.09134, Jul. 2024.
-\bibitem{gusakov2025} Y.~Gusakov, O.~Simeone, T.~Routtenberg, and N.~Shlezinger, ``Online learning of modular Bayesian deep receivers: Single-step adaptation with streaming data,'' arXiv:2511.06045, Nov. 2025.
 \bibitem{eata2022} S.~Niu, J.~Wu, Y.~Zhang, Y.~Chen, S.~Zheng, P.~Zhao, and M.~Tan, ``Efficient test-time model adaptation without forgetting,'' in \emph{Proc. 39th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~162, 2022, pp. 16888--16905.
 \bibitem{cotta2022} Q.~Wang, O.~Fink, L.~Van~Gool, and D.~Dai, ``Continual test-time domain adaptation,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2022, pp. 7201--7211.
 \bibitem{sar2023} S.~Niu, J.~Wu, Y.~Zhang, Z.~Wen, Y.~Chen, P.~Zhao, and M.~Tan, ``Towards stable test-time adaptation in dynamic wild world,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2023.
 \bibitem{rotta2023} L.~Yuan, B.~Xie, and S.~Li, ``Robust test-time adaptation in dynamic scenarios,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2023, pp. 15922--15932.
-\bibitem{persistent2024} T.-H. Hoang, D.~M. Vo, and M.~N. Do, ``Persistent test-time adaptation in recurring testing scenarios,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~37, 2024.
+\bibitem{medbn} H.~Park, J.~Hwang, S.~Mun, S.~Park, and J.~Ok, ``MedBN: Robust test-time adaptation against malicious test samples,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2024, pp. 5997--6007.
+\bibitem{wu2023tta} T.~Wu, F.~Jia, X.~Qi, J.~T. Wang, V.~Sehwag, S.~Mahloujifar, and P.~Mittal, ``Uncovering adversarial risks of test-time adaptation,'' in \emph{Proc. 40th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~202, 2023, pp. 37456--37495.
 \bibitem{l2sp2018} X.~Li, Y.~Grandvalet, and F.~Davoine, ``Explicit inductive bias for transfer learning with convolutional networks,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 2825--2834.
 \bibitem{ewc2017} J.~Kirkpatrick, R.~Pascanu, N.~Rabinowitz, J.~Veness, G.~Desjardins, A.~A. Rusu, K.~Milan, J.~Quan, T.~Ramalho, A.~Grabska-Barwinska, D.~Hassabis, C.~Clopath, D.~Kumaran, and R.~Hadsell, ``Overcoming catastrophic forgetting in neural networks,'' \emph{Proc. Natl. Acad. Sci. USA}, vol.~114, no.~13, pp. 3521--3526, Mar. 2017.
 \bibitem{meanteacher2017} A.~Tarvainen and H.~Valpola, ``Mean teachers are better role models: Weight-averaged consistency targets improve semi-supervised deep learning results,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~30, 2017, pp. 1195--1204.
-\bibitem{wu2023tta} T.~Wu, F.~Jia, X.~Qi, J.~T. Wang, V.~Sehwag, S.~Mahloujifar, and P.~Mittal, ``Uncovering adversarial risks of test-time adaptation,'' in \emph{Proc. 40th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~202, 2023, pp. 37456--37495.
+\bibitem{behrouz2025nested} A.~Behrouz, M.~Razaviyayn, P.~Zhong, and V.~Mirrokni, ``Nested learning: The illusion of deep learning architectures,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~38, 2025; arXiv:2512.24695.
+\bibitem{behrouz2025titans} A.~Behrouz, P.~Zhong, and V.~Mirrokni, ``Titans: Learning to memorize at test time,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~38, 2025; arXiv:2501.00663.
+\bibitem{zhou2012pilot} X.~Zhou, B.~Maham, and A.~Hj{\o}rungnes, ``Pilot contamination for active eavesdropping,'' \emph{IEEE Trans. Wireless Commun.}, vol.~11, no.~3, pp. 903--907, Mar. 2012.
+\bibitem{kapetanovic2015} D.~Kapetanovi\'c, G.~Zheng, and F.~Rusek, ``Physical layer security for massive MIMO: An overview on passive eavesdropping and active attacks,'' \emph{IEEE Commun. Mag.}, vol.~53, no.~6, pp. 21--27, Jun. 2015.
+\bibitem{uzlaner2024} N.~Uzlaner, T.~Raviv, N.~Shlezinger, and K.~Todros, ``Asynchronous online adaptation via modular drift detection for deep receivers,'' arXiv:2407.09134, Jul. 2024.
+\bibitem{gusakov2025} Y.~Gusakov, O.~Simeone, T.~Routtenberg, and N.~Shlezinger, ``Online learning of modular Bayesian deep receivers: Single-step adaptation with streaming data,'' arXiv:2511.06045, Nov. 2025.
+\bibitem{persistent2024} T.-H. Hoang, D.~M. Vo, and M.~N. Do, ``Persistent test-time adaptation in recurring testing scenarios,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~37, 2024.
 \bibitem{cong2024} T.~Cong, X.~He, Y.~Shen, and Y.~Zhang, ``Test-time poisoning attacks against test-time adaptation models,'' in \emph{Proc. IEEE Symp. Secur. Privacy (SP)}, 2024, pp. 1306--1324.
 \bibitem{su2025} Y.~Su, Y.~Li, N.~Liu, K.~Jia, X.~Yang, C.-S. Foo, and X.~Xu, ``On the adversarial risk of test time adaptation: An investigation into realistic test-time data poisoning,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2025.
-\bibitem{medbn} H.~Park, J.~Hwang, S.~Mun, S.~Park, and J.~Ok, ``MedBN: Robust test-time adaptation against malicious test samples,'' in \emph{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2024, pp. 5997--6007.
 \bibitem{rdumb2023} O.~Press, S.~Schneider, M.~K{\"u}mmerer, and M.~Bethge, ``RDumb: A simple approach that questions our progress in continual test-time adaptation,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, 2023.
 \bibitem{blanchard2017} P.~Blanchard, E.~M. El~Mhamdi, R.~Guerraoui, and J.~Stainer, ``Machine learning with adversaries: Byzantine tolerant gradient descent,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~30, 2017, pp. 119--129.
 \bibitem{steinhardt2017} J.~Steinhardt, P.~W. Koh, and P.~Liang, ``Certified defenses for data poisoning attacks,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~30, 2017, pp. 3517--3529.
 \bibitem{hu2026} Y.~Hu and L.~Duan, ``Theory of continual learning against data poisoning attacks,'' in \emph{Proc. 43rd Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~306, 2026, pp. 44906--44935.
-\bibitem{behrouz2025nested} A.~Behrouz, M.~Razaviyayn, P.~Zhong, and V.~Mirrokni, ``Nested learning: The illusion of deep learning architectures,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~38, 2025; arXiv:2512.24695.
-\bibitem{behrouz2025titans} A.~Behrouz, P.~Zhong, and V.~Mirrokni, ``Titans: Learning to memorize at test time,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~38, 2025; arXiv:2501.00663.
 \bibitem{mcclelland1995} J.~L. McClelland, B.~L. McNaughton, and R.~C. O'Reilly, ``Why there are complementary learning systems in the hippocampus and neocortex: Insights from the successes and failures of connectionist models of learning and memory,'' \emph{Psychol. Rev.}, vol.~102, no.~3, pp. 419--457, Jul. 1995.
 \bibitem{kumaran2016} D.~Kumaran, D.~Hassabis, and J.~L. McClelland, ``What learning systems do intelligent agents need? Complementary learning systems theory updated,'' \emph{Trends Cogn. Sci.}, vol.~20, no.~7, pp. 512--534, Jul. 2016.
 \bibitem{sadeghi2019} M.~Sadeghi and E.~G. Larsson, ``Adversarial attacks on deep-learning based radio signal classification,'' \emph{IEEE Wireless Commun. Lett.}, vol.~8, no.~1, pp. 213--216, Feb. 2019.
 \bibitem{sadeghi2019ae} M.~Sadeghi and E.~G. Larsson, ``Physical adversarial attacks against end-to-end autoencoder communication systems,'' \emph{IEEE Commun. Lett.}, vol.~23, no.~5, pp. 847--850, May 2019.
 \bibitem{sagduyu2021} Y.~E. Sagduyu, Y.~Shi, and T.~Erpek, ``Adversarial deep learning for over-the-air spectrum poisoning attacks,'' \emph{IEEE Trans. Mobile Comput.}, vol.~20, no.~2, pp. 306--319, 2021.
 \bibitem{athalye2018obfuscated} A.~Athalye, N.~Carlini, and D.~Wagner, ``Obfuscated gradients give a false sense of security: Circumventing defenses to adversarial examples,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 274--283.
-\bibitem{athalye2018eot} A.~Athalye, L.~Engstrom, A.~Ilyas, and K.~Kwok, ``Synthesizing robust adversarial examples,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 284--293.
 \bibitem{carlini2019} N.~Carlini, A.~Athalye, N.~Papernot, W.~Brendel, J.~Rauber, D.~Tsipras, I.~Goodfellow, A.~Madry, and A.~Kurakin, ``On evaluating adversarial robustness,'' arXiv:1902.06705, 2019.
 \bibitem{tramer2020} F.~Tram{\`e}r, N.~Carlini, W.~Brendel, and A.~Madry, ``On adaptive attacks to adversarial example defenses,'' in \emph{Adv. Neural Inf. Process. Syst. (NeurIPS)}, vol.~33, 2020, pp. 1633--1645.
-\bibitem{ilyas2018} A.~Ilyas, L.~Engstrom, A.~Athalye, and J.~Lin, ``Black-box adversarial attacks with limited queries and information,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 2137--2146.
-\bibitem{wierstra2014} D.~Wierstra, T.~Schaul, T.~Glasmachers, Y.~Sun, J.~Peters, and J.~Schmidhuber, ``Natural evolution strategies,'' \emph{J. Mach. Learn. Res.}, vol.~15, no.~27, pp. 949--980, 2014.
 \bibitem{finn2017} C.~Finn, P.~Abbeel, and S.~Levine, ``Model-agnostic meta-learning for fast adaptation of deep networks,'' in \emph{Proc. 34th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~70, 2017, pp. 1126--1135.
-\bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu, ``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2018.
 \bibitem{tr38901} 3GPP, ``Study on channel model for frequencies from 0.5 to 100 GHz,'' TR 38.901, V19.5.0, 2026, Table 7.4.1-1.
-\bibitem{ts38212} 3GPP, ``NR; Multiplexing and channel coding,'' TS 38.212, V19.2.0, 2025, Secs. 5.1 and 5.3.2.
-\bibitem{ts38211} 3GPP, ``NR; Physical channels and modulation,'' TS 38.211, V19.2.0 (ETSI TS 138 211 V19.2.0, Feb. 2026), Secs. 5.2.1 and 6.3.1.1.
-\bibitem{sionna} J.~Hoydis, S.~Cammerer, F.~Ait Aoudia, M.~Nimier-David, L.~Maggi, G.~Marcus, A.~Vem, and A.~Keller, ``Sionna,'' software, 2022; version 2.2.0, Sep. 2026. [Online]. Available: \url{https://nvlabs.github.io/sionna/}
+\bibitem{madry2018} A.~Madry, A.~Makelov, L.~Schmidt, D.~Tsipras, and A.~Vladu, ``Towards deep learning models resistant to adversarial attacks,'' in \emph{Proc. Int. Conf. Learn. Represent. (ICLR)}, 2018.
+\bibitem{athalye2018eot} A.~Athalye, L.~Engstrom, A.~Ilyas, and K.~Kwok, ``Synthesizing robust adversarial examples,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 284--293.
+\bibitem{wierstra2014} D.~Wierstra, T.~Schaul, T.~Glasmachers, Y.~Sun, J.~Peters, and J.~Schmidhuber, ``Natural evolution strategies,'' \emph{J. Mach. Learn. Res.}, vol.~15, no.~27, pp. 949--980, 2014.
+\bibitem{ilyas2018} A.~Ilyas, L.~Engstrom, A.~Athalye, and J.~Lin, ``Black-box adversarial attacks with limited queries and information,'' in \emph{Proc. 35th Int. Conf. Mach. Learn. (ICML)}, PMLR vol.~80, 2018, pp. 2137--2146.
+\bibitem{wilson1927} E.~B. Wilson, ``Probable inference, the law of succession, and statistical inference,'' \emph{J. Amer. Statist. Assoc.}, vol.~22, no.~158, pp. 209--212, Jun. 1927.
+\bibitem{raviv2024} T.~Raviv, S.~Park, O.~Simeone, Y.~C. Eldar, and N.~Shlezinger, ``Adaptive and flexible model-based AI for deep receivers in dynamic channels,'' \emph{IEEE Wireless Commun.}, vol.~31, no.~4, pp. 163--169, 2024.
+\bibitem{hoeffding1963} W.~Hoeffding, ``Probability inequalities for sums of bounded random variables,'' \emph{J. Amer. Statist. Assoc.}, vol.~58, no.~301, pp. 13--30, Mar. 1963.
+\bibitem{huber1964} P.~J. Huber, ``Robust estimation of a location parameter,'' \emph{Ann. Math. Statist.}, vol.~35, no.~1, pp. 73--101, Mar. 1964.
 \bibitem{ts36212} 3GPP, ``Evolved Universal Terrestrial Radio Access (E-UTRA); Multiplexing and channel coding,'' TS 36.212, V19.1.0, 2025, Sec. 5.1.1.
 \bibitem{liu2012cost} L.~Liu, C.~Oestges, J.~Poutanen, K.~Haneda, P.~Vainikainen, F.~Quitin, F.~Tufvesson, and P.~De~Doncker, ``The COST 2100 MIMO channel model,'' \emph{IEEE Wireless Commun.}, vol.~19, no.~6, pp. 92--99, Dec. 2012.
-\bibitem{raviv2024} T.~Raviv, S.~Park, O.~Simeone, Y.~C. Eldar, and N.~Shlezinger, ``Adaptive and flexible model-based AI for deep receivers in dynamic channels,'' \emph{IEEE Wireless Commun.}, vol.~31, no.~4, pp. 163--169, 2024.
-\bibitem{huber1964} P.~J. Huber, ``Robust estimation of a location parameter,'' \emph{Ann. Math. Statist.}, vol.~35, no.~1, pp. 73--101, Mar. 1964.
-\bibitem{hoeffding1963} W.~Hoeffding, ``Probability inequalities for sums of bounded random variables,'' \emph{J. Amer. Statist. Assoc.}, vol.~58, no.~301, pp. 13--30, Mar. 1963.
+\bibitem{ts38212} 3GPP, ``NR; Multiplexing and channel coding,'' TS 38.212, V19.2.0, 2025, Secs. 5.1 and 5.3.2.
+\bibitem{ts38211} 3GPP, ``NR; Physical channels and modulation,'' TS 38.211, V19.2.0 (ETSI TS 138 211 V19.2.0, Feb. 2026), Secs. 5.2.1 and 6.3.1.1.
 \bibitem{kunsch1989} H.~R. K{\"u}nsch, ``The jackknife and the bootstrap for general stationary observations,'' \emph{Ann. Statist.}, vol.~17, no.~3, pp. 1217--1241, Sep. 1989.
-\bibitem{wilson1927} E.~B. Wilson, ``Probable inference, the law of succession, and statistical inference,'' \emph{J. Amer. Statist. Assoc.}, vol.~22, no.~158, pp. 209--212, Jun. 1927.
 \bibitem{wilcoxon1945} F.~Wilcoxon, ``Individual comparisons by ranking methods,'' \emph{Biometrics Bull.}, vol.~1, no.~6, pp. 80--83, Dec. 1945.
 \bibitem{holm1979} S.~Holm, ``A simple sequentially rejective multiple test procedure,'' \emph{Scand. J. Statist.}, vol.~6, no.~2, pp. 65--70, 1979.
+\bibitem{sionna} J.~Hoydis, S.~Cammerer, F.~Ait Aoudia, M.~Nimier-David, L.~Maggi, G.~Marcus, A.~Vem, and A.~Keller, ``Sionna,'' software, 2022; version 2.2.0, Sep. 2026. [Online]. Available: \url{https://nvlabs.github.io/sionna/}
 \end{thebibliography}
 
 \end{document}
