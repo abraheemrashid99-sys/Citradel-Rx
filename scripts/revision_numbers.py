@@ -59,8 +59,10 @@ def load(folder: str) -> List[dict]:
             if r["config"]["frame"].get("coding") == "ldpc" and not r["summary"].get("ldpc_scrambled"):
                 continue   # first coded-scene version without NR scrambling (superseded by d23s_*)
             out.append(r)
-        if not folder.endswith("_g1fix") and os.path.isdir(os.path.join(RES, g1fix_folder(folder))):
+        if not folder.endswith(("_g1fix", "_more")) and os.path.isdir(os.path.join(RES, g1fix_folder(folder))):
             out = with_g1fix(folder, out)
+        if not folder.endswith(("_g1fix", "_more")) and os.path.isdir(os.path.join(RES, folder + "_more")):
+            out = out + load(folder + "_more")   # further seeds (scripts/extend_seeds.py), each with its own twin
         _cache[folder] = out
     return _cache[folder]
 
@@ -101,7 +103,7 @@ MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
 # every clean-twin folder any driver writes (scripts/revision_fast.py CLEAN_DIR), so a new machine cannot be missed
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 21)]   # pool12-20: the re-runs of scripts/rerun_g1fix.py
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 41)]   # pool12-20: scripts/rerun_g1fix.py; pool21-40: scripts/extend_seeds.py
 
 
 _probe: Dict[str, bool] = {}
