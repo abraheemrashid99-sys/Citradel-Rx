@@ -1,0 +1,74 @@
+[
+ {
+  "path": "cache/pretrain/citadel_35a035771eae67a248516ca7.pt",
+  "kind": "pretrain_cache",
+  "machine": "pool24",
+  "source": "cache/pretrain/citadel_35a035771eae67a248516ca7.pt",
+  "bytes": 2214717,
+  "sha256": "abc54076e67d4dbb01c3a4f799aaa8365f9661fe7a73b107b9570c6e9c55f6e3",
+  "parts": [
+   "machines/pool24/cache/pretrain/citadel_35a035771eae67a248516ca7.pt"
+  ]
+ },
+ {
+  "path": "results_archive/pool24/docs/PAIRED_DISP_rev2_drift_long_more.md",
+  "kind": "machine_file",
+  "machine": "pool24",
+  "source": "docs/PAIRED_DISP_rev2_drift_long_more.md",
+  "bytes": 290,
+  "sha256": "98b9ff063ab645cfd0879750ddaf3f843bd127ef1738e072e2869c76901cf106",
+  "parts": [
+   "machines/pool24/docs/PAIRED_DISP_rev2_drift_long_more.md"
+  ]
+ },
+ {
+  "path": "results_archive/pool24/docs/figures/pd1_a3star_sir0_e0.05_clip.pdf",
+  "kind": "machine_file",
+  "machine": "pool24",
+  "source": "docs/figures/pd1_a3star_sir0_e0.05_clip.pdf",
+  "bytes": 55206,
+  "sha256": "5c85e791f9e7d3b57a960dfd15f3f962e58b27620bcdff1d5636aa4d4cc4dec8",
+  "parts": [
+   "machines/pool24/docs/figures/pd1_a3star_sir0_e0.05_clip.pdf"
+  ]
+ },
+ {
+  "path": "results_archive/pool24/docs/figures/pd1_a3star_sir0_e0.05_clip.png",
+  "kind": "machine_file",
+  "machine": "pool24",
+  "source": "docs/figures/pd1_a3star_sir0_e0.05_clip.png",
+  "bytes": 83823,
+  "sha256": "5a3d048bfef2560d6151c5752f3f2e8ce189bb2e2c1a72b3835d0cb0e240931f",
+  "parts": [
+   "machines/pool24/docs/figures/pd1_a3star_sir0_e0.05_clip.png"
+  ]
+ },
+ {
+  "path": "results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz",
+  "kind": "snapshot",
+  "machine": "pool24",
+  "source": "results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz",
+  "bytes": 374602923,
+  "sha256": "56ce858cf0b00ee49d3c5d18c86ec349f21a9cfade3ad6ccfd3dbc8c716dff2c",
+  "parts": [
+   "machines/pool24/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz.part00",
+   "machines/pool24/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz.part01",
+   "machines/pool24/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz.part02",
+   "machines/pool24/results/rev2_drift_long_more/b5_a3star_e0.05__long1000_s12_d9c95f9d0869.levels.npz.part03"
+  ]
+ },
+ {
+  "path": "results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz",
+  "kind": "snapshot",
+  "machine": "pool24",
+  "source": "results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz",
+  "bytes": 374598623,
+  "sha256": "5746381a3670007244c4aace7d15a696ff849c9881d169f00e453012f2cefbd8",
+  "parts": [
+   "machines/pool24/results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz.part00",
+   "machines/pool24/results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz.part01",
+   "machines/pool24/results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz.part02",
+   "machines/pool24/results/rev_clean_pool24/ext_twin_b1000_8b400816_s12_87ada1307d23.levels.npz.part03"
+  ]
+ }
+]
