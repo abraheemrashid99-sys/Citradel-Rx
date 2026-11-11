@@ -465,7 +465,39 @@ class Attacker:
             eps_d = self.budget(y_d, signal=sig_d)
             Ed = self.rng.standard_normal(y_d.shape) + (1j * self.rng.standard_normal(y_d.shape) if is_complex else 0)
             y_d_adv = y_d + Ed / np.linalg.norm(Ed) * eps_d
+        if self.ac.oracle_scales and idx_d is not None and hasattr(receiver, "process_block"):
+            y_p_adv = self._oracle_select(b, y_p, idx_p, y_p_adv, y_d_adv, receiver, framer, idx_d, stats)
         return y_p_adv, y_d_adv, stats
+
+    def _oracle_select(self, b, y_p, idx_p, y_p_adv, y_d_adv, receiver, framer, idx_d, stats) -> np.ndarray:
+        """Exact-gate attacker. The optimised pilot perturbation E is scaled by each factor of
+        attack.oracle_scales, every candidate is processed by an exact copy of the victim receiver
+        (adaptation, references, gates with their thresholds and running statistics, fallback and CRC
+        selection), and the candidate whose emitted decisions have the highest SER on the true data is
+        sent (ties: the larger perturbation); with oracle_mode = accepted, the highest SER among the
+        candidates the gates accept, if any (a poisoning attacker). The data part, if any, is kept. The random-number states
+        are restored after every trial, so the trials do not change the run."""
+        import copy
+        import random
+        E = y_p_adv - y_p
+        best, trials = None, []
+        for s in self.ac.oracle_scales:
+            st = (torch.get_rng_state(), np.random.get_state(), random.getstate())
+            rx = copy.deepcopy(receiver)
+            out = rx.process_block(b, y_p + s * E, idx_p, y_d_adv, aux={"framer": framer, "state": self.block_state})
+            torch.set_rng_state(st[0]); np.random.set_state(st[1]); random.setstate(st[2])
+            ser = float((out.idx_hat != idx_d).any(axis=1).mean())
+            g = out.stats.get("gamma")
+            trials.append((float(s), ser, None if g is None else float(g)))
+        acc = [t for t in trials if t[2] is None or t[2] >= 0.5]
+        pool = acc if (self.ac.oracle_mode == "accepted" and acc) else trials
+        for t in pool:   # first maximum: the larger perturbation on ties (scales in decreasing order)
+            if best is None or t[1] > best[1] + 1e-12:
+                best = t
+        stats.update(oracle_scale=best[0], oracle_ser=best[1], oracle_gamma=best[2],
+                     oracle_n_accepted=int(sum(1 for t in trials if t[2] is None or t[2] >= 0.5)),
+                     oracle_n=len(trials))
+        return y_p + best[0] * E
 
     def _pgd_step(self, E, g, alpha, eps, is_complex):
         E_new = self._project_structure(E + g / g.norm().clamp_min(1e-12) * alpha, is_complex)
