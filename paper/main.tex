@@ -691,7 +691,8 @@ are also counted.
 \caption{Headline Cell: White-Box A1 at SIR 0\,dB, Test Seeds 10--19. Clean: Clean-Twin SER;
 Excess: \eqref{eq:excess} in the Window, 95\% Moving-Block Interval; After: Excess in up to 30 Blocks
 After It; Rej., False Rej.: Poisoned and Clean-Twin Blocks Rejected; $\Delta$ Clean: Clean SER of
-Citadel-Rx Relative to the Baseline}\label{tab:p1}
+Citadel-Rx Relative to the Baseline; Never Adapts: Pre-Trained DeepSIC Without Test-Time Training; ML: Exhaustive
+Maximum-Likelihood Detection With the LS Estimate}\label{tab:p1}
 \scriptsize\setlength{\tabcolsep}{2.5pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
@@ -702,6 +703,8 @@ Online DeepSIC & \val{p1.online_deepsic.wb0.clean} & \makecell{\val{p1.online_de
 Meta-DeepSIC & \val{p1.meta_deepsic.wb0.clean} & \makecell{\val{p1.meta_deepsic.wb0.excess}\\\val{p1.meta_deepsic.wb0.ci}} & \val{p1.meta_deepsic.wb0.post} & \val{p1.meta_deepsic.wb0.rej} & \val{p1.meta_deepsic.wb0.frej} & \val{cmp.meta_deepsic.clnrel}\%\\
 CRC-Rollback & \val{p1.crc_rollback.wb0.clean} & \makecell{\val{p1.crc_rollback.wb0.excess}\\\val{p1.crc_rollback.wb0.ci}} & \val{p1.crc_rollback.wb0.post} & \val{p1.crc_rollback.wb0.rej} & \val{p1.crc_rollback.wb0.frej} & \val{cmp.crc_rollback.clnrel}\%\\
 Online + CRC sel. & \val{p1.online_select.wb0.clean} & \makecell{\val{p1.online_select.wb0.excess}\\\val{p1.online_select.wb0.ci}} & \val{p1.online_select.wb0.post} & \val{p1.online_select.wb0.rej} & \val{p1.online_select.wb0.frej} & \val{cmp.online_select.clnrel}\%\\
+Never adapts & \val{p1.frozen_deepsic.wb0.clean} & \makecell{\val{p1.frozen_deepsic.wb0.excess}\\\val{p1.frozen_deepsic.wb0.ci}} & \val{p1.frozen_deepsic.wb0.post} & -- & -- & --\\
+ML, LS estimate & \val{p1.ml.wb0.clean} & \makecell{\val{p1.ml.wb0.excess}\\\val{p1.ml.wb0.ci}} & \val{p1.ml.wb0.post} & -- & -- & --\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -750,7 +753,8 @@ fast level, so only \val{c1.cit.acc} attacked blocks were accepted.
 \centering
 \caption{Attacks Built Against the Defense, SIR 0\,dB, Test Seeds 10--14, 95\% Intervals.
 Combined: Soft Gates, Unroll 10, PGD 50, 2 Restarts, EOT (Without Soft Gates for Online DeepSIC).
-Rank-4 Physical Is A1 (Same Runs as the A1 Row of Table~\ref{tab:refdeg}). CSI: Channel State
+Exact Gates: the Soft-Gate Perturbation at 8 Scales, Each Tried on an Exact Copy of the Receiver
+(\val{orc.acc.nseeds} Seeds). Rank-4 Physical Is A1 (Same Runs as the A1 Row of Table~\ref{tab:refdeg}). CSI: Channel State
 Information}\label{tab:attacks}
 \scriptsize
 \begin{tabular}{@{}L{29mm}ccc@{}}
@@ -761,6 +765,8 @@ Unroll 10 & \val{atk.citadelunroll10sir0.excess} \val{atk.citadelunroll10sir0.ci
 Unroll 50 & \val{atk.citadelunroll50sir0.excess} \val{atk.citadelunroll50sir0.ci} & \val{atk.citadelunroll50sir0.rej} & --\\
 PGD 100, 5 restarts & \val{atk.citadelpgd100r5sir0.excess} \val{atk.citadelpgd100r5sir0.ci} & \val{atk.citadelpgd100r5sir0.rej} & --\\
 Soft gates, unroll 10 & \val{atk.citadelsoftgatesir0.excess} \val{atk.citadelsoftgatesir0.ci} & \val{atk.citadelsoftgatesir0.rej} & --\\
+Exact gates, highest SER & \val{atk.citadeloraclemaxsersir0.excess} \val{atk.citadeloraclemaxsersir0.ci} & \val{atk.citadeloraclemaxsersir0.rej} & --\\
+Exact gates, accepted only & \val{atk.citadeloracleaccsir0.excess} \val{atk.citadeloracleaccsir0.ci} & \val{atk.citadeloracleaccsir0.rej} & --\\
 Combined & \val{atk.citadelstrongestsir0.excess} \val{atk.citadelstrongestsir0.ci} & \val{atk.citadelstrongestsir0.rej} & \val{atk.onlinestrongestsir0.excess}\\
 Rank-1 physical & \val{atk.citadelM1sir0.excess} \val{atk.citadelM1sir0.ci} & \val{atk.citadelM1sir0.rej} & \val{atk.onlinedeepsicM1sir0.excess}\\
 Rank-2 physical & \val{atk.citadelM2sir0.excess} \val{atk.citadelM2sir0.ci} & \val{atk.citadelM2sir0.rej} & \val{atk.onlinedeepsicM2sir0.excess}\\
