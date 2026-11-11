@@ -304,7 +304,11 @@ class Attacker:
             y_hat = torch.cat([yr, yi], dim=1)
         else:
             y_hat = s_soft[..., 0] @ Hr.T
-        return ((y_d_feat - y_hat) ** 2).mean()
+        # mean over slots of the squared residual per receive antenna, |.|^2 summed over the real and
+        # imaginary parts: the scale of physics.model_residual, which the receiver's G1 uses. (Records
+        # written before this fix averaged over the 2N real coordinates, half the receiver's scale for
+        # complex modulation; they stay in results/rev_p3_adaptive, see docs/G1_SOFT_FIX.md.)
+        return ((y_d_feat - y_hat) ** 2).sum(dim=1).mean() / H.shape[0]
 
     def _soft_ctx(self, t, y_p, y_d, idx_p, idx_d, H, noise_var, framer, victim, core) -> Optional[Dict[str, Any]]:
         if idx_d is None or framer is None or not framer.framer.enabled:
