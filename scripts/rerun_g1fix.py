@@ -97,8 +97,10 @@ def mkey(cfg: dict) -> str:
     return json.dumps({k: v for k, v in cfg.items() if k not in ("attack", "run")}, sort_keys=True)
 
 
-def plan(family: str, seeds, machine: str, shard):
+def plan(family: str, seeds, machine: str, shard, only=None):
     folders, twins = FAMILIES[family]
+    if only:   # a subset of the family's folders (to split one seed over several machines)
+        folders = [f for f in folders if f in only]
     att, cln = [], {}
     for folder in folders:
         out = os.path.join(RES, folder + "_g1fix") if family != "softgate" else os.path.join(RES, "rev_p3_adaptive_g1fix")
@@ -207,6 +209,7 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--dry", action="store_true")
     ap.add_argument("--probe-only", action="store_true", help="only repeat the stored clean run (pairs_as check)")
+    ap.add_argument("--folders", nargs="*", default=None, help="only these folders of the family")
     a = ap.parse_args()
     machine = os.environ.get("CITADEL_MACHINE", "")
     if not machine and not a.dry:
@@ -217,7 +220,7 @@ def main() -> None:
     if a.probe_only:
         print(time.strftime("%H:%M:%S"), run_one({"kind": "probe"}), flush=True)
         return
-    jobs = plan(a.family, a.seeds, machine or "DRY", shard)
+    jobs = plan(a.family, a.seeds, machine or "DRY", shard, a.folders)
     total = sum(j["est"] for j in jobs) / 60
     for j in jobs:
         print(f"{j['kind']:9s} {j['name']:36s} seed {j['seed']:2d}  ~{j['est'] / 60:4.0f} min"
