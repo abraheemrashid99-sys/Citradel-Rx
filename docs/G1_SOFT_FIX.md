@@ -77,10 +77,15 @@ of its seeds has been re-run, so no table cell mixes the two attack versions.
 | pool13 | soft gates, seeds 10-12 | `rerun_g1fix.py --family softgate --seeds 10 11 12` |
 | pool12 | soft gates, seeds 13-14 | `rerun_g1fix.py --family softgate --seeds 13 14` |
 | pool14-pool17 | A4, four balanced shards | `rerun_g1fix.py --family a4 --shard k/4` |
-| pool18, pool19 | A3\*, seeds 10 and 11 | `rerun_g1fix.py --family a3star --seeds 10` (11) |
+| pool18 | A3\*, seed 10 | `rerun_g1fix.py --family a3star --seeds 10` |
+| pool20 | A3\*, seed 11, 400-block runs | `rerun_g1fix.py --family a3star --seeds 11 --folders rev_p8_drift rev2_drift_guard` |
+| pool19 | A3\*, seed 11, 1000-block run | `rerun_g1fix.py --family a3star --seeds 11 --folders rev2_drift_long` |
 
 (The soft-gate runs of pool12 and pool13 were made with the first version of the script, which wrote
-them to `results/rev_p3_g1fix`; the folder was renamed afterwards.)
+them to `results/rev_p3_g1fix`; the folder was renamed afterwards. pool19 first ran all ten seed-11 A3\*
+jobs; its container restarted and the jobs were split between pool19 and pool20. Three records that
+orphaned workers of the stopped run wrote on pool19 have no clean twin there and are not used; they
+are kept with pool19's files on the `snapshots` branch.)
 
 ## What changed in the results
 
@@ -102,6 +107,11 @@ Same settings, seeds and clean twins; only the soft G1 term differs. Excess SER 
 | A4, alpha 0.25, abstain state (seeds 15-19) | +0.0367 | +0.0214 | 188/200 | 191/200 |
 | A4, alpha 0.75, abstain state (seeds 10-14) | +0.0384 | +0.0249 | | |
 | A4, alpha 0.75, abstain state (seeds 15-19) | +0.0347 | +0.0242 | | |
+| A3\*, 5 %, 400 blocks | +0.0019 | +0.0017 | 1/600 | 1/600 |
+| A3\*, 20 % | +0.0117 | +0.0122 | 164/600 | 135/600 |
+| A3\*, 50 % | +0.0097 | +0.0109 | 600/600 | 599/600 |
+| A3\*, 50 %, drift guard | +0.0101 | +0.0110 | 600/600 | 599/600 |
+| A3\*, 5 %, drift guard | +0.0019 | +0.0017 | 2/600 | 2/600 |
 
 In these runs the A4 attacker with 6 PGD steps was rejected more often and did less damage than before
 the fix; with 20 steps it was rejected about as often as with 6 and did more damage. Why the corrected
