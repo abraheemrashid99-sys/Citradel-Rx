@@ -59,8 +59,30 @@ def load(folder: str) -> List[dict]:
             if r["config"]["frame"].get("coding") == "ldpc" and not r["summary"].get("ldpc_scrambled"):
                 continue   # first coded-scene version without NR scrambling (superseded by d23s_*)
             out.append(r)
+        if not folder.endswith("_g1fix") and os.path.isdir(os.path.join(RES, g1fix_folder(folder))):
+            out = with_g1fix(folder, out)
         _cache[folder] = out
     return _cache[folder]
+
+
+def g1fix_folder(folder: str) -> str:
+    """Where scripts/rerun_g1fix.py writes the re-runs of a folder's soft-gate attacks."""
+    return folder + "_g1fix"
+
+
+def with_g1fix(folder: str, out: List[dict]) -> List[dict]:
+    """Records of attacks that used the soft-gate surrogate are replaced by their re-runs with the fixed
+    soft G1 term (docs/G1_SOFT_FIX.md). An experiment (record name) is switched only when every one of
+    its seeds has been re-run, so no table cell mixes the two attack versions."""
+    from rerun_g1fix import affected
+    new = load(g1fix_folder(folder))
+    have = {(r["name"], r["seed"]) for r in new}
+    old = [r for r in out if affected(r)]
+    names = {r["name"] for r in old}
+    done = {n for n in names if all((r["name"], r["seed"]) in have for r in old if r["name"] == n)}
+    for n in sorted(names - done):
+        print(f"   {folder}/{n}: soft-G1 re-run not complete, the records before the fix are used")
+    return [r for r in out if not (affected(r) and r["name"] in done)] + [r for r in new if r["name"] in done]
 
 
 def mkey(cfg: dict) -> str:
@@ -79,13 +101,32 @@ MACHINE_GROUP = {"cloud": "cloud", "cloudx": "cloud", "cloudy": "cloud", "cloudz
 
 CLOUD_V1 = {"rev_p4_paired", "rev_p3_refdeg", "rev_cal_citadel", "rev_clean_cloud"}   # first campaign on the cloud
 # every clean-twin folder any driver writes (scripts/revision_fast.py CLEAN_DIR), so a new machine cannot be missed
-CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 14)]   # pool13: the re-runs of scripts/rerun_g1fix.py
+CLEAN_ALL = ["rev_clean", "rev_clean_cloud", "rev_clean_win", "rev_clean_helper", "rev_clean_local"] + [f"rev_clean_pool{i}" for i in range(1, 21)]   # pool12-20: the re-runs of scripts/rerun_g1fix.py
+
+
+_probe: Dict[str, bool] = {}
+
+
+def probe_ok(m: str) -> bool:
+    if m not in _probe:
+        fn = os.path.join(RES, "g1fix_probe", f"{m}.json")
+        try:
+            _probe[m] = bool(json.load(open(fn)).get("identical"))
+        except Exception:
+            _probe[m] = False
+    return _probe[m]
 
 
 def machine(r: dict):
     """Which machine ran a record: second-campaign records carry it; a first-campaign record is placed
     by its folder (the cloud ran P4, the reference-degradation runs and the calibration; the MacBook
-    the rest)."""
+    the rest). A re-run of scripts/rerun_g1fix.py that carries `pairs_as` is paired with the clean twin
+    of the machine that ran the record it replaces, if its own machine repeated a stored cloud run
+    bit for bit (results/g1fix_probe/<machine>.json)."""
+    if r.get("pairs_as"):
+        if probe_ok(r.get("machine", "")):
+            return MACHINE_GROUP.get(r["pairs_as"], r["pairs_as"])
+        print(f"   {os.path.basename(r.get('_file', ''))}: no identical probe for machine {r.get('machine')}, not paired")
     if r.get("machine"):
         return MACHINE_GROUP.get(r["machine"], r["machine"])
     folder = os.path.basename(os.path.dirname(r.get("_file", "")))
