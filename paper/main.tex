@@ -255,9 +255,7 @@ with $\ell^{\rm d}$ the cross-entropy on the true data of 64 random sub-blocks $
 A4), $\tilde F$ a soft pass fraction, and $\tilde v_1$, $\tilde v_2$ soft verdicts of G1, against LMMSE
 only on posterior-mean symbols, and of G2 with $\tilde F$ for $F_{\rm nn}$, from
 \eqref{eq:g1}--\eqref{eq:softstep} with untightened thresholds; G3 is not modeled. The soft verdicts replace
-the hard gates on the forward and the backward pass. In the soft-gate and combined attacks of
-Section~\ref{sec:adaptive} and in the soft-gate run at SIR 10\,dB, the soft G1 residual was averaged over
-the $2N$ real coordinates, half the scale of \eqref{eq:g1} for QPSK, so these runs model G1 more weakly than stated.
+the hard gates on the forward and the backward pass. The same soft verdicts enter A4 and A3$^\ast$.
 A4, with 6 PGD steps, splits the budget,
 \begin{equation}\label{eq:a4}
 \|\bm E^{\rm p}_b\|_F\le\sqrt{\alpha}\,\epsilon_b,\qquad \|\bm E^{\rm d}_b\|_F\le\sqrt{1-\alpha}\,\epsilon^{\rm d}_b,
@@ -784,7 +782,7 @@ At SIR 0\,dB the \val{atk.cit0.n} attacks of Table~\ref{tab:attacks} give Citade
 to \val{atk.cit0.exmax}, against \val{h7.citadela1.excess} to \val{ab.complete.excess} for plain A1 in two
 sets of runs on different machines; the unroll-10, soft-gate and PGD-100 attacks, also run at SIR
 10\,dB (not tabulated), give
-\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. Soft gates (without G3 and the tightening, and with the weaker G1 noted after \eqref{eq:soft}), the query search (not converged) and the other attacks get about as few blocks accepted as plain A1, whereas the rank-1 attacker gets
+\val{atk.cit10.exmin} to \val{atk.cit10.exmax}. Soft gates (without G3 and the tightening), the query search (not converged) and the other attacks get about as few blocks accepted as plain A1, whereas the rank-1 attacker gets
 more accepted and gives the lowest excess. With five seeds, differences of a few $10^{-3}$ lie within
 the intervals. When nearly every attacked block is rejected, the excess depends on the perturbation's
 power, not its optimization: it is the price of detecting with an anchor that has not adapted to the
